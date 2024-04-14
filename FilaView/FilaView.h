@@ -1,10 +1,23 @@
 #pragma once
 
-using namespace System;
+class TWin;
 
 namespace FilaView {
-	public ref class Class1
-	{
-		// TODO: Add your methods for this class here.
-	};
-}
+
+public
+ref class FilaViewCtl {
+public:
+
+  FilaViewCtl();
+
+  ~FilaViewCtl();
+
+  System::IntPtr handle();
+
+private:
+
+  TWin *_win = nullptr;
+
+};
+
+} // namespace FilaView

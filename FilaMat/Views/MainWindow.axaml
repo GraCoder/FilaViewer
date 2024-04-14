@@ -30,7 +30,7 @@
             MaterialOpacity="0.65" />
       </ExperimentalAcrylicBorder.Material>
     </ExperimentalAcrylicBorder>
-    <Panel Margin="0,40,0,0">
+    <Panel Margin="10,40,10,10">
 
       <cc:NativeEmbedView></cc:NativeEmbedView>
     </Panel>
