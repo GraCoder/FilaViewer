@@ -32,9 +32,9 @@ public:
 
   void exec();
 
-  //filament::Engine *engine() { return _engine; }
-  //filament::SwapChain *getSwapChain() { return _swapchain; }
-  //filament::Renderer *getRenderer() { return _renderer; }
+  filament::Engine *engine() { return _engine; }
+  filament::SwapChain *getSwapChain() { return _swapchain; }
+  filament::Renderer *getRenderer() { return _renderer; }
 
   SDL_Window *getSDLWindow() { return _window; }
 
@@ -50,7 +50,7 @@ private:
 
   void poll_events();
 
-  //inline FTView *view() { return (FTView*)(_view.get()); }
+  inline FTView *view() { return (FTView*)(_view.get()); }
 
 private:
 
@@ -58,9 +58,9 @@ private:
 
   uint64_t _time = 0;
 
-  //filament::Engine *_engine = nullptr;
-  //filament::SwapChain *_swapchain = nullptr;
-  //filament::Renderer *_renderer = nullptr;
+  filament::Engine *_engine = nullptr;
+  filament::SwapChain *_swapchain = nullptr;
+  filament::Renderer *_renderer = nullptr;
 
   //filament::View *_gui_view = nullptr;
   //filagui::ImGuiHelper *_gui = nullptr;

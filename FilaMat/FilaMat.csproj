@@ -32,6 +32,6 @@
 
 
   <ItemGroup>
-    <ProjectReference Include="..\FilaView\FilaView.vcxproj" />
+    <ProjectReference Include="..\..\0\FilaViewer\FilaView\FilaView.vcxproj" />
   </ItemGroup>
 </Project>

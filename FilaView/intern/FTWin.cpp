@@ -3,16 +3,16 @@
 #include <functional>
 #include <stdexcept>
 
-//#include <filament/Renderer.h>
-//#include <filament/Engine.h>
-//#include <filament/Options.h>
-//#include <filament/SwapChain.h>
-//#include <filament/Viewport.h>
-//#include <viewer/ViewerGui.h>
-//#include <utils/Entity.h>
-//#include <utils/EntityManager.h>
-//#include <camutils/Bookmark.h>
-//
+#include <filament/Renderer.h>
+#include <filament/Engine.h>
+#include <filament/Options.h>
+#include <filament/SwapChain.h>
+#include <filament/Viewport.h>
+#include <viewer/ViewerGui.h>
+#include <utils/Entity.h>
+#include <utils/EntityManager.h>
+#include <camutils/Bookmark.h>
+
 //#include <viewer/ViewerGui.h>
 //#include "imgui/ImGuiHelper.h"
 

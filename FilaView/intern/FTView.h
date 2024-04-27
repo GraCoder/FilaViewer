@@ -3,6 +3,7 @@
 #include "TView.h"
 
 #include <functional>
+#include <SDL2/SDL_scancode.h>
 
 namespace filament {
 class View;

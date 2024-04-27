@@ -11,17 +11,24 @@
 
 #include "FTView.h"
 
+#ifdef TEST_ENTITY
 #include "mesh/Cube.h"
 #include "mesh/Sphere.h"
 #include "pcv_mat.h"
 
-#include "imgui/imgui.h"
-
-#include "PCDispatch.h"
-#include "PCNode.h"
-
 Sphere *_sphere = 0;
 Cube *_cube = 0;
+
+#endif
+
+#ifdef FILAMENT_IMGUI
+#include "imgui/imgui.h"
+#endif
+
+#ifdef POINT_CLOUD_SUPPORT
+#include "PCDispatch.h"
+#include "PCNode.h"
+#endif
 
 using namespace filament;
 
@@ -52,6 +59,7 @@ FTScene::FTScene(FTView *view)
     _scene->addEntity(light);
   }
 
+#ifdef TEST_ENTITY
   {
     _basic_material =
       filament::Material::Builder().package(PCV_MAT_BASICMAT_DATA, PCV_MAT_BASICMAT_SIZE).build(_engine);
@@ -78,10 +86,13 @@ FTScene::FTScene(FTView *view)
   }
 
   view->set_gui_callback(std::bind(&FTScene::gui, this, std::placeholders::_1, std::placeholders::_2));
+
+#endif
 }
 
 FTScene::~FTScene()
 {
+#ifdef TEST_ENTITY
   if (_sphere)
     delete _sphere;
   if (_cube)
@@ -93,11 +104,14 @@ FTScene::~FTScene()
   if (_basic_material)
     _engine.destroy(_basic_material);
 
+#endif
+
   _engine.destroy(_scene);
 }
 
 void FTScene::show_box(const tg::boundingbox &box) 
 {
+#if 0
   if (!_cube)
     return;
 
@@ -107,10 +121,12 @@ void FTScene::show_box(const tg::boundingbox &box)
   auto fm = math::mat4f::translation<float>(math::float3(ct.x(), ct.y(), ct.z())) *
             math::mat4f::scaling<float>(math::float3(sz.x(), sz.y(), sz.z()));
   tcm.setTransform(ti, fm);
+#endif
 }
 
 void FTScene::gui(filament::Engine *, filament::View *)
 {
+#ifdef FILAMENT_IMGUI
   ImGui::SetNextWindowSize(ImVec2(400, 200), ImGuiCond_Once);
   ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_Once);
 
@@ -131,4 +147,5 @@ void FTScene::gui(filament::Engine *, filament::View *)
   ImGui::Text("Point Count: %d", _point_count);
 
   ImGui::End();
+#endif
 }
