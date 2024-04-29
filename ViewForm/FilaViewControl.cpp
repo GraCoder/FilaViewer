@@ -23,10 +23,10 @@ System::IntPtr FilaView::FilaViewControl::handle()
 
 void FilaView::FilaViewControl::resize_control(System::IntPtr width, System::IntPtr height)
 {
-  MoveWindow((HWND)_win->handle(), 0, 0, width.ToInt32(), height.ToInt32(), true);
-  width.ToInt32();
-  LPARAM p = height.ToInt32();
-  p = (p << 32) | width.ToInt32();
+  //MoveWindow((HWND)_win->handle(), 0, 0, width.ToInt32(), height.ToInt32(), true);
+  //width.ToInt32();
+  //LPARAM p = height.ToInt32();
+  //p = (p << 32) | width.ToInt32();
   //SendMessage((HWND)_win->handle(), WM_SIZE, 0, p);
 
   //SetWindowPos((HWND)_win->handle(), NULL, 0, 0, width.ToInt32(), height.ToInt32(), 0);

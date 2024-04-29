@@ -36,7 +36,7 @@ FTScene::FTScene(FTView *view)
   view->view()->setScene(_scene);
 
   {
-    math::float4 clr(0, 0.125, 0.25, 1.0);
+    math::float4 clr(0.2, 0.2, 0.2, 1);
     auto skybox = Skybox::Builder().color(clr).build(_engine);
     _scene->setSkybox(skybox);
   }

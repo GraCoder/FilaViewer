@@ -17,12 +17,12 @@ namespace FilaMat.Views
             InitializeComponent();
         }
 
-        //private void InitializeComponent()
-        //{
-        //    AvaloniaXamlLoader.Load(this);
+        private void InitializeComponent()
+        {
+            AvaloniaXamlLoader.Load(this);
 
-        //    emb_view = this.FindNameScope()?.Find<global::FilaMat.Views.EmbedView>("emb_view");
-        //}
+            //emb_view = this.FindNameScope()?.Find<global::FilaMat.Views.EmbedView>("emb_view");
+        }
 
         public async void ShowPopupDelay(object sender, RoutedEventArgs args)
         {
@@ -47,8 +47,6 @@ namespace FilaMat.Views
 
             if (change.Property == BoundsProperty)
             {
-                var rect = change.GetNewValue<Rect>();
-                emb_view.ResizeGeometry(rect);
             }
         }
     }
@@ -62,12 +60,12 @@ namespace FilaMat.Views
             Implementation = new VulkanWin();
         }
 
-        public void ResizeGeometry(Rect rt)
-        {
-            int width = (int)rt.Width;
-            int height = (int)rt.Height;
-            ((VulkanWin)Implementation).ViewCtl.resize_control(width, height);
-        }
+        //public void ResizeGeometry(Rect rt)
+        //{
+        //    int width = (int)rt.Width;
+        //    int height = (int)rt.Height;
+        //    ((VulkanWin)Implementation).ViewCtl.resize_control(width, height);
+        //}
 
         protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)
         {
