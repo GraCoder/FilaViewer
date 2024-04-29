@@ -11,7 +11,6 @@
 
 #include "FTView.h"
 
-#ifdef TEST_ENTITY
 #include "mesh/Cube.h"
 #include "mesh/Sphere.h"
 #include "pcv_mat.h"
@@ -19,11 +18,7 @@
 Sphere *_sphere = 0;
 Cube *_cube = 0;
 
-#endif
-
-#ifdef FILAMENT_IMGUI
 #include "imgui/imgui.h"
-#endif
 
 #ifdef POINT_CLOUD_SUPPORT
 #include "PCDispatch.h"
@@ -42,7 +37,6 @@ FTScene::FTScene(FTView *view)
 
   {
     math::float4 clr(0, 0.125, 0.25, 1.0);
-    // clr.xyz = math::float3(1, 1, 1);
     auto skybox = Skybox::Builder().color(clr).build(_engine);
     _scene->setSkybox(skybox);
   }
@@ -59,7 +53,6 @@ FTScene::FTScene(FTView *view)
     _scene->addEntity(light);
   }
 
-#ifdef TEST_ENTITY
   {
     _basic_material =
       filament::Material::Builder().package(PCV_MAT_BASICMAT_DATA, PCV_MAT_BASICMAT_SIZE).build(_engine);
@@ -86,13 +79,10 @@ FTScene::FTScene(FTView *view)
   }
 
   view->set_gui_callback(std::bind(&FTScene::gui, this, std::placeholders::_1, std::placeholders::_2));
-
-#endif
 }
 
 FTScene::~FTScene()
 {
-#ifdef TEST_ENTITY
   if (_sphere)
     delete _sphere;
   if (_cube)
@@ -103,8 +93,6 @@ FTScene::~FTScene()
 
   if (_basic_material)
     _engine.destroy(_basic_material);
-
-#endif
 
   _engine.destroy(_scene);
 }
@@ -126,7 +114,7 @@ void FTScene::show_box(const tg::boundingbox &box)
 
 void FTScene::gui(filament::Engine *, filament::View *)
 {
-#ifdef FILAMENT_IMGUI
+#ifdef POINT_CLOUD_SUPPORT 
   ImGui::SetNextWindowSize(ImVec2(400, 200), ImGuiCond_Once);
   ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_Once);
 

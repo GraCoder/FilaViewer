@@ -2,21 +2,21 @@
 
 #include <memory>
 
+#include "FilaViewExport.h"
+
 class TView;
 
-class TWin {
+class FILAVIEW_EXPORT TWin {
 public:
-  static TWin* create(TWin *);
+  static TWin* create(TWin *, bool with_border = true);
 
   uint64_t handle();
 
   ~TWin();
 
-  void realize();
-
   void resize(int w, int h);
 
-  void exec();
+  void exec(bool thead = false);
 
   TView* view() { return _view.get(); }
 
@@ -29,6 +29,4 @@ protected:
   std::shared_ptr<TView> _view = nullptr;
 
   uint32_t _width = 800, _height = 600;
-
-  bool _close = false;
 };

@@ -19,8 +19,6 @@ TWin::~TWin()
 
 uint64_t TWin::handle() { return downcast(this)->handle(); }
 
-FT_FORWARD(TWin, realize)
-
 void TWin::resize(int w, int h)
 {
   _width = w;
@@ -29,5 +27,7 @@ void TWin::resize(int w, int h)
   downcast(this)->configure_cameras();
 }
 
-FT_FORWARD(TWin, exec)
-
+void TWin::exec(bool thread) 
+{
+  downcast(this)->exec(thread);
+}

@@ -4,15 +4,16 @@ class TWin;
 
 namespace FilaView {
 
-public
-ref class FilaViewCtl {
+public ref class FilaViewControl {
 public:
 
-  FilaViewCtl();
+  FilaViewControl();
 
-  ~FilaViewCtl();
+  ~FilaViewControl();
 
   System::IntPtr handle();
+
+  void resize_control(System::IntPtr width, System::IntPtr height);
 
 private:
 

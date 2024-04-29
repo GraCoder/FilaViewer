@@ -17,10 +17,12 @@ namespace FilaMat.Views
             InitializeComponent();
         }
 
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
+        //private void InitializeComponent()
+        //{
+        //    AvaloniaXamlLoader.Load(this);
+
+        //    emb_view = this.FindNameScope()?.Find<global::FilaMat.Views.EmbedView>("emb_view");
+        //}
 
         public async void ShowPopupDelay(object sender, RoutedEventArgs args)
         {
@@ -45,9 +47,8 @@ namespace FilaMat.Views
 
             if (change.Property == BoundsProperty)
             {
-                //var isMobile = change.GetNewValue<Rect>().Width < 1200;
-                //this.Find<DockPanel>("FirstPanel")!.Classes.Set("mobile", isMobile);
-                //this.Find<DockPanel>("SecondPanel")!.Classes.Set("mobile", isMobile);
+                var rect = change.GetNewValue<Rect>();
+                emb_view.ResizeGeometry(rect);
             }
         }
     }
@@ -59,6 +60,13 @@ namespace FilaMat.Views
         static EmbedView()
         {
             Implementation = new VulkanWin();
+        }
+
+        public void ResizeGeometry(Rect rt)
+        {
+            int width = (int)rt.Width;
+            int height = (int)rt.Height;
+            ((VulkanWin)Implementation).ViewCtl.resize_control(width, height);
         }
 
         protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)
@@ -75,19 +83,23 @@ namespace FilaMat.Views
 
     public interface INativeControl
     {
-        /// <param name="isSecond">Used to specify which control should be displayed as a demo</param>
-        /// <param name="parent"></param>
-        /// <param name="createDefault"></param>
         IPlatformHandle CreateControl(IPlatformHandle parent, Func<IPlatformHandle> createDefault);
     }
 
 
     public class VulkanWin : INativeControl
     {
+        FilaView.FilaViewControl _view_ctl;
+
+        public FilaView.FilaViewControl ViewCtl
+        {
+            get { return _view_ctl; }
+        }
+        
         public IPlatformHandle CreateControl(IPlatformHandle parent, Func<IPlatformHandle> createDefault)
         {
-            var sdl = new FilaView.FilaViewCtl();
-            return new Win32WindowControlHandle(sdl.handle(), "HWND");
+            _view_ctl = new FilaView.FilaViewControl();
+            return new Win32WindowControlHandle(_view_ctl.handle(), "HWND");
         }
     }
 

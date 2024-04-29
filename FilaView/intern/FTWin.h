@@ -28,9 +28,7 @@ public:
 
   uint64_t handle();
 
-  void realize();
-
-  void exec();
+  void exec(bool thread);
 
   filament::Engine *engine() { return _engine; }
   filament::SwapChain *getSwapChain() { return _swapchain; }
@@ -40,7 +38,13 @@ public:
 
   void setup_gui();
 
+  void set_flags(uint32_t flags);
+
 private:
+
+  void create_window();
+
+  void realize_render();
 
   void create_engine();
 
@@ -54,6 +58,10 @@ private:
 
 private:
 
+  bool _close:1 = false;
+
+  uint32_t _win_flags = 0;
+
   SDL_Window *_window = nullptr;
 
   uint64_t _time = 0;
@@ -62,8 +70,8 @@ private:
   filament::SwapChain *_swapchain = nullptr;
   filament::Renderer *_renderer = nullptr;
 
-  //filament::View *_gui_view = nullptr;
-  //filagui::ImGuiHelper *_gui = nullptr;
+  filament::View *_gui_view = nullptr;
+  filagui::ImGuiHelper *_gui = nullptr;
 
   std::thread _thread;
 };
