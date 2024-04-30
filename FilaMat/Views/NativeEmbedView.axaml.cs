@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Avalonia;
@@ -7,6 +9,8 @@ using Avalonia.Controls.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
+using Avalonia.Platform.Storage;
+using FilaView;
 
 namespace FilaMat.Views
 {
@@ -21,7 +25,7 @@ namespace FilaMat.Views
         {
             AvaloniaXamlLoader.Load(this);
 
-            //emb_view = this.FindNameScope()?.Find<global::FilaMat.Views.EmbedView>("emb_view");
+            _view = this.FindNameScope()?.Find<global::FilaMat.Views.EmbedView>("_view");
         }
 
         public async void ShowPopupDelay(object sender, RoutedEventArgs args)
@@ -49,23 +53,35 @@ namespace FilaMat.Views
             {
             }
         }
+
+        FilaViewControl fila_control()
+        {
+            return ((VulkanWin)_view.Implementation).ViewCtl;
+        }
+
+        public void load_file(IStorageFile f)
+        {
+            var exts = new string[] {
+                ".gltf", ".glb", ".obj", ".fbx"
+            };
+
+            string p = f.Path.ToString();
+            var ext = Path.GetExtension(p);
+            if (exts.Contains(ext))
+            {
+                fila_control().load_file(p);
+            }
+        }
     }
 
     public class EmbedView : NativeControlHost
     {
-        public static INativeControl? Implementation { get; set; }
+        public INativeControl? Implementation { get; set; }
 
-        static EmbedView()
+        public EmbedView()
         {
             Implementation = new VulkanWin();
         }
-
-        //public void ResizeGeometry(Rect rt)
-        //{
-        //    int width = (int)rt.Width;
-        //    int height = (int)rt.Height;
-        //    ((VulkanWin)Implementation).ViewCtl.resize_control(width, height);
-        //}
 
         protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)
         {

@@ -15,6 +15,8 @@ public:
 
   void resize_control(System::IntPtr width, System::IntPtr height);
 
+  void load_file(System::String ^file);
+
 private:
 
   TWin *_win = nullptr;

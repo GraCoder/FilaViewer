@@ -17,10 +17,14 @@ namespace FilaMat
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                desktop.MainWindow = new MainWindow
+                var main_window = new MainWindow
                 {
                     DataContext = new MainWindowViewModel(),
                 };
+
+                main_window.RegistInteraction();
+
+                desktop.MainWindow = main_window; 
             }
 
             base.OnFrameworkInitializationCompleted();

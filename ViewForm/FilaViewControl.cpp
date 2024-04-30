@@ -35,3 +35,8 @@ void FilaView::FilaViewControl::resize_control(System::IntPtr width, System::Int
   //sprintf(chtmp, "%d, %d\n", width.ToInt32(), height.ToInt32());
   //MessageBox(NULL, chtmp, "", MB_OK);
 }
+
+void FilaView::FilaViewControl::load_file(System::String ^file)
+{
+  file->ToString().;
+}
