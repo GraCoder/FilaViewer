@@ -5,9 +5,12 @@
 #include <filament/Scene.h>
 #include <filament/Skybox.h>
 #include <filament/TransformManager.h>
+#include <filament/RenderableManager.h>
 #include <filament/View.h>
 #include <utils/Entity.h>
 #include <utils/EntityManager.h>
+
+#include <gltfio/AssetLoader.h>
 
 #include "FTView.h"
 
@@ -110,6 +113,18 @@ void FTScene::show_box(const tg::boundingbox &box)
             math::mat4f::scaling<float>(math::float3(sz.x(), sz.y(), sz.z()));
   tcm.setTransform(ti, fm);
 #endif
+}
+
+void FTScene::load_model(const std::string &file)
+{
+  //auto loader = gltfio::AssetLoader::create();
+  //auto asset = loader->createInstancedAsset();
+  //_scene->addEntities(asset->getLightEntities(), asset->getLightEntityCount());
+  //auto &rm = _engine.getRenderableManager();
+  //for (int i = 0, n = asset->getRenderableEntityCount(); i < n; i++) {
+  //  auto ri = rm.getInstance(asset->getRenderableEntities()[i]);
+  //  rm.setScreenSpaceContactShadows(ri, true);
+  //}
 }
 
 void FTScene::gui(filament::Engine *, filament::View *)

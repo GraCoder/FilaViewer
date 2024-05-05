@@ -20,6 +20,10 @@ public:
 
   TView* view() { return _view.get(); }
 
+public:
+
+  void load_model(const char *file);
+
 protected:
 
   TWin();

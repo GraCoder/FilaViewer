@@ -3,7 +3,9 @@
 #include "FilaView/TWin.h"
 
 #include <Windows.h>
+#include <string>
 
+using namespace System;
 using namespace FilaView;
 
 FilaViewControl::FilaViewControl() { 
@@ -38,5 +40,9 @@ void FilaView::FilaViewControl::resize_control(System::IntPtr width, System::Int
 
 void FilaView::FilaViewControl::load_file(System::String ^file)
 {
-  file->ToString().;
+  using namespace Runtime::InteropServices;
+  auto s = (const char *)(Marshal::StringToHGlobalAnsi(file)).ToPointer();
+  std::string sf = s;
+  Marshal::FreeHGlobal(IntPtr((void*)s));
+  _win->load_model(sf.c_str());
 }

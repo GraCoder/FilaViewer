@@ -34,6 +34,10 @@ public:
 
   void show_box(const tg::boundingbox &box);
 
+public:
+
+  void load_model(const std::string &file);
+
 private:
 
   void gui(filament::Engine *, filament::View *);

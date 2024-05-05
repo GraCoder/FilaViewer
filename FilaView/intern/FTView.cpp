@@ -7,6 +7,7 @@
 
 #include <utils/Entity.h>
 #include <utils/EntityManager.h>
+
 #include <camutils/Manipulator.h>
 
 #include "FTScene.h"

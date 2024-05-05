@@ -26,6 +26,8 @@ public:
 
 public:
 
+public:
+
   void reset_projection();
 
   typedef std::function<void(filament::Engine*, filament::View*)> GuiCallback;
