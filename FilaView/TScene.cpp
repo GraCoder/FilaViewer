@@ -136,12 +136,3 @@ TScene::TScene()
 {
 
 }
-
-void TScene::process(float delta) 
-{ 
-#ifdef POINT_CLOUD_SUPPORT
-  for (auto &iter : _pcs) {
-    iter.second->_process(delta);
-  }
-#endif
-}

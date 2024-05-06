@@ -33,8 +33,6 @@ public:
 
   void dispatch();
 
-  void process(float delta);
-
 protected:
   
   TScene();

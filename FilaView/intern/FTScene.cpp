@@ -11,6 +11,7 @@
 #include <utils/EntityManager.h>
 
 #include <gltfio/AssetLoader.h>
+#include <gltfio/MaterialProvider.h>
 
 #include "FTView.h"
 
@@ -29,6 +30,24 @@ Cube *_cube = 0;
 #endif
 
 using namespace filament;
+using namespace filament::math;
+
+namespace {
+
+mat4f fit_to_unit_cube(const Aabb &bounds, float zoffset)
+{
+  float3 minpt = bounds.min;
+  float3 maxpt = bounds.max;
+  float maxExtent;
+  maxExtent = std::max(maxpt.x - minpt.x, maxpt.y - minpt.y);
+  maxExtent = std::max(maxExtent, maxpt.z - minpt.z);
+  float scaleFactor = 2.0f / maxExtent;
+  float3 center = (minpt + maxpt) / 2.0f;
+  center.z += zoffset / scaleFactor;
+  return mat4f::scaling(float3(scaleFactor)) * mat4f::translation(-center);
+}
+
+} // namespace
 
 FTScene::FTScene(FTView *view)
   : TScene()
@@ -117,15 +136,74 @@ void FTScene::show_box(const tg::boundingbox &box)
 
 void FTScene::load_model(const std::string &file)
 {
-  //auto loader = gltfio::AssetLoader::create();
-  //auto asset = loader->createInstancedAsset();
-  //_scene->addEntities(asset->getLightEntities(), asset->getLightEntityCount());
-  //auto &rm = _engine.getRenderableManager();
-  //for (int i = 0, n = asset->getRenderableEntityCount(); i < n; i++) {
-  //  auto ri = rm.getInstance(asset->getRenderableEntities()[i]);
-  //  rm.setScreenSpaceContactShadows(ri, true);
-  //}
+  FILE *fp = nullptr;
+  if (file.ends_with("gltf")) {
+    fp = fopen(file.c_str(), "rt");
+  } else if (file.ends_with("glb")) {
+    fp = fopen(file.c_str(), "rb");
+  }
+
+  if (!fp)
+    return;
+  fseek(fp, 0, SEEK_END);
+  auto sz = ftell(fp);
+  std::vector<uint8_t> data(sz, 0);
+  data.resize(sz);
+  fseek(fp, 0, SEEK_SET);
+  fread(data.data(), 1, sz, fp);
+  fclose(fp);
+
+  std::unique_lock<std::mutex> lock(_mutex);
+
+  _tasks.push(std::bind(
+    [this](const std::vector<uint8_t> &data) {
+      auto mp = gltfio::createJitShaderProvider(&_engine);
+      auto loader = gltfio::AssetLoader::create({&_engine, mp});
+      auto asset = loader->createAsset(data.data(), data.size());
+      _scene->addEntities(asset->getLightEntities(), asset->getLightEntityCount());
+
+      auto &rm = _engine.getRenderableManager();
+      auto &tm = _engine.getTransformManager();
+
+      {
+        auto root = tm.getInstance(asset->getRoot());
+        auto instance = asset->getInstance();
+        auto aabb = instance ? instance->getBoundingBox() : asset->getBoundingBox();
+        filament::math::mat4f transform;
+        tm.setTransform(root, transform);
+      }
+
+      for (int i = 0, n = asset->getRenderableEntityCount(); i < n; i++) {
+        auto ent = asset->getRenderableEntities()[i];
+
+        _scene->addEntity(ent);
+
+        auto ri = rm.getInstance(ent);
+        rm.setScreenSpaceContactShadows(ri, true);
+      }
+    },
+    std::move(data)));
 }
+
+void FTScene::process(float delta) 
+{ 
+#ifdef POINT_CLOUD_SUPPORT
+  for (auto &iter : _pcs) {
+    iter.second->_process(delta);
+  }
+ #endif
+
+  if (_tasks.empty())
+    return;
+
+  int count = 4;
+  std::unique_lock<std::mutex> lock(_mutex);
+  while (_tasks.size() > 0 && count-- > 0) {
+    _tasks.front()();
+    _tasks.pop();
+  }
+}
+
 
 void FTScene::gui(filament::Engine *, filament::View *)
 {

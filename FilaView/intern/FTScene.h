@@ -1,6 +1,10 @@
 #pragma once
 
+#include <queue>
+#include <functional>
 #include <tmath.h>
+#include <mutex>
+
 #include "TScene.h"
 
 namespace filament {
@@ -38,6 +42,8 @@ public:
 
   void load_model(const std::string &file);
 
+  void process(float delta);
+
 private:
 
   void gui(filament::Engine *, filament::View *);
@@ -56,5 +62,8 @@ private:
   filament::Material const *_depth_material = nullptr;
 
   uint32_t _point_count = 0;
+
+  std::mutex _mutex;
+  std::queue<std::function<void()>> _tasks;
 };
 

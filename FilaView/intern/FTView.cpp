@@ -32,7 +32,7 @@ FTView::FTView(filament::Engine &engine)
 
   set_pivot({0, 0, 0}, 15);
 
-  _scene = TScene::create(this);
+  _scene = std::static_pointer_cast<FTScene>(TScene::create(this));
 }
 
 FTView::~FTView()
@@ -72,6 +72,13 @@ void FTView::set_pivot(const tg::vec3d &pos, double dis)
              .build(filament::camutils::Mode::ORBIT);
 
   _cam_dirty = true;
+}
+
+void FTView::process(float delta) 
+{ 
+  update_camera();
+
+  scene()->process(delta); 
 }
 
 void FTView::reset_projection()

@@ -11,6 +11,7 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <PlatformTarget>x64</PlatformTarget>
     <PublishSingleFile>true</PublishSingleFile>
+    <PublishAot>True</PublishAot>
   </PropertyGroup>
 
   <ItemGroup>

@@ -60,11 +60,12 @@ namespace FilaMat.Views
                 ".gltf", ".glb", ".obj", ".fbx"
             };
 
-            string p = f.Path.ToString();
+            string p = f.TryGetLocalPath();
             var ext = Path.GetExtension(p);
             if (exts.Contains(ext))
             {
-                //fila_control().load_file(p);
+                var vk_win = (VulkanWin)(_view as EmbedView).Implementation;
+                vk_win.load_file(p);
             }
         }
     }
@@ -105,6 +106,15 @@ namespace FilaMat.Views
             _win = TWin.create();
             TWin.exec(_win);
             return new Win32WindowControlHandle((IntPtr)TWin.handle(_win), "HWND");
+        }
+
+        public void load_file(String file)
+        {
+            var bts = Encoding.ASCII.GetBytes(file);
+            fixed(byte* ptr = bts)
+            {
+                TWin.load_model(_win, (sbyte*)ptr);
+            }
         }
     }
 

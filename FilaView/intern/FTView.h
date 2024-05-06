@@ -11,6 +11,8 @@ class Camera;
 class Engine;
 } // namespace filament
 
+class FTScene;
+
 class FTView : public TView {
   friend class TView;
   friend class FTWin;
@@ -25,6 +27,10 @@ public:
   void set_pivot(const tg::vec3d &pos, double dis = 100);
 
 public:
+
+  const std::shared_ptr<FTScene>& scene() { return _scene; };
+
+  void process(float delta);
 
 public:
 
@@ -61,4 +67,6 @@ private:
   bool    _grabing = false;
 
   GuiCallback _gui_callback;
+
+  std::shared_ptr<FTScene> _scene = nullptr;
 };

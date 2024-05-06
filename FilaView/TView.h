@@ -18,14 +18,10 @@ public:
 
   ~TView();
 
-  std::shared_ptr<TScene> scene() { return _scene; };
-
   using Manipulator = filament::camutils::Manipulator<float>;
   Manipulator *manip();
 
   void set_manip_factor(float f);
-
-  void process(float delta);
 
   void zoom_box(const tg::boundingbox &box);
 
@@ -38,6 +34,4 @@ protected:
 protected:
   bool _cam_dirty = true;
   float _near = 0.4, _far = 2000;
-
-  std::shared_ptr<TScene> _scene = nullptr;
 };

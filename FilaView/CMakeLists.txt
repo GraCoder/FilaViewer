@@ -131,6 +131,7 @@ set(filament_libs
   ${filament_dir}/lib/x86_64/bluevk.lib
   ${filament_dir}/lib/x86_64/gltfio.lib
   ${filament_dir}/lib/x86_64/gltfio_core.lib
+  ${filament_dir}/lib/x86_64/shaders.lib
   ${filament_dir}/lib/x86_64/dracodec.lib
 )
 

@@ -37,13 +37,6 @@ void TView::set_manip_factor(float f)
   //_manip->
 }
 
-void TView::process(float delta) 
-{ 
-  downcast(this)->update_camera();
-
-  scene()->process(delta); 
-}
-
 void TView::zoom_box(const tg::boundingbox &box)
 {
   using namespace filament::camutils;
@@ -76,8 +69,6 @@ std::optional<tg::vec3d> TView::get_pos(int x, int y)
     double len = tg::length(tg::vec3d(planes[i].data()));
     planes[i] = planes[i] / len;
   }
-
-  _scene->get_pos(planes);
 
   return std::optional<tg::vec3d>();
 }

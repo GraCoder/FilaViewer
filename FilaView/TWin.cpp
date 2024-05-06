@@ -39,6 +39,6 @@ TView *TWin::view()
 
 void TWin::load_model(const char *file) 
 {
-  auto scene = static_cast<FTScene*>(downcast(this)->view()->scene().get());
+  auto scene = downcast(this)->view()->scene();
   scene->load_model(file);
 }
