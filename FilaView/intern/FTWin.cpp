@@ -32,9 +32,9 @@ HWND native_window(SDL_Window *win)
   return wmi.info.win.window;
 };
 
-TWin *TWin::create(TWin *, bool with_border)
+TWin *TWin::create(TWin *s, bool with_border)
 {
-  auto win = new FTWin(nullptr);
+  auto win = new FTWin(static_cast<FTWin *>(s));
   uint32_t flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
   if(!with_border)
     flags |= SDL_WINDOW_BORDERLESS;
@@ -66,6 +66,9 @@ FTWin::~FTWin()
 
 uint64_t FTWin::handle() 
 {
+  if (!_window)
+    create_window();
+
   auto hwnd = native_window(_window);
   return (uint64_t)hwnd;
 }
@@ -168,11 +171,10 @@ void FTWin::realize_render()
 {
   create_engine(); 
 
-  _swapchain = _engine->createSwapChain(native_window(_window),
-                                        filament::SwapChain::CONFIG_HAS_STENCIL_BUFFER);
+  _swapchain = _engine->createSwapChain(native_window(_window), filament::SwapChain::CONFIG_HAS_STENCIL_BUFFER);
   _renderer = _engine->createRenderer();
 
-  _view = FTView::create(this);
+  _view = std::static_pointer_cast<FTView>(FTView::create(this));
 
   auto fview = view()->view();
   fview->setPostProcessingEnabled(false);

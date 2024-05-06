@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using FilaMat.ViewModels;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using ReactiveUI;
 
 namespace FilaMat.Views

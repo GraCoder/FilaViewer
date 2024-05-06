@@ -11,8 +11,6 @@
 
 FT_DOWNCAST(TWin)
 
-TWin::TWin() {
-}
 
 TWin::~TWin()
 {
@@ -31,6 +29,11 @@ void TWin::resize(int w, int h)
 void TWin::exec(bool thread) 
 {
   downcast(this)->exec(thread);
+}
+
+TView *TWin::view()
+{
+  return downcast(this)->view();
 }
 
 

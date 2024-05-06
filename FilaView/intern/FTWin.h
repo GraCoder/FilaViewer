@@ -54,7 +54,7 @@ private:
 
   void poll_events();
 
-  inline FTView *view() { return (FTView*)(_view.get()); }
+  inline FTView *view() { return _view.get(); }
 
 private:
 
@@ -72,6 +72,8 @@ private:
 
   filament::View *_gui_view = nullptr;
   filagui::ImGuiHelper *_gui = nullptr;
+
+  std::shared_ptr<FTView> _view = nullptr;
 
   std::thread _thread;
 };

@@ -8,7 +8,7 @@ class TView;
 
 class FILAVIEW_EXPORT TWin {
 public:
-  static TWin* create(TWin *, bool with_border = true);
+  static TWin* create(TWin *win = nullptr, bool with_border = true);
 
   uint64_t handle();
 
@@ -18,7 +18,7 @@ public:
 
   void exec(bool thead = false);
 
-  TView* view() { return _view.get(); }
+  TView *view();
 
 public:
 
@@ -26,11 +26,9 @@ public:
 
 protected:
 
-  TWin();
+  TWin() = default;
 
 protected:
-
-  std::shared_ptr<TView> _view = nullptr;
 
   uint32_t _width = 800, _height = 600;
 };

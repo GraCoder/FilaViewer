@@ -54,11 +54,6 @@ namespace FilaMat.Views
             }
         }
 
-        FilaViewControl fila_control()
-        {
-            return ((VulkanWin)_view.Implementation).ViewCtl;
-        }
-
         public void load_file(IStorageFile f)
         {
             var exts = new string[] {
@@ -69,7 +64,7 @@ namespace FilaMat.Views
             var ext = Path.GetExtension(p);
             if (exts.Contains(ext))
             {
-                fila_control().load_file(p);
+                //fila_control().load_file(p);
             }
         }
     }
@@ -101,19 +96,15 @@ namespace FilaMat.Views
     }
 
 
-    public class VulkanWin : INativeControl
+    public unsafe class VulkanWin : INativeControl
     {
-        FilaView.FilaViewControl _view_ctl;
+        TWin *_win = null;
 
-        public FilaView.FilaViewControl ViewCtl
-        {
-            get { return _view_ctl; }
-        }
-        
         public IPlatformHandle CreateControl(IPlatformHandle parent, Func<IPlatformHandle> createDefault)
         {
-            _view_ctl = new FilaView.FilaViewControl();
-            return new Win32WindowControlHandle(_view_ctl.handle(), "HWND");
+            _win = TWin.create();
+            TWin.exec(_win);
+            return new Win32WindowControlHandle((IntPtr)TWin.handle(_win), "HWND");
         }
     }
 

@@ -3,7 +3,6 @@ using System.Reactive.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia.Controls;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using ReactiveUI;
 
 namespace FilaMat.ViewModels
