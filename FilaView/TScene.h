@@ -17,7 +17,7 @@ class TView;
 
 class TScene {
 public:
-  static std::shared_ptr<TScene> create(TView *view);
+  static std::shared_ptr<TScene> create();
 
   ~TScene();
 

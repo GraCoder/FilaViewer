@@ -19,8 +19,7 @@ TView::TView() {}
 
 std::shared_ptr<TView> TView::create(TWin *win)
 {
-  auto &engine = *static_cast<FTWin *>(win)->engine();
-  return std::make_shared<FTView>(engine);
+  return std::make_shared<FTView>();
 }
 
 TView::~TView() {
@@ -40,14 +39,14 @@ void TView::set_manip_factor(float f)
 void TView::zoom_box(const tg::boundingbox &box)
 {
   using namespace filament::camutils;
-  auto m = downcast(this)->_cam->getProjectionMatrix();
+  auto m = downcast(this)->_camera->getProjectionMatrix();
   float l = m[1][1] * box.radius();
 }
 
 std::optional<tg::vec3d> TView::get_pos(int x, int y)
 {
-  auto fm = downcast(this)->_cam->getProjectionMatrix();
-  fm = fm * downcast(this)->_cam->getViewMatrix();
+  auto fm = downcast(this)->_camera->getProjectionMatrix();
+  fm = fm * downcast(this)->_camera->getViewMatrix();
   auto &vp = downcast(this)->_view->getViewport();
   double fx = double(x - vp.left) / vp.width * 2.0 - 1;
   double fy = double(y - vp.bottom) / vp.height * 2.0 - 1;
@@ -64,7 +63,7 @@ std::optional<tg::vec3d> TView::get_pos(int x, int y)
   planes[3] = m * tg::vec4d(0, -1, 0, fy + dy);
   planes[4] = m * tg::vec4d(0, 0, 1, 0);
 
-  auto cam_pos = downcast(this)->_cam->getPosition();
+  auto cam_pos = downcast(this)->_camera->getPosition();
   for (int i = 0; i < 5; i++) {
     double len = tg::length(tg::vec3d(planes[i].data()));
     planes[i] = planes[i] / len;

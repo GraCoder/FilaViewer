@@ -47,6 +47,11 @@ FTWin::FTWin(FTWin *win)
 {
   if (SDL_Init(SDL_INIT_EVENTS))
     throw(std::runtime_error("sdl init failed."));
+
+  _view = std::static_pointer_cast<FTView>(FTView::create(this));
+
+  auto scene = std::static_pointer_cast<FTScene>(FTScene::create());
+  _view->set_scene(scene);
 }
 
 FTWin::~FTWin()
@@ -169,19 +174,21 @@ void FTWin::create_window()
 
 void FTWin::realize_render() 
 {
+  if (_render_realized)
+    return;
+
   create_engine(); 
+
+  _view->realize(_engine);
 
   _swapchain = _engine->createSwapChain(native_window(_window), filament::SwapChain::CONFIG_HAS_STENCIL_BUFFER);
   _renderer = _engine->createRenderer();
 
-  _view = std::static_pointer_cast<FTView>(FTView::create(this));
-
-  auto fview = view()->view();
-  fview->setPostProcessingEnabled(false);
-
   configure_cameras();
 
   setup_gui();
+
+  _render_realized = true;
 }
 
 void FTWin::create_engine()
@@ -205,6 +212,9 @@ void FTWin::poll_events()
   static constexpr int mk[4] = {0, 0, 1, 2};
 
   while (!_close) {
+    if (!UTILS_HAS_THREADING)
+      _engine->execute();
+
     constexpr int max_event = 16;
     SDL_Event events[max_event];
     int ev_count = 0;
@@ -317,9 +327,7 @@ void FTWin::poll_events()
     SDL_Delay(refresh_interval_ms);
 
     if (_renderer->beginFrame(getSwapChain())) {
-      _renderer->render(view()->view());
-      if (_gui_view)
-        _renderer->render(_gui_view);
+      _renderer->render(*view());
       _renderer->endFrame();
       //_renderer->readPixels();
     }

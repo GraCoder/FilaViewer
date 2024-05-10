@@ -114,6 +114,7 @@ template <typename T> inline Tmat4<T> perspective(T fovy, T aspect, T n, T f)
 template <typename T> inline Tmat4<T> ortho(T left, T right, T bottom, T top, T n, T f)
 {
   Tmat4<T> result;
+
   result[0] = Tvec4<T>(2.0f / (right - left), 0.0f, 0.0f, 0.0f);
   result[1] = Tvec4<T>(0.0f, 2.0f / (top - bottom), 0.0f, 0.0f);
 #ifdef DEPTH_ZERO
@@ -125,6 +126,10 @@ template <typename T> inline Tmat4<T> ortho(T left, T right, T bottom, T top, T 
 #endif
   return result;
 }
+
+Tmat4<int> frustum(int, int, int, int, int, int) = delete;
+Tmat4<int> perspective(int, int, int, int) = delete;
+Tmat4<int> ortho(int, int, int, int, int, int) = delete;
 
 // reverse///////////////////////////////////////////////////////////////////////
 inline void view_planes(const mat4& transmat, vec4& l, vec4& r, vec4& b, vec4& t, vec4& n, vec4& f)

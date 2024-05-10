@@ -22,7 +22,7 @@ public:
 
 public:
 
-  void load_model(const char *file);
+  void load_model(const char *file, bool normalize);
 
 protected:
 

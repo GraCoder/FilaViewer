@@ -37,8 +37,8 @@ TView *TWin::view()
 }
 
 
-void TWin::load_model(const char *file) 
+void TWin::load_model(const char *file, bool normalize) 
 {
   auto scene = downcast(this)->view()->scene();
-  scene->load_model(file);
+  scene->load_model(file, normalize);
 }

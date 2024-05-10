@@ -15,7 +15,10 @@ get_filename_component(VK_BIN_DIR ${Vulkan_GLSLC_EXECUTABLE} DIRECTORY)
 get_filename_component(SDL2_LIB_DIR ${Vulkan_LIBRARY} DIRECTORY)
 link_directories(${SDL2_LIB_DIR})
 
+find_package(Assimp)
+
 set(filament_dir "" CACHE PATH "")
+option(filament_single_thread "" OFF)
 
 ####################################################################################
 
@@ -37,9 +40,7 @@ set(material_dir  "${gen_root}/generated/material")
 set(material_src
   materials/BasicMat.mat
   materials/DefaultMat.mat
-  #materials/AiDefaultTrans.mat
-  #materials/DepthVisualizer.mat
-  #materials/TransparentColor.mat
+  materials/TransparentMat.mat
   materials/uiBlit.mat
 
   materials/PCMat.mat
@@ -81,6 +82,12 @@ set(intern_src
   #intern/PCCDispatch.h
   #intern/PCCDispatch.cpp
 )
+if(Assimp_FOUND)
+list(APPEND intern_src
+  intern/MeshAssimp.h
+  intern/MeshAssimp.cpp
+)
+endif()
 source_group(intern FILES ${intern_src})
 
 set(imgui_src
@@ -106,6 +113,11 @@ set(source_files
 
 add_library(${target_name} SHARED ${source_files} ${intern_src} ${imgui_src} ${source_mesh} ${resgen_output})
 
+
+if(filament_single_thread)
+target_compile_definitions(${target_name} PRIVATE FILAMENT_SINGLE_THREADED)
+endif()
+
 target_compile_definitions(${target_name} PRIVATE NOGDI)
 target_compile_definitions(${target_name} PRIVATE PC_DEBUG)
 
@@ -129,6 +141,7 @@ set(filament_libs
   ${filament_dir}/lib/x86_64/utils.lib
   ${filament_dir}/lib/x86_64/camutils.lib
   ${filament_dir}/lib/x86_64/bluevk.lib
+  ${filament_dir}/lib/x86_64/bluegl.lib
   ${filament_dir}/lib/x86_64/gltfio.lib
   ${filament_dir}/lib/x86_64/gltfio_core.lib
   ${filament_dir}/lib/x86_64/shaders.lib
@@ -136,3 +149,10 @@ set(filament_libs
 )
 
 target_link_libraries(${target_name} PRIVATE SDL2 ${filament_libs} shlwapi)
+
+target_link_libraries(${target_name} PRIVATE Opengl32)
+
+if(Assimp_FOUND)
+#set_target_properties(assimp::assimp PROPERTIES MAP_IMPORTED_CONFIG_DEBUG Release)
+target_link_libraries(${target_name} PRIVATE assimp::assimp)
+endif()

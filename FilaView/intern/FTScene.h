@@ -19,28 +19,32 @@ class PCDispatch;
 }
 
 class FTView;
+class MeshAssimp;
 
 class FTScene : public TScene {
 public:
 
-  FTScene(FTView *view);
+  FTScene();
 
   ~FTScene();
 
-  FTView *view() { return _view; }
+  filament::Engine* engine() { return _engine; }
 
-  filament::Engine &engine() { return _engine; }
-
-  filament::Scene *scene() { return _scene; }
+  operator filament::Scene*() { return _scene; }
+  filament::Scene* fila_scene() { return _scene; }
 
   const filament::Material *basic_material() { return _basic_material; }
   const filament::Material *default_material() { return _default_material; }
 
   void show_box(const tg::boundingbox &box);
 
+  void add_test_scene();
+
+  void load_model(const std::string &file, bool normalize);
+
 public:
 
-  void load_model(const std::string &file);
+  void realize(filament::Engine *engine);
 
   void process(float delta);
 
@@ -48,13 +52,13 @@ private:
 
   void gui(filament::Engine *, filament::View *);
 
+  void assimp_load(const std::string &file, bool normalize);
+
 private:
+  bool _realized = false;
 
-  FTView *_view = nullptr;
-
-  filament::Engine &_engine;
-
-  filament::Scene *_scene = nullptr;
+  filament::Engine  *_engine = nullptr;
+  filament::Scene   *_scene = nullptr;
 
   filament::Material const *_basic_material = nullptr;
   filament::Material const *_default_material = nullptr;
@@ -65,5 +69,7 @@ private:
 
   std::mutex _mutex;
   std::queue<std::function<void()>> _tasks;
+
+  std::unique_ptr<MeshAssimp> _assimp;
 };
 
