@@ -22,13 +22,13 @@
 FT_DOWNCAST(TScene)
 FT_DOWNCAST(TView)
 
-std::shared_ptr<TScene> TScene::create(TView *view) 
-{ 
-  auto fview = downcast(view);
-  auto scene =  std::make_shared<FTScene>(fview); 
-
+std::shared_ptr<TScene> TScene::create()
+{
+  auto scene = std::make_shared<FTScene>();
   return scene;
 }
+
+TScene::TScene() = default;
 
 TScene::~TScene() 
 { 
@@ -130,9 +130,4 @@ void TScene::dispatch()
 
   _dispacher->dispatch();
 #endif
-}
-
-TScene::TScene() 
-{
-
 }

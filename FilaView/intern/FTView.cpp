@@ -15,33 +15,18 @@
 using namespace filament;
 using namespace filament::camutils;
 
-FTView::FTView(filament::Engine &engine)
+FTView::FTView()
   : TView()
-  , _engine(engine)
 {
-  _view = engine.createView();
-
-  utils::Entity camEnt;
-  utils::EntityManager &em = utils::EntityManager::get();
-  em.create(1, &camEnt);
-  _cam = engine.createCamera(camEnt);
-  _cam->setExposure(16.0f, 1 / 125.0f, 100.0f);
-  _view->setCamera(_cam);
-
-  reset_projection();
-
-  set_pivot({0, 0, 0}, 15);
-
-  _scene = std::static_pointer_cast<FTScene>(TScene::create(this));
 }
 
 FTView::~FTView()
 {
-  if (_cam)
-    _engine.destroy(_cam->getEntity());
+  if (_engine && _camera)
+    _engine->destroy(_camera->getEntity());
 
-  if (_view)
-    _engine.destroy(_view);
+  if (_engine && _view)
+    _engine->destroy(_view);
 
   if (_manip)
     delete _manip;
@@ -60,7 +45,7 @@ void FTView::set_pivot(const tg::vec3d &pos, double dis)
              .viewport(vp.width, vp.height)
              //
              //.fovDirection(Fov::VERTICAL)
-             //.fovDegrees(_cam->getFieldOfViewInDegrees(Camera::Fov::VERTICAL))
+             //.fovDegrees(_camera->getFieldOfViewInDegrees(Camera::Fov::VERTICAL))
              //.farPlane(_far)
              //.mapExtent(100, 100)
              //.mapMinDistance(_near)
@@ -71,10 +56,41 @@ void FTView::set_pivot(const tg::vec3d &pos, double dis)
              .flightMoveDamping(15.0)
              .build(filament::camutils::Mode::ORBIT);
 
-  _cam_dirty = true;
+  _camera_dirty = true;
 }
 
-void FTView::process(float delta) 
+void FTView::realize(filament::Engine *engine) 
+{
+  _engine = engine;
+
+  _view = engine->createView();
+  _view->setPostProcessingEnabled(false);
+
+  utils::Entity cam_ent;
+  utils::EntityManager &em = utils::EntityManager::get();
+  em.create(1, &cam_ent);
+  _camera = engine->createCamera(cam_ent);
+  _camera->setExposure(16.0f, 1 / 125.0f, 100.0f);
+  _view->setCamera(_camera);
+
+  reset_projection();
+
+  set_pivot({0, 0, 0}, 15);
+
+  if (_scene) {
+    _scene->realize(engine);
+    _view->setScene(*_scene);
+  }
+}
+
+void FTView::set_scene(const std::shared_ptr<FTScene> &scene) 
+{
+  _scene = scene;
+  if (_view && scene->fila_scene())
+    _view->setScene(scene->fila_scene());
+}
+
+void FTView::process(float delta)
 { 
   update_camera();
 
@@ -95,7 +111,7 @@ void FTView::reset_projection()
   filament::math::mat4 fmat;
   memcpy(&fmat, &mat, sizeof(tg::mat4d));
 
-  _cam->setCustomProjection(fmat, _near, _far);
+  _camera->setCustomProjection(fmat, _near, _far);
 }
 
 void FTView::clean() { _scene->clean(); }
@@ -113,14 +129,14 @@ void FTView::mouse_up(int x, int y)
 {
   _grabing = false;
   _manip->grabEnd();
-  _cam_dirty = true;
+  _camera_dirty = true;
 }
 
 void FTView::mouse_move(int x, int y)
 {
   if (_grabing) {
     _manip->grabUpdate(x, y);
-    _cam_dirty = true;
+    _camera_dirty = true;
   } 
 }
 
@@ -130,23 +146,23 @@ void FTView::mouse_wheel(int x, int y, float deltay)
     _manip->scroll(x, y, deltay);
   }
 
-  _cam_dirty = true;
+  _camera_dirty = true;
 }
 
-void FTView::key_down(SDL_Scancode scancode) { _cam_dirty = true; }
+void FTView::key_down(SDL_Scancode scancode) { _camera_dirty = true; }
 
 void FTView::key_up(SDL_Scancode scancode)
 {
   if (scancode == SDL_SCANCODE_SPACE) {
     _manip->jumpToBookmark(_manip->getHomeBookmark());
   }
-  _cam_dirty = true;
+  _camera_dirty = true;
 }
 
 void FTView::set_viewport(int x, int y, uint32_t width, uint32_t height)
 {
   //auto aspectRatio = double(width) / height;
-  //_cam->setScaling({1.0 / aspectRatio, 1.0});
+  //_camera->setScaling({1.0 / aspectRatio, 1.0});
 
   _view->setViewport({x, y, width, height});
 
@@ -157,15 +173,15 @@ void FTView::set_viewport(int x, int y, uint32_t width, uint32_t height)
 
 void FTView::update_camera()
 {
-  if (!_cam_dirty)
+  if (!_camera_dirty)
     return;
 
-  _cam_dirty = false;
+  _camera_dirty = false;
 
   math::float3 eye, center, up;
   _manip->getLookAt(&eye, &center, &up);
-  _cam->lookAt(eye, center, up);
+  _camera->lookAt(eye, center, up);
 
-  if(scene())
+  if (scene())
     scene()->dispatch();
 }

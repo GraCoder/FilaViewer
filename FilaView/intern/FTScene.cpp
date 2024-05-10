@@ -1,23 +1,26 @@
 #include "FTScene.h"
 
 #include <filament/Engine.h>
+#include <filament/View.h>
+#include <filament/Material.h>
+#include <filament/TransformManager.h>
+#include <filament/RenderableManager.h>
 #include <filament/LightManager.h>
 #include <filament/Scene.h>
 #include <filament/Skybox.h>
-#include <filament/TransformManager.h>
-#include <filament/RenderableManager.h>
-#include <filament/View.h>
 #include <utils/Entity.h>
 #include <utils/EntityManager.h>
 
 #include <gltfio/AssetLoader.h>
 #include <gltfio/MaterialProvider.h>
+#include <gltfio/ResourceLoader.h>
 
 #include "FTView.h"
 
+#include "pcv_mat.h"
 #include "mesh/Cube.h"
 #include "mesh/Sphere.h"
-#include "pcv_mat.h"
+#include "MeshAssimp.h"
 
 Sphere *_sphere = 0;
 Cube *_cube = 0;
@@ -49,58 +52,10 @@ mat4f fit_to_unit_cube(const Aabb &bounds, float zoffset)
 
 } // namespace
 
-FTScene::FTScene(FTView *view)
+FTScene::FTScene()
   : TScene()
-  , _engine(view->engine())
 {
-  _view = view;
-  _scene = _engine.createScene();
-  view->view()->setScene(_scene);
-
-  {
-    math::float4 clr(0.2, 0.2, 0.2, 1);
-    auto skybox = Skybox::Builder().color(clr).build(_engine);
-    _scene->setSkybox(skybox);
-  }
-
-  {
-    auto light = utils::EntityManager::get().create();
-    LightManager::Builder(LightManager::Type::SUN)
-      .color(Color::toLinear<ACCURATE>(sRGBColor(0.98f, 0.92f, 0.89f)))
-      .intensity(110000)
-      .direction({0.7, -1, -0.8})
-      .sunAngularRadius(1.9f)
-      .castShadows(false)
-      .build(_engine, light);
-    _scene->addEntity(light);
-  }
-
-  {
-    _basic_material =
-      filament::Material::Builder().package(PCV_MAT_BASICMAT_DATA, PCV_MAT_BASICMAT_SIZE).build(_engine);
-    _default_material =
-      filament::Material::Builder().package(PCV_MAT_DEFAULTMAT_DATA, PCV_MAT_DEFAULTMAT_SIZE).build(_engine);
-  }
-
-  //{
-  //  auto sphere = new Sphere(*_engine, TApp::app()->default_mat());
-  //  _sphere = sphere;
-  //  auto material = sphere->getMaterialInstance();
-  //  material->setParameter("baseColor", RgbType::sRGB, math::float3(1, 0, 0));
-  //  material->setParameter("metallic", 0);
-  //  material->setParameter("roughness", 1);
-  //  material->setParameter("reflectance", 0);
-  //  _scene->addEntity(sphere->getSolidRenderable());
-  //}
-
-  if(1)
-  {
-    auto cube = new Cube(_engine, _basic_material, math::float3(0, 10, 0));
-    _cube = cube;
-    _scene->addEntity(cube->getWireFrameRenderable());
-  }
-
-  view->set_gui_callback(std::bind(&FTScene::gui, this, std::placeholders::_1, std::placeholders::_2));
+  //view->set_gui_callback(std::bind(&FTScene::gui, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 FTScene::~FTScene()
@@ -110,13 +65,11 @@ FTScene::~FTScene()
   if (_cube)
     delete _cube;
 
-  if (_default_material)
-    _engine.destroy(_default_material);
-
-  if (_basic_material)
-    _engine.destroy(_basic_material);
-
-  _engine.destroy(_scene);
+  if (_engine) {
+    _engine->destroy(_default_material);
+    _engine->destroy(_basic_material);
+    _engine->destroy(_scene);
+  }
 }
 
 void FTScene::show_box(const tg::boundingbox &box) 
@@ -134,17 +87,40 @@ void FTScene::show_box(const tg::boundingbox &box)
 #endif
 }
 
-void FTScene::load_model(const std::string &file)
+void FTScene::add_test_scene()
+{
+  {
+    auto sphere = new Sphere(*_engine, _default_material);
+    _sphere = sphere;
+    auto material = sphere->getMaterialInstance();
+    material->setParameter("baseColor", RgbType::sRGB, math::float3(1, 0, 0));
+    material->setParameter("metallic", 0);
+    material->setParameter("roughness", 1);
+    material->setParameter("reflectance", 0);
+    _scene->addEntity(sphere->getSolidRenderable());
+  }
+
+  if (1) {
+    auto cube = new Cube(*_engine, _basic_material, math::float3(0, 10, 0));
+    _cube = cube;
+    _scene->addEntity(cube->getWireFrameRenderable());
+  }
+}
+
+void FTScene::load_model(const std::string &file, float size)
 {
   FILE *fp = nullptr;
   if (file.ends_with("gltf")) {
     fp = fopen(file.c_str(), "rt");
   } else if (file.ends_with("glb")) {
     fp = fopen(file.c_str(), "rb");
+  } else{
+    assimp_load(file, size);
   }
 
   if (!fp)
     return;
+
   fseek(fp, 0, SEEK_END);
   auto sz = ftell(fp);
   std::vector<uint8_t> data(sz, 0);
@@ -157,13 +133,19 @@ void FTScene::load_model(const std::string &file)
 
   _tasks.push(std::bind(
     [this](const std::vector<uint8_t> &data) {
-      auto mp = gltfio::createJitShaderProvider(&_engine);
-      auto loader = gltfio::AssetLoader::create({&_engine, mp});
+      auto mp = gltfio::createJitShaderProvider(_engine);
+      auto loader = gltfio::AssetLoader::create({_engine, mp});
       auto asset = loader->createAsset(data.data(), data.size());
+
+      gltfio::ResourceLoader res_loader({_engine});
+      res_loader.loadResources(asset);
+
+      asset->releaseSourceData();
+
       _scene->addEntities(asset->getLightEntities(), asset->getLightEntityCount());
 
-      auto &rm = _engine.getRenderableManager();
-      auto &tm = _engine.getTransformManager();
+      auto &rm = _engine->getRenderableManager();
+      auto &tm = _engine->getTransformManager();
 
       {
         auto root = tm.getInstance(asset->getRoot());
@@ -178,13 +160,60 @@ void FTScene::load_model(const std::string &file)
 
         _scene->addEntity(ent);
 
-        auto ri = rm.getInstance(ent);
-        rm.setScreenSpaceContactShadows(ri, true);
+        //auto ri = rm.getInstance(ent);
+        //rm.setScreenSpaceContactShadows(ri, true);
       }
     },
     std::move(data)));
 }
 
+void FTScene::realize(filament::Engine *engine) 
+{
+  if (_realized)
+    return;
+
+  _realized = true;
+
+  _engine = engine;
+  _scene = _engine->createScene();
+
+  {
+    auto basic_mtl = filament::Material::Builder()
+                       .package(PCV_MAT_BASIC_DATA, PCV_MAT_BASIC_SIZE)
+                       .build(*_engine);
+    basic_mtl->setDefaultParameter("baseColor", RgbType::LINEAR, float3{0.8});
+    _basic_material = basic_mtl;
+
+    auto def_mtl = filament::Material::Builder()
+                     .package(PCV_MAT_DEFAULT_DATA, PCV_MAT_DEFAULT_SIZE)
+                     .build(*_engine);
+    def_mtl->setDefaultParameter("baseColor", RgbType::LINEAR, float3{0.8});
+    def_mtl->setDefaultParameter("metallic", 0.0f);
+    def_mtl->setDefaultParameter("roughness", 0.4f);
+    def_mtl->setDefaultParameter("reflectance", 0.5f);
+    _default_material = def_mtl;
+  }
+
+  {
+    math::float4 clr(0.2, 0.2, 0.2, 1);
+    auto skybox = Skybox::Builder().color(clr).build(*_engine);
+    _scene->setSkybox(skybox);
+  }
+
+  {
+    auto light = utils::EntityManager::get().create();
+    LightManager::Builder(LightManager::Type::SUN)
+      .color(Color::toLinear<ACCURATE>(sRGBColor(0.98f, 0.92f, 0.89f)))
+      .intensity(110000)
+      .direction({-1, -1, -1})
+      .sunAngularRadius(1.9f)
+      .castShadows(false)
+      .build(*_engine, light);
+    _scene->addEntity(light);
+  }
+
+  //add_test_scene();
+}
 void FTScene::process(float delta) 
 { 
 #ifdef POINT_CLOUD_SUPPORT
@@ -196,14 +225,16 @@ void FTScene::process(float delta)
   if (_tasks.empty())
     return;
 
+  std::unique_lock<std::mutex> lock{_mutex, std::try_to_lock};
+  if (!lock.owns_lock())
+    return;
+
   int count = 4;
-  std::unique_lock<std::mutex> lock(_mutex);
   while (_tasks.size() > 0 && count-- > 0) {
     _tasks.front()();
     _tasks.pop();
   }
 }
-
 
 void FTScene::gui(filament::Engine *, filament::View *)
 {
@@ -229,4 +260,32 @@ void FTScene::gui(filament::Engine *, filament::View *)
 
   ImGui::End();
 #endif
+}
+
+void FTScene::assimp_load(const std::string &file, float sz) 
+{
+  if (!_assimp)
+    _assimp = std::make_unique<MeshAssimp>();
+
+  if (!_assimp->load_assert(file.c_str()))
+    return;
+
+  std::unique_lock<std::mutex> lock(_mutex);
+  _tasks.push([this, sz]() { 
+    _assimp->build_assert(_engine, _basic_material, _default_material);
+
+    for(auto ent : _assimp->renderables()){
+      _scene->addEntity(ent);
+    }
+
+    if (sz) {
+      auto &tcm = _engine->getTransformManager();
+      auto ti = tcm.getInstance(_assimp->root());
+      auto &mi = _assimp->min_bound();
+      auto &ma = _assimp->max_bound();
+      auto m = ma - mi;
+      auto f = std::max({m.x, m.y, m.z});
+      tcm.setTransform(ti, mat4::scaling(sz / f) * mat4::translation((mi + ma) / 2.0));
+    }
+  });
 }

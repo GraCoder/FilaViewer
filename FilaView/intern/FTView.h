@@ -18,17 +18,22 @@ class FTView : public TView {
   friend class FTWin;
 public:
 
-  FTView(filament::Engine &engine);
+  FTView();
   ~FTView();
 
-  filament::View *view() { return _view; }
-  filament::Engine &engine() { return _engine; }
+  filament::Engine *engine() { return _engine; }
+
+  operator filament::View*() { return _view; }
+  filament::View *fila_view() { return _view; }
 
   void set_pivot(const tg::vec3d &pos, double dis = 100);
 
 public:
 
-  const std::shared_ptr<FTScene>& scene() { return _scene; };
+  void realize(filament::Engine *engine);
+
+  const std::shared_ptr<FTScene> &scene() { return _scene; }
+  void set_scene(const std::shared_ptr<FTScene> &scene);
 
   void process(float delta);
 
@@ -57,10 +62,9 @@ protected:
 
 private:
 
-  filament::Engine &_engine;
-
-  filament::View *_view = nullptr;
-  filament::Camera *_cam = nullptr;
+  filament::Engine    *_engine = nullptr;
+  filament::View      *_view = nullptr;
+  filament::Camera    *_camera = nullptr;
 
   Manipulator *_manip = nullptr;
 

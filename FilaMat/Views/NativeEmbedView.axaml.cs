@@ -10,7 +10,6 @@ using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
 using Avalonia.Platform.Storage;
-using FilaView;
 
 namespace FilaMat.Views
 {
@@ -99,22 +98,18 @@ namespace FilaMat.Views
 
     public unsafe class VulkanWin : INativeControl
     {
-        TWin *_win = null;
+        TWin.TWin _win = null;
 
         public IPlatformHandle CreateControl(IPlatformHandle parent, Func<IPlatformHandle> createDefault)
         {
-            _win = TWin.create();
-            TWin.exec(_win);
-            return new Win32WindowControlHandle((IntPtr)TWin.handle(_win), "HWND");
+            _win = TWin.TWin.Create(null, false);
+            _win.Exec(true);
+            return new Win32WindowControlHandle((IntPtr)_win.Handle, "HWND");
         }
 
         public void load_file(String file)
         {
-            var bts = Encoding.ASCII.GetBytes(file);
-            fixed(byte* ptr = bts)
-            {
-                TWin.load_model(_win, (sbyte*)ptr);
-            }
+            _win.LoadModel(file, 8);
         }
     }
 
