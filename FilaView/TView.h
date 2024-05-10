@@ -32,6 +32,6 @@ protected:
   TView();
 
 protected:
-  bool _cam_dirty = true;
-  float _near = 0.4, _far = 2000;
+  bool    _camera_dirty = true;
+  float   _near = 0.4, _far = 2000;
 };

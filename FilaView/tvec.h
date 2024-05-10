@@ -183,7 +183,7 @@ public:
   inline static int32_t size(void) { return n; }
 
 protected:
-  T data_[n];
+  T data_[n] = {};
 
   inline void assign(const vecN &that) { memcpy(data_, that.data_, sizeof(T) * n); }
 
@@ -953,7 +953,7 @@ public:
   }
 
 protected:
-  vecN<T, n> data_[m];
+  vecN<T, n> data_[m] = {};
 
   inline void assign(const matNM &that)
   {

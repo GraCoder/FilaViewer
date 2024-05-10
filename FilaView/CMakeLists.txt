@@ -15,7 +15,10 @@ get_filename_component(VK_BIN_DIR ${Vulkan_GLSLC_EXECUTABLE} DIRECTORY)
 get_filename_component(SDL2_LIB_DIR ${Vulkan_LIBRARY} DIRECTORY)
 link_directories(${SDL2_LIB_DIR})
 
+find_package(Assimp)
+
 set(filament_dir "" CACHE PATH "")
+option(filament_single_thread "" OFF)
 
 ####################################################################################
 
@@ -35,14 +38,11 @@ set(gen_root ${CMAKE_CURRENT_BINARY_DIR})
 set(resource_dir  "${gen_root}/generated/resources")
 set(material_dir  "${gen_root}/generated/material")
 set(material_src
-  materials/BasicMat.mat
-  materials/DefaultMat.mat
-  #materials/AiDefaultTrans.mat
-  #materials/DepthVisualizer.mat
-  #materials/TransparentColor.mat
-  materials/uiBlit.mat
+  materials/basic.mat
+  materials/default.mat
+  materials/ui_blit.mat
 
-  materials/PCMat.mat
+  materials/pc.mat
 )
 file(MAKE_DIRECTORY ${resource_dir})
 file(MAKE_DIRECTORY ${material_dir})
@@ -81,6 +81,12 @@ set(intern_src
   #intern/PCCDispatch.h
   #intern/PCCDispatch.cpp
 )
+if(Assimp_FOUND)
+list(APPEND intern_src
+  intern/MeshAssimp.h
+  intern/MeshAssimp.cpp
+)
+endif()
 source_group(intern FILES ${intern_src})
 
 set(imgui_src
@@ -105,6 +111,11 @@ set(source_files
 )
 
 add_library(${target_name} SHARED ${source_files} ${intern_src} ${imgui_src} ${source_mesh} ${resgen_output})
+
+
+if(filament_single_thread)
+target_compile_definitions(${target_name} PRIVATE FILAMENT_SINGLE_THREADED)
+endif()
 
 target_compile_definitions(${target_name} PRIVATE NOGDI)
 target_compile_definitions(${target_name} PRIVATE PC_DEBUG)
@@ -135,4 +146,20 @@ set(filament_libs
   ${filament_dir}/lib/x86_64/dracodec.lib
 )
 
+option(WITH_OPENGL "" OFF)
+
+if(WITH_OPENGL)
+list(APPEND filament_libs ${filament_dir}/lib/x86_64/bluegl.lib)
+target_link_libraries(${target_name} PRIVATE Opengl32)
+endif()
+
+
+if(Assimp_FOUND)
+target_link_libraries(${target_name} PRIVATE assimp::assimp)
+endif()
+
 target_link_libraries(${target_name} PRIVATE SDL2 ${filament_libs} shlwapi)
+
+
+#target_link_libraries(${target_name} PRIVATE Opengl32)
+

@@ -58,7 +58,8 @@ private:
 
 private:
 
-  bool _close:1 = false;
+  bool _close : 1 = false;
+  bool _render_realized : 1 = false;
 
   uint32_t _win_flags = 0;
 
