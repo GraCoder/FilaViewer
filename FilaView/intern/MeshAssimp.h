@@ -89,15 +89,17 @@ private:
     std::vector<int> parents;
   };
 
-  void processGLTFMaterial(const aiScene *scene, const aiMaterial *material,
-                           const std::string &materialName, const std::string &dirName,
-                           std::map<std::string, filament::MaterialInstance *> &outMaterials) const;
-
   template <bool SNORMUV0S, bool SNORMUV1S>
   void process_node(Asset &asset, const aiScene *scene, size_t deep, size_t matCount,
                     const aiNode *node, int parentIndex, size_t &depth) const;
 
+  void process_materials(Asset &asset, const aiScene *scene);
+
   filament::Texture *create_one_texture(uint32_t textureData);
+
+  void process_material(const aiScene *scene, const aiMaterial *material,
+                        const std::string &materialName, const std::string &dirName,
+                        std::map<std::string, filament::MaterialInstance *> &outMaterials) const;
 
 private:
 
@@ -117,14 +119,13 @@ private:
 
   filament::Texture *_def_map = nullptr;
   filament::Texture *_def_normal_map = nullptr;
-  mutable std::unordered_map<uint64_t, filament::Material *> mGltfMaterialCache;
 
   std::map<std::string, filament::MaterialInstance *> _materials;
 
   utils::Entity _root_entity;
   std::vector<utils::Entity> _renderables;
 
-  std::vector<filament::Texture *> mTextures;
+  std::vector<filament::Texture *> _textures;
 };
 
 #endif // TNT_FILAMENT_SAMPLE_MESH_ASSIMP_H
