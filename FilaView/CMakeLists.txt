@@ -141,18 +141,23 @@ set(filament_libs
   ${filament_dir}/lib/x86_64/utils.lib
   ${filament_dir}/lib/x86_64/camutils.lib
   ${filament_dir}/lib/x86_64/bluevk.lib
-  ${filament_dir}/lib/x86_64/bluegl.lib
   ${filament_dir}/lib/x86_64/gltfio.lib
   ${filament_dir}/lib/x86_64/gltfio_core.lib
   ${filament_dir}/lib/x86_64/shaders.lib
   ${filament_dir}/lib/x86_64/dracodec.lib
 )
 
+option(WITH_OPENGL "" OFF)
+
+if(WITH_OPENGL)
+list(APPEND filament_libs ${filament_dir}/lib/x86_64/bluegl.lib)
+target_link_libraries(${target_name} PRIVATE Opengl32)
+endif()
+
 target_link_libraries(${target_name} PRIVATE SDL2 ${filament_libs} shlwapi)
 
-target_link_libraries(${target_name} PRIVATE Opengl32)
 
 if(Assimp_FOUND)
-#set_target_properties(assimp::assimp PROPERTIES MAP_IMPORTED_CONFIG_DEBUG Release)
+set_target_properties(assimp::assimp PROPERTIES MAP_IMPORTED_CONFIG_DEBUG Release)
 target_link_libraries(${target_name} PRIVATE assimp::assimp)
 endif()

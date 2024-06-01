@@ -16,13 +16,15 @@ public:
 
   void resize(int w, int h);
 
+  void realize_context();
+
   void exec(bool thead = false);
 
   TView *view();
 
 public:
 
-  void load_model(const char *file, bool normalize = false);
+  void load_model(const char *file, float sz = 0);
 
 protected:
 

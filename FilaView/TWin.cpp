@@ -26,6 +26,11 @@ void TWin::resize(int w, int h)
   downcast(this)->configure_cameras();
 }
 
+void TWin::realize_context() 
+{
+  downcast(this)->realize_render();
+}
+
 void TWin::exec(bool thread) 
 {
   downcast(this)->exec(thread);
@@ -37,8 +42,8 @@ TView *TWin::view()
 }
 
 
-void TWin::load_model(const char *file, bool normalize) 
+void TWin::load_model(const char *file, float sz) 
 {
   auto scene = downcast(this)->view()->scene();
-  scene->load_model(file, normalize);
+  scene->load_model(file, sz);
 }

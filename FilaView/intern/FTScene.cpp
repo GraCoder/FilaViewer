@@ -107,7 +107,7 @@ void FTScene::add_test_scene()
   }
 }
 
-void FTScene::load_model(const std::string &file, bool normalize)
+void FTScene::load_model(const std::string &file, float size)
 {
   FILE *fp = nullptr;
   if (file.ends_with("gltf")) {
@@ -115,7 +115,7 @@ void FTScene::load_model(const std::string &file, bool normalize)
   } else if (file.ends_with("glb")) {
     fp = fopen(file.c_str(), "rb");
   } else{
-    assimp_load(file, normalize);
+    assimp_load(file, size);
   }
 
   if (!fp)
@@ -159,8 +159,8 @@ void FTScene::load_model(const std::string &file, bool normalize)
 
         _scene->addEntity(ent);
 
-        auto ri = rm.getInstance(ent);
-        rm.setScreenSpaceContactShadows(ri, true);
+        //auto ri = rm.getInstance(ent);
+        //rm.setScreenSpaceContactShadows(ri, true);
       }
     },
     std::move(data)));
@@ -268,7 +268,7 @@ void FTScene::gui(filament::Engine *, filament::View *)
 #endif
 }
 
-void FTScene::assimp_load(const std::string &file, bool normalize) 
+void FTScene::assimp_load(const std::string &file, float sz) 
 {
   if (!_assimp)
     _assimp = std::make_unique<MeshAssimp>();
@@ -277,21 +277,21 @@ void FTScene::assimp_load(const std::string &file, bool normalize)
     return;
 
   std::unique_lock<std::mutex> lock(_mutex);
-  _tasks.push([this, normalize]() { 
+  _tasks.push([this, sz]() { 
     _assimp->build_assert(_engine, _default_material, _transparent_material);
 
     for(auto ent : _assimp->renderables()){
       _scene->addEntity(ent);
     }
 
-    if (normalize) {
+    if (sz) {
       auto &tcm = _engine->getTransformManager();
       auto ti = tcm.getInstance(_assimp->root());
       auto &mi = _assimp->min_bound();
       auto &ma = _assimp->max_bound();
       auto m = ma - mi;
       auto f = std::max({m.x, m.y, m.z});
-      tcm.setTransform(ti, mat4::scaling(2. / f) * mat4::translation((mi + ma) / 2.0));
+      tcm.setTransform(ti, mat4::scaling(sz / f) * mat4::translation((mi + ma) / 2.0));
     }
   });
 }

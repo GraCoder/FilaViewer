@@ -40,7 +40,7 @@ public:
 
   void add_test_scene();
 
-  void load_model(const std::string &file, bool normalize);
+  void load_model(const std::string &file, float sz);
 
 public:
 
@@ -52,7 +52,7 @@ private:
 
   void gui(filament::Engine *, filament::View *);
 
-  void assimp_load(const std::string &file, bool normalize);
+  void assimp_load(const std::string &file, float sz);
 
 private:
   bool _realized = false;
