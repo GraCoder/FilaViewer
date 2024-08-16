@@ -136,6 +136,7 @@ set(filament_libs
   ${filament_dir}/lib/x86_64/backend.lib
   ${filament_dir}/lib/x86_64/geometry.lib
   ${filament_dir}/lib/x86_64/ibl.lib
+  ${filament_dir}/lib/x86_64/filament-iblprefilter.lib
   ${filament_dir}/lib/x86_64/smol-v.lib
   ${filament_dir}/lib/x86_64/utils.lib
   ${filament_dir}/lib/x86_64/camutils.lib
@@ -144,6 +145,8 @@ set(filament_libs
   ${filament_dir}/lib/x86_64/gltfio_core.lib
   ${filament_dir}/lib/x86_64/shaders.lib
   ${filament_dir}/lib/x86_64/dracodec.lib
+  ${filament_dir}/lib/x86_64/image.lib
+  ${filament_dir}/lib/x86_64/ktxreader.lib
 )
 
 option(WITH_OPENGL "" OFF)

@@ -11,6 +11,8 @@ namespace filament {
 class View;
 class Scene;
 class Engine;
+class Skybox;
+class Texture;
 class Material;
 } // namespace filament
 
@@ -40,6 +42,8 @@ public:
 
   void add_test_scene();
 
+  void set_skybox(const std::string &img, bool filter = false);
+
   void load_model(const std::string &file, float sz);
 
 public:
@@ -59,6 +63,9 @@ private:
 
   filament::Engine  *_engine = nullptr;
   filament::Scene   *_scene = nullptr;
+
+  filament::Texture *_skybox_tex = nullptr;
+  filament::Skybox  *_skybox = nullptr;
 
   filament::Material const *_basic_material = nullptr;
   filament::Material const *_default_material = nullptr;

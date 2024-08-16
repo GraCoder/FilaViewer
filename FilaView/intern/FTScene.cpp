@@ -1,5 +1,7 @@
 #include "FTScene.h"
 
+#include <fstream>
+
 #include <filament/Engine.h>
 #include <filament/View.h>
 #include <filament/Material.h>
@@ -11,6 +13,12 @@
 #include <utils/Entity.h>
 #include <utils/EntityManager.h>
 
+#include <ibl/CubemapUtils.h>
+#include <filament-iblprefilter/IBLPrefilterContext.h>
+#include <filament/IndirectLight.h>
+
+#include <ktxreader/Ktx1Reader.h>
+
 #include <gltfio/AssetLoader.h>
 #include <gltfio/MaterialProvider.h>
 #include <gltfio/ResourceLoader.h>
@@ -21,6 +29,10 @@
 #include "mesh/Cube.h"
 #include "mesh/Sphere.h"
 #include "MeshAssimp.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_WINDOWS_UTF8
+#include "stb_image.h"
 
 Sphere *_sphere = 0;
 Cube *_cube = 0;
@@ -48,6 +60,12 @@ mat4f fit_to_unit_cube(const Aabb &bounds, float zoffset)
   float3 center = (minpt + maxpt) / 2.0f;
   center.z += zoffset / scaleFactor;
   return mat4f::scaling(float3(scaleFactor)) * mat4f::translation(-center);
+}
+
+std::vector<uint8_t> readfile(const std::string &path)
+{
+  std::ifstream file(path, std::ios::binary);
+  return std::vector<uint8_t>((std::istreambuf_iterator<char>(file)), {});
 }
 
 } // namespace
@@ -105,6 +123,44 @@ void FTScene::add_test_scene()
     _cube = cube;
     _scene->addEntity(cube->getWireFrameRenderable());
   }
+}
+
+void FTScene::set_skybox(const std::string &img_path, bool filter)
+{
+  using namespace filament;
+
+  auto light = utils::EntityManager::get().create();
+  LightManager::Builder(LightManager::Type::SUN)
+    .color(Color::toLinear<ACCURATE>(sRGBColor(0.98f, 0.92f, 0.89f)))
+    .intensity(110000)
+    .direction({-1, -1, -1})
+    .sunAngularRadius(1.9f)
+    .castShadows(false)
+    .build(*_engine, light);
+  _scene->addEntity(light);
+
+  if (0) {
+    math::float4 clr(0.2, 0.2, 0.2, 1);
+    auto skybox = Skybox::Builder().color(clr).build(*_engine);
+    _scene->setSkybox(skybox);
+    return;
+  }
+
+  auto create_ktx = [](const std::string &path) {
+    using namespace std;
+    ifstream file(path, ios::binary);
+    vector<uint8_t> contents((istreambuf_iterator<char>(file)), {});
+    return new image::Ktx1Bundle(contents.data(), contents.size());
+  };
+
+  _skybox_tex = ktxreader::Ktx1Reader::createTexture(_engine, create_ktx(img_path + "_skybox.ktx"), false);
+  _skybox = Skybox::Builder().environment(_skybox_tex).showSun(true).build(*_engine);
+  //_skybox->setLayerMask(0x7, 0x4);
+  _scene->setSkybox(_skybox);
+
+  auto irrtex = ktxreader::Ktx1Reader::createTexture(_engine, create_ktx(img_path + "_ibl.ktx"), false);
+  auto irrlight = IndirectLight::Builder().reflections(irrtex).intensity(30000).build(*_engine);
+  _scene->setIndirectLight(irrlight);
 }
 
 void FTScene::load_model(const std::string &file, float size)
@@ -194,25 +250,8 @@ void FTScene::realize(filament::Engine *engine)
     _default_material = def_mtl;
   }
 
-  {
-    math::float4 clr(0.2, 0.2, 0.2, 1);
-    auto skybox = Skybox::Builder().color(clr).build(*_engine);
-    _scene->setSkybox(skybox);
-  }
-
-  {
-    auto light = utils::EntityManager::get().create();
-    LightManager::Builder(LightManager::Type::SUN)
-      .color(Color::toLinear<ACCURATE>(sRGBColor(0.98f, 0.92f, 0.89f)))
-      .intensity(110000)
-      .direction({-1, -1, -1})
-      .sunAngularRadius(1.9f)
-      .castShadows(false)
-      .build(*_engine, light);
-    _scene->addEntity(light);
-  }
-
   //add_test_scene();
+  set_skybox("D:\\06_Test\\godot\\gd_material\\materials\\texture\\background\\background");
 }
 void FTScene::process(float delta) 
 { 

@@ -39,8 +39,6 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_WINDOWS_UTF8
 #include <stb_image.h>
 
 #include <backend/DriverEnums.h>
@@ -196,8 +194,8 @@ std::string shader_from_config(const MaterialConfig &config)
   if (config.unlit) {
   } else{
     shader += R"SHADER(
-        //material.metallic = materialParams.metallicFactor;
-        //material.roughness = materialParams.roughnessFactor;
+        material.metallic = materialParams.metallicFactor;
+        material.roughness = materialParams.roughnessFactor;
         //material.roughness = materialParams.roughnessFactor * metallicRoughness.g;
         //material.metallic = materialParams.metallicFactor * metallicRoughness.b;
         //vec4 metallicRoughness = texture(materialParams_metallicRoughnessMap, uv_metallic_rough);
