@@ -41,8 +41,8 @@ public:
 
   void reset_projection();
 
-  typedef std::function<void(filament::Engine*, filament::View*)> GuiCallback;
-  void set_gui_callback(const GuiCallback &cb) { _gui_callback = cb; }
+  //typedef std::function<void(filament::Engine*, filament::View*)> GuiCallback;
+  //void set_gui_callback(const GuiCallback &cb) { _gui_callback = cb; }
 
   void clean();
 
@@ -58,8 +58,6 @@ protected:
   void set_viewport(int x, int y, uint32_t w, uint32_t h);
   void update_camera();
     
-  GuiCallback gui_callback() { return _gui_callback; };
-
 private:
 
   filament::Engine    *_engine = nullptr;
@@ -69,8 +67,6 @@ private:
   Manipulator *_manip = nullptr;
 
   bool    _grabing = false;
-
-  GuiCallback _gui_callback;
 
   std::shared_ptr<FTScene> _scene = nullptr;
 };

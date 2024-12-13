@@ -140,13 +140,13 @@ set(filament_libs
   ${filament_dir}/lib/x86_64/smol-v.lib
   ${filament_dir}/lib/x86_64/utils.lib
   ${filament_dir}/lib/x86_64/camutils.lib
-  ${filament_dir}/lib/x86_64/bluevk.lib
   ${filament_dir}/lib/x86_64/gltfio.lib
   ${filament_dir}/lib/x86_64/gltfio_core.lib
   ${filament_dir}/lib/x86_64/shaders.lib
   ${filament_dir}/lib/x86_64/dracodec.lib
   ${filament_dir}/lib/x86_64/image.lib
   ${filament_dir}/lib/x86_64/ktxreader.lib
+  ${filament_dir}/lib/x86_64/bluevk.lib
 )
 
 option(WITH_OPENGL "" OFF)
@@ -157,11 +157,11 @@ target_link_libraries(${target_name} PRIVATE Opengl32)
 endif()
 
 
+target_link_libraries(${target_name} PRIVATE SDL2 ${filament_libs} shlwapi)
+
 if(Assimp_FOUND)
 target_link_libraries(${target_name} PRIVATE assimp::assimp)
 endif()
-
-target_link_libraries(${target_name} PRIVATE SDL2 ${filament_libs} shlwapi)
 
 
 #target_link_libraries(${target_name} PRIVATE Opengl32)

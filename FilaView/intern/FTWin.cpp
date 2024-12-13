@@ -181,10 +181,12 @@ void FTWin::realize_render()
 
   _view->realize(_engine);
 
+  configure_cameras();
+
+  _view->set_pivot({0, 0, 0}, 15);
+
   _swapchain = _engine->createSwapChain(native_window(_window), filament::SwapChain::CONFIG_HAS_STENCIL_BUFFER);
   _renderer = _engine->createRenderer();
-
-  configure_cameras();
 
   setup_gui();
 
@@ -204,8 +206,6 @@ void FTWin::create_engine()
 
 void FTWin::poll_events() 
 {
-  realize_render();
-
   float freq = SDL_GetPerformanceFrequency();
   _time = SDL_GetPerformanceCounter();
 
@@ -299,6 +299,11 @@ void FTWin::poll_events()
           }
           break;
         }
+        case SDL_WINDOWEVENT_SHOWN: {
+          if (!_render_realized)
+            realize_render();
+          break;
+        }
         default:
           break;
         }
@@ -312,10 +317,10 @@ void FTWin::poll_events()
     float timestamp = (now - _time) / freq;
     _time = now;
 
-    if (_gui && view()->gui_callback()) {
-      ImGui::GetIO().DeltaTime = timestamp;
-      _gui->render(timestamp, view()->gui_callback());
-    }
+    //if (_gui && view()->gui_callback()) {
+    //  ImGui::GetIO().DeltaTime = timestamp;
+    //  _gui->render(timestamp, view()->gui_callback());
+    //}
 
     view()->process(timestamp);
 

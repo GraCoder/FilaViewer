@@ -15,8 +15,8 @@
 #include <cstring>
 
 #include <array>
-#include <iostream>
 #include <filesystem>
+#include <iostream>
 
 #include <filament/Color.h>
 #include <filament/Engine.h>
@@ -25,9 +25,9 @@
 #include <filament/RenderableManager.h>
 #include <filament/Renderer.h>
 #include <filament/Scene.h>
+#include <filament/Texture.h>
 #include <filament/TransformManager.h>
 #include <filament/VertexBuffer.h>
-#include <filament/Texture.h>
 
 #include <math/TVecHelpers.h>
 #include <math/norm.h>
@@ -58,13 +58,15 @@ using namespace utils;
 #define _AI_MATKEY_GLTF_SCALE_BASE "$tex.scale"
 #define _AI_MATKEY_GLTF_STRENGTH_BASE "$tex.strength"
 
-std::map<aiTextureType, std::string> tex_name = {{aiTextureType_BASE_COLOR, "baseColorMap"},
-                                                 {aiTextureType_DIFFUSE, "baseColorMap"},
-                                                 {aiTextureType_SPECULAR, "specularMap"},
-                                                 {aiTextureType_AMBIENT, "aoMap"},
-                                                 {aiTextureType_EMISSIVE, "emissiveMap"},
-                                                 {aiTextureType_NORMALS, "normalMap"},
-                                                 {aiTextureType_SHININESS, "roughnessMap"}};
+std::map<aiTextureType, std::string> tex_name = {
+  {aiTextureType_BASE_COLOR, "baseColorMap"}, 
+  {aiTextureType_DIFFUSE, "baseColorMap"}, 
+  {aiTextureType_SPECULAR, "specularFactorMap"},
+  {aiTextureType_AMBIENT, "aoMap"},
+  {aiTextureType_EMISSIVE, "emissiveMap"},
+  {aiTextureType_NORMALS, "normalMap"},
+  {aiTextureType_SHININESS, "specularColorMap"}
+};
 
 enum class AlphaMode : uint8_t { OPAQUE, MASKED, TRANSPARENT };
 
@@ -76,7 +78,7 @@ struct TextureConfig {
   uint32_t width = 0, height = 0;
   uint8_t *pixels = nullptr;
   uint32_t channel = 4;
-  filament::backend::TextureFormat format; 
+  filament::backend::TextureFormat format;
 
   TextureConfig() {}
   ~TextureConfig()
@@ -88,54 +90,49 @@ struct TextureConfig {
 };
 
 struct MaterialConfig {
-  bool unlit = false;
   bool twoside = false;
   bool vertex_color = false;
 
   AlphaMode alpha_mode = AlphaMode::OPAQUE;
   float mask_threshold = 0.5f;
 
-  //std::optional<float4>    diffuse_color;
-  uint64_t  tex_diffuse = 0;
-  //uint8_t   uv_diffuse = 0;
+  float4 base_color;
+  uint64_t tex_base_color = 0;
+  uint8_t uv_base_color = 0;
 
-  uint64_t  tex_specular = 0;
-  uint8_t   uv_specular = 0;
+  uint64_t tex_specular = 0;
+  uint8_t uv_specular = 0;
 
-  float4    base_color;
-  uint64_t  tex_base_color = 0;
-  uint8_t   uv_base_color = 0;
+  uint64_t tex_specular_color = 0;
+  uint8_t uv_specular_color = 0;
 
-  uint64_t  tex_metallic_rough = 0;
-  uint8_t   uv_metallic_rough = 0;
+  uint64_t tex_specular_factor = 0;
+  uint8_t uv_specular_factor = 0;
 
-  uint64_t  tex_emissive = 0;
-  uint8_t   uv_emissive = 0;
+  uint64_t tex_metallic_rough = 0;
+  uint8_t uv_metallic_rough = 0;
 
-  uint64_t  tex_ao = 0;
-  uint8_t   uv_ao = 0;
+  uint64_t tex_emissive = 0;
+  uint8_t uv_emissive = 0;
 
-  uint64_t  tex_normal = 0;
-  uint8_t   uv_normal = 0;
+  uint64_t tex_ao = 0;
+  uint8_t uv_ao = 0;
 
-  float     metallic = 0;
-  uint64_t  tex_metallic = 0;
-  uint8_t   uv_metallic = 0;
+  uint64_t tex_normal = 0;
+  uint8_t uv_normal = 0;
 
-  float     roughness = 0.8;
-  uint64_t  tex_roughness = 0;
-  uint8_t   uv_roughness = 0;
+  float metallic = 0;
+  uint64_t tex_metallic = 0;
+  uint8_t uv_metallic = 0;
 
-  uint64_t  tex_height = 0;
-  uint8_t   uv_height = 0;
+  float roughness = 0.8;
+  uint64_t tex_roughness = 0;
+  uint8_t uv_roughness = 0;
 
-  uint64_t  tex_shiness = 0;
-  uint8_t   uv_shiness = 0;
+  uint64_t tex_height = 0;
+  uint8_t uv_height = 0;
 
-  uint8_t max_uv_index()
-  {
-    return std::max({uv_base_color, uv_metallic_rough, uv_emissive, uv_ao, uv_normal});
-  }
+  uint8_t max_uv_index() { return std::max({uv_base_color, uv_metallic_rough, uv_emissive, uv_ao, uv_normal}); }
 };
 
 void append_boolean_to_bitmask(uint64_t &bitmask, bool b)
@@ -148,7 +145,6 @@ uint64_t hash_material_config(const MaterialConfig &config)
 {
   uint64_t bitmask = 0;
   memcpy(&bitmask, &config.mask_threshold, sizeof(config.mask_threshold));
-  append_boolean_to_bitmask(bitmask, config.unlit);
   append_boolean_to_bitmask(bitmask, config.twoside);
   append_boolean_to_bitmask(bitmask, config.vertex_color);
   append_boolean_to_bitmask(bitmask, config.alpha_mode == AlphaMode::OPAQUE);
@@ -173,6 +169,16 @@ std::string shader_from_config(const MaterialConfig &config)
   shader += "float2 uv_ao = getUV" + std::to_string(config.uv_ao) + "();\n";
   shader += "float2 uv_emissive = getUV" + std::to_string(config.uv_emissive) + "();\n";
 
+  shader += R"SHADER(
+        prepareMaterial(material);
+        material.baseColor = materialParams.baseColorFactor; 
+    )SHADER";
+
+  if (config.tex_base_color) {
+    shader += "float2 uv_base_color = getUV" + std::to_string(config.uv_base_color) + "();\n";
+    shader += "material.baseColor = texture(materialParams_baseColorMap, uv_base_color);\n";
+  }
+
   if (config.tex_normal) {
     shader += R"SHADER(
       vec3 nrm_dis = texture(materialParams_normalMap, uv_normal).xyz * 2.0 - 1.0;
@@ -181,21 +187,23 @@ std::string shader_from_config(const MaterialConfig &config)
     )SHADER";
   }
 
-  shader += R"SHADER(
-        prepareMaterial(material);
-        material.baseColor = materialParams.baseColorFactor; 
+  if(config.tex_specular_color) {
+    shader += "float2 uv_specular_color = getUV" + std::to_string(config.uv_specular_color) + "();\n";
+    shader += R"SHADER(
+      material.specularColorFactor = texture(materialParams_specularColorMap, uv_specular_color).rgb;
     )SHADER";
-
-  if(config.tex_base_color) {
-    shader += "float2 uv_base_color = getUV" + std::to_string(config.uv_base_color) + "();\n";
-    shader += "material.baseColor = texture(materialParams_baseColorMap, uv_base_color);\n"; 
   }
 
-  if (config.unlit) {
-  } else{
+  if(config.tex_specular_factor){
+    shader += "float2 uv_specular_factor = getUV" + std::to_string(config.uv_specular_factor) + "();\n";
     shader += R"SHADER(
-        material.metallic = materialParams.metallicFactor;
-        material.roughness = materialParams.roughnessFactor;
+      material.specularFactor = texture(materialParams_specularFactorMap, uv_specular_factor).r;
+    )SHADER";
+  }
+
+  shader += R"SHADER(
+        //material.metallic = materialParams.metallicFactor;
+        //material.roughness = materialParams.roughnessFactor;
         //material.roughness = materialParams.roughnessFactor * metallicRoughness.g;
         //material.metallic = materialParams.metallicFactor * metallicRoughness.b;
         //vec4 metallicRoughness = texture(materialParams_metallicRoughnessMap, uv_metallic_rough);
@@ -204,13 +212,12 @@ std::string shader_from_config(const MaterialConfig &config)
         //material.emissive.rgb *= materialParams.emissiveFactor.rgb;
         //material.emissive.a = 0.0;
     )SHADER";
-  } 
 
-  if(config.tex_shiness) {
-    shader += "float2 uv_roughness = getUV" + std::to_string(config.uv_roughness) + "();\n"; 
-    shader += "vec3 rclr = texture(materialParams_roughnessMap, uv_roughness).rgb;\n";
-    shader += "material.roughness = 1.0 - (0.213 * rclr.r + 0.715 * rclr.g + 0.072 * rclr.b);\n";
-  }
+  //if (config.tex_shiness) {
+  //  shader += "float2 uv_roughness = getUV" + std::to_string(config.uv_roughness) + "();\n";
+  //  shader += "vec3 rclr = texture(materialParams_roughnessMap, uv_roughness).rgb;\n";
+  //  shader += "material.roughness = 1.0 - (0.213 * rclr.r + 0.715 * rclr.g + 0.072 * rclr.b);\n";
+  //}
 
   shader += "}\n";
 
@@ -228,11 +235,13 @@ Material *create_material_from_config(Engine &engine, MaterialConfig &config)
     .doubleSided(config.twoside)
     .require(VertexAttribute::UV0)
     .parameter("baseColorFactor", MaterialBuilder::UniformType::FLOAT4)
+
     .parameter("baseColorMap", MaterialBuilder::SamplerType::SAMPLER_2D)
     .parameter("metallicRoughnessMap", MaterialBuilder::SamplerType::SAMPLER_2D)
     .parameter("aoMap", MaterialBuilder::SamplerType::SAMPLER_2D)
     .parameter("emissiveMap", MaterialBuilder::SamplerType::SAMPLER_2D)
     .parameter("normalMap", MaterialBuilder::SamplerType::SAMPLER_2D)
+
     .parameter("metallicFactor", MaterialBuilder::UniformType::FLOAT)
     .parameter("roughnessFactor", MaterialBuilder::UniformType::FLOAT)
     .parameter("normalScale", MaterialBuilder::UniformType::FLOAT)
@@ -255,31 +264,27 @@ Material *create_material_from_config(Engine &engine, MaterialConfig &config)
     builder.blending(MaterialBuilder::BlendingMode::OPAQUE);
   }
 
-  if(config.tex_specular) {
-    builder.parameter("specularMap", MaterialBuilder::SamplerType::SAMPLER_2D); 
+  if (config.tex_specular_color) {
+    builder.parameter("specularColorFactor", MaterialBuilder::UniformType::FLOAT3);
+    builder.parameter("specularColorMap", MaterialBuilder::SamplerType::SAMPLER_2D);
   }
 
-  if(config.tex_shiness) {
-    //builder.parameter("specularColorMap", MaterialBuilder::SamplerType::SAMPLER_2D); 
-    builder.parameter("roughnessMap", MaterialBuilder::SamplerType::SAMPLER_2D); 
+  if(config.tex_specular_factor) {
+    builder.parameter("specularFactorMap", MaterialBuilder::SamplerType::SAMPLER_2D); 
   }
 
-  builder.shading(config.unlit ? Shading::UNLIT : Shading::LIT);
-
+  builder.shading(Shading::LIT);
   Package pkg = builder.build(engine.getJobSystem());
   return Material::Builder().package(pkg.getData(), pkg.getSize()).build(engine);
 }
 
-template <typename VECTOR, typename INDEX>
-Box computeTransformedAABB(VECTOR const *vertices, INDEX const *indices, size_t count,
-                           const mat4f &transform) noexcept
+template <typename VECTOR, typename INDEX> Box computeTransformedAABB(VECTOR const *vertices, INDEX const *indices, size_t count, const mat4f &transform) noexcept
 {
   size_t stride = sizeof(VECTOR);
   filament::math::float3 bmin(std::numeric_limits<float>::max());
   filament::math::float3 bmax(std::numeric_limits<float>::lowest());
   for (size_t i = 0; i < count; ++i) {
-    VECTOR const *p =
-      reinterpret_cast<VECTOR const *>((char const *)vertices + indices[i] * stride);
+    VECTOR const *p = reinterpret_cast<VECTOR const *>((char const *)vertices + indices[i] * stride);
     const filament::math::float3 v(p->x, p->y, p->z);
     float3 tv = (transform * float4(v, 1.0f)).xyz;
     bmin = min(bmin, tv);
@@ -287,8 +292,7 @@ Box computeTransformedAABB(VECTOR const *vertices, INDEX const *indices, size_t 
   }
   return Box().set(bmin, bmax);
 }
-void getMinMaxUV(const aiScene *scene, const aiNode *node, float2 &minUV, float2 &maxUV,
-                 uint32_t uvIndex)
+void getMinMaxUV(const aiScene *scene, const aiNode *node, float2 &minUV, float2 &maxUV, uint32_t uvIndex)
 {
   for (size_t i = 0; i < node->mNumMeshes; ++i) {
     const aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
@@ -339,7 +343,7 @@ template <typename T> struct State {
   T const *data() const { return state.data(); }
 };
 
-struct TextureImage{
+struct TextureImage {
   std::string _img_path;
 };
 
@@ -375,15 +379,9 @@ Texture *create_texture(uint32_t pixel, Engine *engine)
   uint32_t *tex_data = (uint32_t *)malloc(sizeof(uint32_t) * 4);
   tex_data[0] = tex_data[1] = tex_data[2] = tex_data[3] = pixel;
 
-  auto *texture = Texture::Builder()
-                    .width(uint32_t(1))
-                    .height(uint32_t(1))
-                    .levels(0xff)
-                    .format(Texture::InternalFormat::RGBA8)
-                    .build(*engine);
+  auto *texture = Texture::Builder().width(uint32_t(1)).height(uint32_t(1)).levels(0xff).format(Texture::InternalFormat::RGBA8).build(*engine);
 
-  Texture::PixelBufferDescriptor buf(tex_data, size_t(1 * 1 * 4), Texture::Format::RGBA, Texture::Type::UBYTE,
-                                     (Texture::PixelBufferDescriptor::Callback)&free);
+  Texture::PixelBufferDescriptor buf(tex_data, size_t(1 * 1 * 4), Texture::Format::RGBA, Texture::Type::UBYTE, (Texture::PixelBufferDescriptor::Callback)&free);
 
   texture->setImage(*engine, 0, std::move(buf));
   return texture;
@@ -452,23 +450,21 @@ TextureSampler::MagFilter ai_magfilter_to_filament(unsigned int aiMagFilter)
 bool MeshAssimp::load_assert(const utils::Path &path)
 {
   Assimp::Importer importer;
-  importer.SetPropertyInteger(AI_CONFIG_PP_SBP_REMOVE,
-                              aiPrimitiveType_LINE | aiPrimitiveType_POINT);
+  importer.SetPropertyInteger(AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_LINE | aiPrimitiveType_POINT);
   importer.SetPropertyBool(AI_CONFIG_IMPORT_COLLADA_IGNORE_UP_DIRECTION, true);
   importer.SetPropertyBool(AI_CONFIG_PP_PTV_KEEP_HIERARCHY, true);
 
-  const aiScene *scene = importer.ReadFile(
-    path,
-    // normals and tangents
-    aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_FixInfacingNormals |
-      // UV Coordinates
-      aiProcess_GenUVCoords |
-      // topology optimization
-      aiProcess_FindInstances | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices |
-      // misc optimization
-      aiProcess_ImproveCacheLocality | aiProcess_SortByPType |
-      // we only support triangles
-      aiProcess_Triangulate);
+  const aiScene *scene = importer.ReadFile(path,
+                                           // normals and tangents
+                                           aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_FixInfacingNormals |
+                                             // UV Coordinates
+                                             aiProcess_GenUVCoords |
+                                             // topology optimization
+                                             aiProcess_FindInstances | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices |
+                                             // misc optimization
+                                             aiProcess_ImproveCacheLocality | aiProcess_SortByPType |
+                                             // we only support triangles
+                                             aiProcess_Triangulate);
 
   if (!scene) {
     std::cout << "No scene" << std::endl;
@@ -483,22 +479,21 @@ bool MeshAssimp::load_assert(const utils::Path &path)
   auto asset = std::make_unique<Asset>();
   asset->file = path;
 
-  const std::function<void(aiNode const *node, size_t &totalVertexCount, size_t &totalIndexCount)>
-    countVertices = [scene, &countVertices](aiNode const *node, size_t &totalVertexCount,
-                                            size_t &totalIndexCount) {
-      for (size_t i = 0; i < node->mNumMeshes; i++) {
-        aiMesh const *mesh = scene->mMeshes[node->mMeshes[i]];
-        totalVertexCount += mesh->mNumVertices;
+  const std::function<void(aiNode const *node, size_t &totalVertexCount, size_t &totalIndexCount)> countVertices = [scene, &countVertices](aiNode const *node, size_t &totalVertexCount,
+                                                                                                                                           size_t &totalIndexCount) {
+    for (size_t i = 0; i < node->mNumMeshes; i++) {
+      aiMesh const *mesh = scene->mMeshes[node->mMeshes[i]];
+      totalVertexCount += mesh->mNumVertices;
 
-        const aiFace *faces = mesh->mFaces;
-        const size_t numFaces = mesh->mNumFaces;
-        totalIndexCount += numFaces * faces[0].mNumIndices;
-      }
+      const aiFace *faces = mesh->mFaces;
+      const size_t numFaces = mesh->mNumFaces;
+      totalIndexCount += numFaces * faces[0].mNumIndices;
+    }
 
-      for (size_t i = 0; i < node->mNumChildren; i++) {
-        countVertices(node->mChildren[i], totalVertexCount, totalIndexCount);
-      }
-    };
+    for (size_t i = 0; i < node->mNumChildren; i++) {
+      countVertices(node->mChildren[i], totalVertexCount, totalIndexCount);
+    }
+  };
 
   size_t deep = 0;
   size_t depth = 0;
@@ -524,13 +519,9 @@ bool MeshAssimp::load_assert(const utils::Path &path)
   float2 maxUV1 = float2(std::numeric_limits<float>::lowest());
   getMinMaxUV(scene, node, minUV1, maxUV1, 1);
 
-  asset->snorm_uv0 = minUV0.x >= -1.0f && minUV0.x <= 1.0f && maxUV0.x >= -1.0f &&
-                    maxUV0.x <= 1.0f && minUV0.y >= -1.0f && minUV0.y <= 1.0f &&
-                    maxUV0.y >= -1.0f && maxUV0.y <= 1.0f;
+  asset->snorm_uv0 = minUV0.x >= -1.0f && minUV0.x <= 1.0f && maxUV0.x >= -1.0f && maxUV0.x <= 1.0f && minUV0.y >= -1.0f && minUV0.y <= 1.0f && maxUV0.y >= -1.0f && maxUV0.y <= 1.0f;
 
-  asset->snorm_uv1 = minUV1.x >= -1.0f && minUV1.x <= 1.0f && maxUV1.x >= -1.0f &&
-                    maxUV1.x <= 1.0f && minUV1.y >= -1.0f && minUV1.y <= 1.0f &&
-                    maxUV1.y >= -1.0f && maxUV1.y <= 1.0f;
+  asset->snorm_uv1 = minUV1.x >= -1.0f && minUV1.x <= 1.0f && maxUV1.x >= -1.0f && maxUV1.x <= 1.0f && minUV1.y >= -1.0f && minUV1.y <= 1.0f && maxUV1.y >= -1.0f && maxUV1.y <= 1.0f;
 
   if (asset->snorm_uv0) {
     if (asset->snorm_uv1) {
@@ -547,11 +538,9 @@ bool MeshAssimp::load_assert(const utils::Path &path)
   }
 
   for (auto &mesh : asset->meshes) {
-    mesh.aabb = RenderableManager::computeAABB(asset->positions.data(),
-                                               asset->indices.data() + mesh.offset, mesh.count);
+    mesh.aabb = RenderableManager::computeAABB(asset->positions.data(), asset->indices.data() + mesh.offset, mesh.count);
 
-    Box transformedAabb = computeTransformedAABB(
-      asset->positions.data(), asset->indices.data() + mesh.offset, mesh.count, mesh.accTransform);
+    Box transformedAabb = computeTransformedAABB(asset->positions.data(), asset->indices.data() + mesh.offset, mesh.count, mesh.accTransform);
 
     float3 aabbMin = transformedAabb.getMin();
     float3 aabbMax = transformedAabb.getMax();
@@ -587,16 +576,14 @@ bool MeshAssimp::load_assert(const utils::Path &path)
     }
   }
 
-  _asset = std::move(asset); 
+  _asset = std::move(asset);
 
   process_materials(scene);
 
   return true;
 }
 
-template <bool SNORMUV0, bool SNORMUV1>
-void MeshAssimp::process_node(Asset &asset, const aiScene *scene, size_t deep, size_t matCount, const aiNode *node,
-                              int parentIndex, size_t &depth) const
+template <bool SNORMUV0, bool SNORMUV1> void MeshAssimp::process_node(Asset &asset, const aiScene *scene, size_t deep, size_t matCount, const aiNode *node, int parentIndex, size_t &depth) const
 {
   mat4f const &current = transpose(*reinterpret_cast<mat4f const *>(&node->mTransformation));
 
@@ -719,8 +706,7 @@ void MeshAssimp::process_node(Asset &asset, const aiScene *scene, size_t deep, s
           }
         }
 
-        asset.meshes.back().parts.push_back(
-          {indexBufferOffset, indicesCount, mtlname, baseColor, opacity, metallic, roughness, reflectance});
+        asset.meshes.back().parts.push_back({indexBufferOffset, indicesCount, mtlname, baseColor, opacity, metallic, roughness, reflectance});
       }
     }
   }
@@ -740,40 +726,31 @@ void MeshAssimp::process_node(Asset &asset, const aiScene *scene, size_t deep, s
   }
 }
 
-void MeshAssimp::build_assert(filament::Engine *engine, const filament::Material *basic_mtl,
-                              const filament::Material *default_mtl, bool override_mtl)
+void MeshAssimp::build_assert(filament::Engine *engine, const filament::Material *basic_mtl, const filament::Material *default_mtl, bool override_mtl)
 {
   if (!_asset)
     return;
 
   _engine = engine;
 
-  //if (!_def_map)
-  //  _def_map = create_texture(0xffffffff, engine);
-  //if (!_def_normal_map)
-  //  _def_normal_map = create_texture(0xffff8080, engine);
-
   build_materials(engine);
 
   {
-    VertexBuffer::Builder vertexBufferBuilder =
-      VertexBuffer::Builder()
-        .vertexCount((uint32_t)_asset->positions.size())
-        .bufferCount(4)
-        .attribute(VertexAttribute::POSITION, 0, VertexBuffer::AttributeType::HALF4)
-        .attribute(VertexAttribute::TANGENTS, 1, VertexBuffer::AttributeType::SHORT4)
-        .normalized(VertexAttribute::TANGENTS);
+    VertexBuffer::Builder vertexBufferBuilder = VertexBuffer::Builder()
+                                                  .vertexCount((uint32_t)_asset->positions.size())
+                                                  .bufferCount(4)
+                                                  .attribute(VertexAttribute::POSITION, 0, VertexBuffer::AttributeType::HALF4)
+                                                  .attribute(VertexAttribute::TANGENTS, 1, VertexBuffer::AttributeType::SHORT4)
+                                                  .normalized(VertexAttribute::TANGENTS);
 
     if (_asset->snorm_uv0) {
-      vertexBufferBuilder.attribute(VertexAttribute::UV0, 2, VertexBuffer::AttributeType::SHORT2)
-        .normalized(VertexAttribute::UV0);
+      vertexBufferBuilder.attribute(VertexAttribute::UV0, 2, VertexBuffer::AttributeType::SHORT2).normalized(VertexAttribute::UV0);
     } else {
       vertexBufferBuilder.attribute(VertexAttribute::UV0, 2, VertexBuffer::AttributeType::HALF2);
     }
 
     if (_asset->snorm_uv1) {
-      vertexBufferBuilder.attribute(VertexAttribute::UV1, 3, VertexBuffer::AttributeType::SHORT2)
-        .normalized(VertexAttribute::UV1);
+      vertexBufferBuilder.attribute(VertexAttribute::UV1, 3, VertexBuffer::AttributeType::SHORT2).normalized(VertexAttribute::UV1);
     } else {
       vertexBufferBuilder.attribute(VertexAttribute::UV1, 3, VertexBuffer::AttributeType::HALF2);
     }
@@ -786,21 +763,16 @@ void MeshAssimp::build_assert(filament::Engine *engine, const filament::Material
     auto t1s = new State<ushort2>(std::move(_asset->texCoords1));
     auto is = new State<uint32_t>(std::move(_asset->indices));
 
-    _vertex_buffer->setBufferAt(*_engine, 0,
-                                VertexBuffer::BufferDescriptor(ps->data(), ps->size(), State<half4>::free, ps));
+    _vertex_buffer->setBufferAt(*_engine, 0, VertexBuffer::BufferDescriptor(ps->data(), ps->size(), State<half4>::free, ps));
 
-    _vertex_buffer->setBufferAt(*_engine, 1,
-                                VertexBuffer::BufferDescriptor(ns->data(), ns->size(), State<short4>::free, ns));
+    _vertex_buffer->setBufferAt(*_engine, 1, VertexBuffer::BufferDescriptor(ns->data(), ns->size(), State<short4>::free, ns));
 
-    _vertex_buffer->setBufferAt(*_engine, 2,
-                                VertexBuffer::BufferDescriptor(t0s->data(), t0s->size(), State<ushort2>::free, t0s));
+    _vertex_buffer->setBufferAt(*_engine, 2, VertexBuffer::BufferDescriptor(t0s->data(), t0s->size(), State<ushort2>::free, t0s));
 
-    _vertex_buffer->setBufferAt(*_engine, 3,
-                                VertexBuffer::BufferDescriptor(t1s->data(), t1s->size(), State<ushort2>::free, t1s));
+    _vertex_buffer->setBufferAt(*_engine, 3, VertexBuffer::BufferDescriptor(t1s->data(), t1s->size(), State<ushort2>::free, t1s));
 
     _index_buffer = IndexBuffer::Builder().indexCount(uint32_t(is->size())).build(*_engine);
-    _index_buffer->setBuffer(*_engine,
-                             IndexBuffer::BufferDescriptor(is->data(), is->size(), State<uint32_t>::free, is));
+    _index_buffer->setBuffer(*_engine, IndexBuffer::BufferDescriptor(is->data(), is->size(), State<uint32_t>::free, is));
   }
 
   std::map<std::string, filament::MaterialInstance *> &materials = _materials;
@@ -820,8 +792,7 @@ void MeshAssimp::build_assert(filament::Engine *engine, const filament::Material
 
     size_t partIndex = 0;
     for (auto &part : mesh.parts) {
-      builder.geometry(partIndex, RenderableManager::PrimitiveType::TRIANGLES, _vertex_buffer, _index_buffer,
-                       part.offset, part.count);
+      builder.geometry(partIndex, RenderableManager::PrimitiveType::TRIANGLES, _vertex_buffer, _index_buffer, part.offset, part.count);
 
       if (override_mtl) {
         builder.material(partIndex, materials[AI_DEFAULT_MATERIAL_NAME]);
@@ -850,13 +821,12 @@ void MeshAssimp::build_assert(filament::Engine *engine, const filament::Material
       builder.build(*_engine, entity);
     }
     auto pindex = _asset->parents[meshIndex];
-    TransformManager::Instance parent((pindex < 0) ? tcm.getInstance(_root_entity)
-                                                   : tcm.getInstance(_renderables[pindex]));
+    TransformManager::Instance parent((pindex < 0) ? tcm.getInstance(_root_entity) : tcm.getInstance(_renderables[pindex]));
     tcm.create(entity, parent, mesh.transform);
   }
 }
 
-void MeshAssimp::process_materials(const aiScene *scene) 
+void MeshAssimp::process_materials(const aiScene *scene)
 {
   std::map<std::string, std::unique_ptr<MaterialConfig>> mtls;
   for (int i = 0; i < scene->mNumMaterials; i++) {
@@ -923,7 +893,7 @@ std::shared_ptr<TextureConfig> load_texture(const aiScene *scene, const std::str
   tex_config->height = tex->mHeight;
   tex->pcData = nullptr;
 
-  if (strcmp(tex->achFormatHint, "rgba888") == 0){
+  if (strcmp(tex->achFormatHint, "rgba888") == 0) {
     tex_config->format = backend::TextureFormat::RGB8;
     tex_config->channel = 3;
   } else if (strcmp(tex->achFormatHint, "rgba8888") == 0) {
@@ -940,7 +910,7 @@ auto MeshAssimp::load_textures(const aiScene *scene, const aiMaterial *material,
   auto tex_type = (aiTextureType)type;
   unsigned int count = material->GetTextureCount(tex_type), uvindex = 0;
 
-  //if (count == 0)
+  // if (count == 0)
 
   aiString tex_name;
   std::string folder = std::filesystem::u8path(_asset->file).parent_path().string();
@@ -980,29 +950,28 @@ std::unique_ptr<MaterialConfig> MeshAssimp::load_material(const aiScene *scene, 
     material->Get<aiShadingMode>(AI_MATKEY_SHADING_MODEL, sm);
   }
 
-  // mtl_config.tex_metallic =
-  // mtl_config.tex_roughness =
-
   {
     aiColor4D color;
     material->Get(AI_MATKEY_BASE_COLOR, color);
     mtl_config.base_color = float4(color.r, color.g, color.b, color.a);
-    std::tie(mtl_config.tex_base_color, mtl_config.uv_base_color) =
-      load_textures(scene, material, aiTextureType_BASE_COLOR);
-  }
-  {
-    aiColor4D color;
-    if(aiReturn_SUCCESS == material->Get(AI_MATKEY_COLOR_DIFFUSE, color))
-      mtl_config.base_color = float4(color.r, color.g, color.b, color.a);
-    auto [tex, uv] = load_textures(scene, material, aiTextureType_DIFFUSE);
-    if (tex) {
-      mtl_config.tex_base_color = tex;
-      mtl_config.tex_diffuse = tex;
+    auto [tex, uv] = load_textures(scene, material, aiTextureType_BASE_COLOR);
+    if(tex) {
+      mtl_config.tex_base_color = tex; 
       mtl_config.uv_base_color = uv;
     }
   }
 
+  {
+    aiColor4D color;
+    if (aiReturn_SUCCESS == material->Get(AI_MATKEY_COLOR_DIFFUSE, color))
+      mtl_config.base_color = float4(color.r, color.g, color.b, color.a);
 
+    auto [tex, uv] = load_textures(scene, material, aiTextureType_DIFFUSE);
+    if (tex) {
+      mtl_config.tex_base_color = tex;
+      mtl_config.uv_base_color = uv;
+    }
+  }
 
   {
     material->Get(AI_MATKEY_METALLIC_FACTOR, mtl_config.metallic);
@@ -1014,8 +983,16 @@ std::unique_ptr<MaterialConfig> MeshAssimp::load_material(const aiScene *scene, 
     std::tie(mtl_config.tex_roughness, mtl_config.uv_roughness) = load_textures(scene, material, aiTextureType_DIFFUSE_ROUGHNESS);
   }
 
+  //{
+  //  auto [tex, uv] = load_textures(scene, material, aiTextureType_SHININESS);
+  //  if(tex) {
+  //    mtl_config.tex_specular_color = tex;
+  //    mtl_config.uv_specular_color = uv;
+  //  }
+  //}
+
   {
-    std::tie(mtl_config.tex_specular, mtl_config.uv_specular) = load_textures(scene, material, aiTextureType_SPECULAR);
+    std::tie(mtl_config.tex_specular_factor, mtl_config.uv_specular_factor) = load_textures(scene, material, aiTextureType_SPECULAR);
   }
 
   {
@@ -1030,10 +1007,6 @@ std::unique_ptr<MaterialConfig> MeshAssimp::load_material(const aiScene *scene, 
     // mtl_config.tex_ao = load_texture(scene, material, folder, aiTextureType_AMBIENT);
   }
 
-  {
-    std::tie(mtl_config.tex_shiness, mtl_config.uv_shiness) = load_textures(scene, material, aiTextureType_SHININESS);
-  }
-
   // for (int i = 0; i < 32; i++) {
   //   load_textures(scene, material, i);
   // }
@@ -1041,7 +1014,7 @@ std::unique_ptr<MaterialConfig> MeshAssimp::load_material(const aiScene *scene, 
   return mtl;
 }
 
-void MeshAssimp::build_materials(filament::Engine *engine) 
+void MeshAssimp::build_materials(filament::Engine *engine)
 {
   auto build_texture = [this, engine](uint64_t tex_id) {
     filament::Texture *texture = nullptr;
@@ -1064,6 +1037,9 @@ void MeshAssimp::build_materials(filament::Engine *engine)
       } else if (channel == 3) {
         fmt = Texture::Format::RGB;
         builder.format(filament::Texture::InternalFormat::RGB8);
+      } else if(channel == 1) {
+        fmt = Texture::Format::R; 
+        builder.format(filament::Texture::InternalFormat::R8);
       }
       texture = builder.build(*engine);
       Texture::PixelBufferDescriptor buf(data, width * height * channel, fmt, Texture::Type::UBYTE);
@@ -1080,8 +1056,8 @@ void MeshAssimp::build_materials(filament::Engine *engine)
         fmt = Texture::Format::RGB;
         break;
       }
-      Texture::PixelBufferDescriptor buf(tc->pixels, size_t(tc->width * tc->height * tc->channel), fmt,
-                                         Texture::Type::UBYTE, (Texture::PixelBufferDescriptor::Callback)&free);
+      Texture::PixelBufferDescriptor buf(tc->pixels, size_t(tc->width * tc->height * tc->channel), 
+        fmt, Texture::Type::UBYTE, (Texture::PixelBufferDescriptor::Callback)&free);
       texture->setImage(*engine, 0, std::move(buf));
     }
     texture->generateMipmaps(*engine);
@@ -1090,7 +1066,8 @@ void MeshAssimp::build_materials(filament::Engine *engine)
   };
 
   auto fun2 = [this, engine](MaterialInstance *mtl, uint64_t tex_id) {
-    if (tex_id == 0) return;
+    if (tex_id == 0)
+      return;
     auto &tc = _texture_config[tex_id];
     TextureSampler sampler(tc->minfilter, tc->magfilter);
     auto &name = tex_name[tc->type];
@@ -1105,7 +1082,7 @@ void MeshAssimp::build_materials(filament::Engine *engine)
 
     adjust_material_config(iter.second.get());
 
-    //auto ch = hash_material_config(*c);
+    // auto ch = hash_material_config(*c);
 
     auto material = create_material_from_config(*_engine, *c);
     auto mtl = material->createInstance(iter.first.c_str());
@@ -1115,9 +1092,9 @@ void MeshAssimp::build_materials(filament::Engine *engine)
     fun2(mtl, c->tex_ao);
     fun2(mtl, c->tex_emissive);
     fun2(mtl, c->tex_normal);
-    fun2(mtl, c->tex_shiness);
-
-    fun2(mtl, c->tex_diffuse);
+    fun2(mtl, c->tex_specular);
+    fun2(mtl, c->tex_specular_factor);
+    fun2(mtl, c->tex_specular_color);
 
     mtl->setParameter("baseColorFactor", RgbaType::LINEAR, c->base_color);
     mtl->setParameter("metallicFactor", c->metallic);
@@ -1125,18 +1102,17 @@ void MeshAssimp::build_materials(filament::Engine *engine)
   }
 }
 
-void MeshAssimp::adjust_material_config(MaterialConfig *material) 
+void MeshAssimp::adjust_material_config(MaterialConfig *material)
 {
   if (auto id = material->tex_height) {
     if (_texture_config[id]->channel == 3) {
       material->tex_normal = material->tex_height;
       material->uv_normal = material->uv_height;
-      material->tex_height = 0; material->uv_height = 0;
+      material->tex_height = 0;
+      material->uv_height = 0;
       _texture_config[id]->type = aiTextureType_NORMALS;
-    } else if(_texture_config[id]->channel != 1){
+    } else if (_texture_config[id]->channel != 1) {
       material->tex_height = 0;
     }
   }
 }
-
-

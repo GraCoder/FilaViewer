@@ -14,7 +14,6 @@
 #include <utils/EntityManager.h>
 
 #include <ibl/CubemapUtils.h>
-#include <filament-iblprefilter/IBLPrefilterContext.h>
 #include <filament/IndirectLight.h>
 
 #include <ktxreader/Ktx1Reader.h>
@@ -73,7 +72,6 @@ std::vector<uint8_t> readfile(const std::string &path)
 FTScene::FTScene()
   : TScene()
 {
-  //view->set_gui_callback(std::bind(&FTScene::gui, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 FTScene::~FTScene()
@@ -125,7 +123,7 @@ void FTScene::add_test_scene()
   }
 }
 
-void FTScene::set_skybox(const std::string &img_path, bool filter)
+void FTScene::set_environment(const std::string &img_path, bool filter)
 {
   using namespace filament;
 
@@ -133,18 +131,13 @@ void FTScene::set_skybox(const std::string &img_path, bool filter)
   LightManager::Builder(LightManager::Type::SUN)
     .color(Color::toLinear<ACCURATE>(sRGBColor(0.98f, 0.92f, 0.89f)))
     .intensity(110000)
-    .direction({-1, -1, -1})
+    .direction({0.7, -1, -1})
     .sunAngularRadius(1.9f)
     .castShadows(false)
+    .sunHaloSize(10.0f)
+    .sunHaloFalloff(80.f)
     .build(*_engine, light);
   _scene->addEntity(light);
-
-  if (0) {
-    math::float4 clr(0.2, 0.2, 0.2, 1);
-    auto skybox = Skybox::Builder().color(clr).build(*_engine);
-    _scene->setSkybox(skybox);
-    return;
-  }
 
   auto create_ktx = [](const std::string &path) {
     using namespace std;
@@ -153,13 +146,18 @@ void FTScene::set_skybox(const std::string &img_path, bool filter)
     return new image::Ktx1Bundle(contents.data(), contents.size());
   };
 
-  _skybox_tex = ktxreader::Ktx1Reader::createTexture(_engine, create_ktx(img_path + "_skybox.ktx"), false);
-  _skybox = Skybox::Builder().environment(_skybox_tex).showSun(true).build(*_engine);
-  //_skybox->setLayerMask(0x7, 0x4);
+  _skybox_tex = ktxreader::Ktx1Reader::createTexture(_engine, create_ktx(img_path + "_skybox.ktx"), true);
+  _skybox = Skybox::Builder()
+    .environment(_skybox_tex)
+    .showSun(true)
+    .build(*_engine);
   _scene->setSkybox(_skybox);
 
-  auto irrtex = ktxreader::Ktx1Reader::createTexture(_engine, create_ktx(img_path + "_ibl.ktx"), false);
-  auto irrlight = IndirectLight::Builder().reflections(irrtex).intensity(30000).build(*_engine);
+  auto irrtex = ktxreader::Ktx1Reader::createTexture(_engine, create_ktx(img_path + "_ibl.ktx"), true);
+  auto irrlight = IndirectLight::Builder()
+    .reflections(irrtex)
+    //.intensity(30000)
+    .build(*_engine);
   _scene->setIndirectLight(irrlight);
 }
 
@@ -170,7 +168,7 @@ void FTScene::load_model(const std::string &file, float size)
     fp = fopen(file.c_str(), "rt");
   } else if (file.ends_with("glb")) {
     fp = fopen(file.c_str(), "rb");
-  } else{
+  } else {
     assimp_load(file, size);
   }
 
@@ -216,14 +214,14 @@ void FTScene::load_model(const std::string &file, float size)
 
         _scene->addEntity(ent);
 
-        //auto ri = rm.getInstance(ent);
-        //rm.setScreenSpaceContactShadows(ri, true);
+        // auto ri = rm.getInstance(ent);
+        // rm.setScreenSpaceContactShadows(ri, true);
       }
     },
     std::move(data)));
 }
 
-void FTScene::realize(filament::Engine *engine) 
+void FTScene::realize(filament::Engine *engine)
 {
   if (_realized)
     return;
@@ -234,15 +232,11 @@ void FTScene::realize(filament::Engine *engine)
   _scene = _engine->createScene();
 
   {
-    auto basic_mtl = filament::Material::Builder()
-                       .package(PCV_MAT_BASIC_DATA, PCV_MAT_BASIC_SIZE)
-                       .build(*_engine);
+    auto basic_mtl = filament::Material::Builder().package(PCV_MAT_BASIC_DATA, PCV_MAT_BASIC_SIZE).build(*_engine);
     basic_mtl->setDefaultParameter("baseColor", RgbType::LINEAR, float3{0.8});
     _basic_material = basic_mtl;
 
-    auto def_mtl = filament::Material::Builder()
-                     .package(PCV_MAT_DEFAULT_DATA, PCV_MAT_DEFAULT_SIZE)
-                     .build(*_engine);
+    auto def_mtl = filament::Material::Builder().package(PCV_MAT_DEFAULT_DATA, PCV_MAT_DEFAULT_SIZE).build(*_engine);
     def_mtl->setDefaultParameter("baseColor", RgbType::LINEAR, float3{0.8});
     def_mtl->setDefaultParameter("metallic", 0.0f);
     def_mtl->setDefaultParameter("roughness", 0.4f);
@@ -250,16 +244,17 @@ void FTScene::realize(filament::Engine *engine)
     _default_material = def_mtl;
   }
 
-  //add_test_scene();
-  set_skybox("D:\\06_Test\\godot\\gd_material\\materials\\texture\\background\\background");
+  // add_test_scene();
+  set_environment("D:\\06_Test\\godot\\gd_material\\materials\\texture\\background\\background");
+  //set_environment("C:\\Users\\t\\dev\\0\\filament\\samples\\assets\\ibl\\lightroom_14b\\lightroom_14b");
 }
-void FTScene::process(float delta) 
-{ 
+void FTScene::process(float delta)
+{
 #ifdef POINT_CLOUD_SUPPORT
   for (auto &iter : _pcs) {
     iter.second->_process(delta);
   }
- #endif
+#endif
 
   if (_tasks.empty())
     return;
@@ -277,7 +272,7 @@ void FTScene::process(float delta)
 
 void FTScene::gui(filament::Engine *, filament::View *)
 {
-#ifdef POINT_CLOUD_SUPPORT 
+#ifdef POINT_CLOUD_SUPPORT
   ImGui::SetNextWindowSize(ImVec2(400, 200), ImGuiCond_Once);
   ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_Once);
 
@@ -290,10 +285,10 @@ void FTScene::gui(filament::Engine *, filament::View *)
       view()->set_pivot(ab.center(), 200);
     }
   }
-  if(ImGui::Button("Calculate Point")) {
+  if (ImGui::Button("Calculate Point")) {
     _point_count = 0;
     for (auto iter : _pcs)
-      _point_count += iter.second->point_count(); 
+      _point_count += iter.second->point_count();
   }
   ImGui::Text("Point Count: %d", _point_count);
 
@@ -301,7 +296,7 @@ void FTScene::gui(filament::Engine *, filament::View *)
 #endif
 }
 
-void FTScene::assimp_load(const std::string &file, float sz) 
+void FTScene::assimp_load(const std::string &file, float sz)
 {
   if (!_assimp)
     _assimp = std::make_unique<MeshAssimp>();
@@ -310,10 +305,10 @@ void FTScene::assimp_load(const std::string &file, float sz)
     return;
 
   std::unique_lock<std::mutex> lock(_mutex);
-  _tasks.push([this, sz]() { 
+  _tasks.push([this, sz]() {
     _assimp->build_assert(_engine, _basic_material, _default_material);
 
-    for(auto ent : _assimp->renderables()){
+    for (auto ent : _assimp->renderables()) {
       _scene->addEntity(ent);
     }
 

@@ -42,7 +42,7 @@ public:
 
   void add_test_scene();
 
-  void set_skybox(const std::string &img, bool filter = false);
+  void set_environment(const std::string &img, bool filter = false);
 
   void load_model(const std::string &file, float sz);
 

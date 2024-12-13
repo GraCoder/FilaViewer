@@ -43,6 +43,7 @@ void FTView::set_pivot(const tg::vec3d &pos, double dis)
              .targetPosition(pos.x(), pos.y(), pos.z())
              .orbitHomePosition(pos.x(), pos.y(), pos.z() + dis)
              .viewport(vp.width, vp.height)
+             .orbitSpeed(0.005, 0.005)
              //
              //.fovDirection(Fov::VERTICAL)
              //.fovDegrees(_camera->getFieldOfViewInDegrees(Camera::Fov::VERTICAL))
@@ -64,7 +65,7 @@ void FTView::realize(filament::Engine *engine)
   _engine = engine;
 
   _view = engine->createView();
-  _view->setPostProcessingEnabled(false);
+  //_view->setPostProcessingEnabled(false);
 
   utils::Entity cam_ent;
   utils::EntityManager &em = utils::EntityManager::get();
@@ -74,8 +75,6 @@ void FTView::realize(filament::Engine *engine)
   _view->setCamera(_camera);
 
   reset_projection();
-
-  set_pivot({0, 0, 0}, 15);
 
   if (_scene) {
     _scene->realize(engine);
@@ -166,7 +165,8 @@ void FTView::set_viewport(int x, int y, uint32_t width, uint32_t height)
 
   _view->setViewport({x, y, width, height});
 
-  _manip->setViewport(width, height);
+  if(_manip)
+    _manip->setViewport(width, height);
 
   reset_projection();
 }
