@@ -65,6 +65,14 @@ void FTView::realize(filament::Engine *engine)
   _engine = engine;
 
   _view = engine->createView();
+
+  _view->setDithering(filament::Dithering::NONE);
+  //_view->setAntiAliasing(filament::AntiAliasing::NONE);
+  {
+    auto opts = _view->getTemporalAntiAliasingOptions(); 
+    opts.enabled = false;
+    _view->setTemporalAntiAliasingOptions(opts);
+  }
   //_view->setPostProcessingEnabled(false);
 
   utils::Entity cam_ent;

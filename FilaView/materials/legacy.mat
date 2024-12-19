@@ -1,10 +1,18 @@
     material {
-        name : "basic",
-        shadingModel : unlit,
+        name : "legacy",
+        shadingModel : specularGlossiness,
         parameters : [
         {
             type : float4,
             name : baseColor
+        } ,
+        {
+            type : float3,
+            name : specularColor
+        },
+        {
+            type : float,
+            name : glossiness
         }
         ]
     }

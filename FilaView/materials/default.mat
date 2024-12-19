@@ -1,5 +1,5 @@
 material {
-    name : default_mtl,
+    name : default,
     shadingModel : lit,
     parameters : [
         {

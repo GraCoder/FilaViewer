@@ -40,6 +40,7 @@ set(material_dir  "${gen_root}/generated/material")
 set(material_src
   materials/basic.mat
   materials/default.mat
+  materials/legacy.mat
   materials/ui_blit.mat
 
   materials/pc.mat

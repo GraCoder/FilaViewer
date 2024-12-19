@@ -242,11 +242,15 @@ void FTScene::realize(filament::Engine *engine)
     def_mtl->setDefaultParameter("roughness", 0.4f);
     def_mtl->setDefaultParameter("reflectance", 0.5f);
     _default_material = def_mtl;
+
+    auto legacy_mtl = filament::Material::Builder().package(PCV_MAT_LEGACY_DATA, PCV_MAT_LEGACY_SIZE).build(*_engine);
+    _legacy_material = legacy_mtl;
   }
 
-  // add_test_scene();
   set_environment("D:\\06_Test\\godot\\gd_material\\materials\\texture\\background\\background");
   //set_environment("C:\\Users\\t\\dev\\0\\filament\\samples\\assets\\ibl\\lightroom_14b\\lightroom_14b");
+
+  //add_test_scene();
 }
 void FTScene::process(float delta)
 {

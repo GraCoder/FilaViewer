@@ -33,6 +33,9 @@
 #include <math/norm.h>
 #include <math/vec3.h>
 
+#include <backend/DriverEnums.h>
+#include <utils/Log.h>
+
 #include <assimp/Importer.hpp>
 #include <assimp/cimport.h>
 #include <assimp/pbrmaterial.h>
@@ -40,8 +43,6 @@
 #include <assimp/scene.h>
 
 #include <stb_image.h>
-
-#include <backend/DriverEnums.h>
 
 #include "pcv_mat.h"
 
@@ -164,22 +165,8 @@ std::string shader_from_config(const MaterialConfig &config)
         void material(inout MaterialInputs material) {
     )SHADER";
 
-  shader += "float2 uv_normal = getUV" + std::to_string(config.uv_normal) + "();\n";
-  shader += "float2 uv_metallic_rough = getUV" + std::to_string(config.uv_metallic_rough) + "();\n";
-  shader += "float2 uv_ao = getUV" + std::to_string(config.uv_ao) + "();\n";
-  shader += "float2 uv_emissive = getUV" + std::to_string(config.uv_emissive) + "();\n";
-
-  shader += R"SHADER(
-        prepareMaterial(material);
-        material.baseColor = materialParams.baseColorFactor; 
-    )SHADER";
-
-  if (config.tex_base_color) {
-    shader += "float2 uv_base_color = getUV" + std::to_string(config.uv_base_color) + "();\n";
-    shader += "material.baseColor = texture(materialParams_baseColorMap, uv_base_color);\n";
-  }
-
   if (config.tex_normal) {
+    shader += "float2 uv_normal = getUV" + std::to_string(config.uv_normal) + "();\n";
     shader += R"SHADER(
       vec3 nrm_dis = texture(materialParams_normalMap, uv_normal).xyz * 2.0 - 1.0;
       nrm_dis.y = -nrm_dis.y;
@@ -187,20 +174,39 @@ std::string shader_from_config(const MaterialConfig &config)
     )SHADER";
   }
 
-  if(config.tex_specular_color) {
+  shader += R"SHADER(
+        prepareMaterial(material);
+        material.baseColor = materialParams.baseColor; 
+    )SHADER";
+
+  if (config.tex_base_color) {
+    shader += "float2 uv_base_color = getUV" + std::to_string(config.uv_base_color) + "();\n";
+    shader += R"SHADER(
+      vec4 baseColor = texture(materialParams_baseColorMap, uv_base_color);
+      material.baseColor = baseColor;
+    )SHADER";
+  }
+
+  if (config.tex_specular_color) {
     shader += "float2 uv_specular_color = getUV" + std::to_string(config.uv_specular_color) + "();\n";
     shader += R"SHADER(
-      material.specularColorFactor = texture(materialParams_specularColorMap, uv_specular_color).rgb;
+      vec3 specularColor = texture(materialParams_specularColorMap, uv_specular_color).rgb;
+      material.specularColor = specularColor; 
     )SHADER";
   }
 
-  if(config.tex_specular_factor){
+  if (config.tex_specular_factor) {
     shader += "float2 uv_specular_factor = getUV" + std::to_string(config.uv_specular_factor) + "();\n";
     shader += R"SHADER(
-      material.specularFactor = texture(materialParams_specularFactorMap, uv_specular_factor).r;
+      float specularFactor = texture(materialParams_specularFactorMap, uv_specular_factor).r;
+      material.specularFactor = specularFactor;
     )SHADER";
   }
 
+  //shader += "float2 uv_ao = getUV" + std::to_string(config.uv_ao) + "();\n";
+  //shader += "float2 uv_emissive = getUV" + std::to_string(config.uv_emissive) + "();\n";
+
+  // shader += "float2 uv_metallic_rough = getUV" + std::to_string(config.uv_metallic_rough) + "();\n";
   shader += R"SHADER(
         //material.metallic = materialParams.metallicFactor;
         //material.roughness = materialParams.roughnessFactor;
@@ -213,11 +219,11 @@ std::string shader_from_config(const MaterialConfig &config)
         //material.emissive.a = 0.0;
     )SHADER";
 
-  //if (config.tex_shiness) {
-  //  shader += "float2 uv_roughness = getUV" + std::to_string(config.uv_roughness) + "();\n";
-  //  shader += "vec3 rclr = texture(materialParams_roughnessMap, uv_roughness).rgb;\n";
-  //  shader += "material.roughness = 1.0 - (0.213 * rclr.r + 0.715 * rclr.g + 0.072 * rclr.b);\n";
-  //}
+  // if (config.tex_shiness) {
+  //   shader += "float2 uv_roughness = getUV" + std::to_string(config.uv_roughness) + "();\n";
+  //   shader += "vec3 rclr = texture(materialParams_roughnessMap, uv_roughness).rgb;\n";
+  //   shader += "material.roughness = 1.0 - (0.213 * rclr.r + 0.715 * rclr.g + 0.072 * rclr.b);\n";
+  // }
 
   shader += "}\n";
 
@@ -234,19 +240,30 @@ Material *create_material_from_config(Engine &engine, MaterialConfig &config)
     .material(shader.c_str())
     .doubleSided(config.twoside)
     .require(VertexAttribute::UV0)
-    .parameter("baseColorFactor", MaterialBuilder::UniformType::FLOAT4)
-
+    .parameter("baseColor", MaterialBuilder::UniformType::FLOAT4)
     .parameter("baseColorMap", MaterialBuilder::SamplerType::SAMPLER_2D)
-    .parameter("metallicRoughnessMap", MaterialBuilder::SamplerType::SAMPLER_2D)
-    .parameter("aoMap", MaterialBuilder::SamplerType::SAMPLER_2D)
-    .parameter("emissiveMap", MaterialBuilder::SamplerType::SAMPLER_2D)
-    .parameter("normalMap", MaterialBuilder::SamplerType::SAMPLER_2D)
-
     .parameter("metallicFactor", MaterialBuilder::UniformType::FLOAT)
-    .parameter("roughnessFactor", MaterialBuilder::UniformType::FLOAT)
-    .parameter("normalScale", MaterialBuilder::UniformType::FLOAT)
-    .parameter("aoStrength", MaterialBuilder::UniformType::FLOAT)
-    .parameter("emissiveFactor", MaterialBuilder::UniformType::FLOAT3);
+    .parameter("roughnessFactor", MaterialBuilder::UniformType::FLOAT);
+
+  if (config.tex_normal)
+    builder.parameter("normalMap", MaterialBuilder::SamplerType::SAMPLER_2D);
+
+    //.parameter("metallicRoughnessMap", MaterialBuilder::SamplerType::SAMPLER_2D)
+    //.parameter("normalScale", MaterialBuilder::UniformType::FLOAT)
+    //.parameter("aoStrength", MaterialBuilder::UniformType::FLOAT)
+    //.parameter("emissiveFactor", MaterialBuilder::UniformType::FLOAT3)
+
+  if (config.tex_ao)
+    builder.parameter("aoMap", MaterialBuilder::SamplerType::SAMPLER_2D);
+  if (config.tex_emissive)
+    builder.parameter("emissiveMap", MaterialBuilder::SamplerType::SAMPLER_2D);
+
+  if (config.tex_specular_color) {
+    builder.parameter("specularColorMap", MaterialBuilder::SamplerType::SAMPLER_2D);
+  }
+  if(config.tex_specular_factor) {
+    builder.parameter("specularFactorMap", MaterialBuilder::SamplerType::SAMPLER_2D); 
+  }
 
   if (config.max_uv_index() > 0) {
     builder.require(VertexAttribute::UV1);
@@ -264,16 +281,11 @@ Material *create_material_from_config(Engine &engine, MaterialConfig &config)
     builder.blending(MaterialBuilder::BlendingMode::OPAQUE);
   }
 
-  if (config.tex_specular_color) {
-    builder.parameter("specularColorFactor", MaterialBuilder::UniformType::FLOAT3);
-    builder.parameter("specularColorMap", MaterialBuilder::SamplerType::SAMPLER_2D);
-  }
+  if (config.tex_specular_color)
+    builder.shading(Shading::SPECULAR_GLOSSINESS);
+  else
+    builder.shading(Shading::LIT);
 
-  if(config.tex_specular_factor) {
-    builder.parameter("specularFactorMap", MaterialBuilder::SamplerType::SAMPLER_2D); 
-  }
-
-  builder.shading(Shading::LIT);
   Package pkg = builder.build(engine.getJobSystem());
   return Material::Builder().package(pkg.getData(), pkg.getSize()).build(engine);
 }
@@ -945,18 +957,16 @@ std::unique_ptr<MaterialConfig> MeshAssimp::load_material(const aiScene *scene, 
 
   material->Get(AI_MATKEY_TWOSIDED, mtl_config.twoside);
 
-  {
-    aiShadingMode sm;
-    material->Get<aiShadingMode>(AI_MATKEY_SHADING_MODEL, sm);
-  }
+  aiShadingMode sm;
+  material->Get<aiShadingMode>(AI_MATKEY_SHADING_MODEL, sm);
 
   {
     aiColor4D color;
     material->Get(AI_MATKEY_BASE_COLOR, color);
     mtl_config.base_color = float4(color.r, color.g, color.b, color.a);
     auto [tex, uv] = load_textures(scene, material, aiTextureType_BASE_COLOR);
-    if(tex) {
-      mtl_config.tex_base_color = tex; 
+    if (tex) {
+      mtl_config.tex_base_color = tex;
       mtl_config.uv_base_color = uv;
     }
   }
@@ -983,13 +993,9 @@ std::unique_ptr<MaterialConfig> MeshAssimp::load_material(const aiScene *scene, 
     std::tie(mtl_config.tex_roughness, mtl_config.uv_roughness) = load_textures(scene, material, aiTextureType_DIFFUSE_ROUGHNESS);
   }
 
-  //{
-  //  auto [tex, uv] = load_textures(scene, material, aiTextureType_SHININESS);
-  //  if(tex) {
-  //    mtl_config.tex_specular_color = tex;
-  //    mtl_config.uv_specular_color = uv;
-  //  }
-  //}
+  {
+    std::tie(mtl_config.tex_specular_color, mtl_config.uv_specular_color) = load_textures(scene, material, aiTextureType_SHININESS);
+  }
 
   {
     std::tie(mtl_config.tex_specular_factor, mtl_config.uv_specular_factor) = load_textures(scene, material, aiTextureType_SPECULAR);
@@ -1070,7 +1076,10 @@ void MeshAssimp::build_materials(filament::Engine *engine)
       return;
     auto &tc = _texture_config[tex_id];
     TextureSampler sampler(tc->minfilter, tc->magfilter);
-    auto &name = tex_name[tc->type];
+    auto iter = tex_name.find(tc->type);
+    if (iter == tex_name.end())
+      return;
+    auto &name = iter->second;
     mtl->setParameter(name.c_str(), _textures[tex_id], sampler);
   };
 
@@ -1088,6 +1097,10 @@ void MeshAssimp::build_materials(filament::Engine *engine)
     auto mtl = material->createInstance(iter.first.c_str());
     _materials[iter.first] = mtl;
 
+    mtl->setParameter("baseColor", RgbaType::LINEAR, c->base_color);
+    mtl->setParameter("metallicFactor", c->metallic);
+    mtl->setParameter("roughnessFactor", c->roughness);
+
     fun2(mtl, c->tex_base_color);
     fun2(mtl, c->tex_ao);
     fun2(mtl, c->tex_emissive);
@@ -1095,10 +1108,6 @@ void MeshAssimp::build_materials(filament::Engine *engine)
     fun2(mtl, c->tex_specular);
     fun2(mtl, c->tex_specular_factor);
     fun2(mtl, c->tex_specular_color);
-
-    mtl->setParameter("baseColorFactor", RgbaType::LINEAR, c->base_color);
-    mtl->setParameter("metallicFactor", c->metallic);
-    mtl->setParameter("roughnessFactor", c->roughness);
   }
 }
 
