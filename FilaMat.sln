@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MdlViewer", "MdlViewer\MdlV
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "filamat", "..\0\filament\libs\filamat\filamat.vcxproj", "{8D7E1E83-3BC3-3FE0-9342-2F4E46C32035}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "filament", "..\0\filament\filament\filament.vcxproj", "{E3AE7DBD-42F8-3389-8781-01923CFE897A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -123,6 +125,30 @@ Global
 		{8D7E1E83-3BC3-3FE0-9342-2F4E46C32035}.RelWithDebInfo|x64.Build.0 = RelWithDebInfo|x64
 		{8D7E1E83-3BC3-3FE0-9342-2F4E46C32035}.RelWithDebInfo|x86.ActiveCfg = RelWithDebInfo|x64
 		{8D7E1E83-3BC3-3FE0-9342-2F4E46C32035}.RelWithDebInfo|x86.Build.0 = RelWithDebInfo|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.Debug|Any CPU.Build.0 = Debug|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.Debug|x64.ActiveCfg = Debug|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.Debug|x64.Build.0 = Debug|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.Debug|x86.ActiveCfg = Debug|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.Debug|x86.Build.0 = Debug|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.MinSizeRel|Any CPU.ActiveCfg = MinSizeRel|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.MinSizeRel|Any CPU.Build.0 = MinSizeRel|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.MinSizeRel|x64.ActiveCfg = MinSizeRel|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.MinSizeRel|x64.Build.0 = MinSizeRel|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.MinSizeRel|x86.ActiveCfg = MinSizeRel|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.MinSizeRel|x86.Build.0 = MinSizeRel|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.Release|Any CPU.ActiveCfg = Release|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.Release|Any CPU.Build.0 = Release|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.Release|x64.ActiveCfg = Release|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.Release|x64.Build.0 = Release|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.Release|x86.ActiveCfg = Release|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.Release|x86.Build.0 = Release|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.RelWithDebInfo|Any CPU.ActiveCfg = RelWithDebInfo|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.RelWithDebInfo|Any CPU.Build.0 = RelWithDebInfo|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.RelWithDebInfo|x64.ActiveCfg = RelWithDebInfo|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.RelWithDebInfo|x64.Build.0 = RelWithDebInfo|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.RelWithDebInfo|x86.ActiveCfg = RelWithDebInfo|x64
+		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.RelWithDebInfo|x86.Build.0 = RelWithDebInfo|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

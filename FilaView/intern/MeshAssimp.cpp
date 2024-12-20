@@ -44,6 +44,8 @@
 
 #include <stb_image.h>
 
+#include <spdlog/spdlog.h>
+
 #include "pcv_mat.h"
 
 using namespace filament;
@@ -62,11 +64,11 @@ using namespace utils;
 std::map<aiTextureType, std::string> tex_name = {
   {aiTextureType_BASE_COLOR, "baseColorMap"}, 
   {aiTextureType_DIFFUSE, "baseColorMap"}, 
-  {aiTextureType_SPECULAR, "specularFactorMap"},
   {aiTextureType_AMBIENT, "aoMap"},
   {aiTextureType_EMISSIVE, "emissiveMap"},
   {aiTextureType_NORMALS, "normalMap"},
-  {aiTextureType_SHININESS, "specularColorMap"}
+  {aiTextureType_SHININESS, "specularColorMap"},
+  {aiTextureType_SPECULAR, "glossinessMap"},
 };
 
 enum class AlphaMode : uint8_t { OPAQUE, MASKED, TRANSPARENT };
@@ -101,6 +103,9 @@ struct MaterialConfig {
   uint64_t tex_base_color = 0;
   uint8_t uv_base_color = 0;
 
+  uint64_t tex_normal = 0;
+  uint8_t uv_normal = 0;
+
   uint64_t tex_specular = 0;
   uint8_t uv_specular = 0;
 
@@ -119,8 +124,8 @@ struct MaterialConfig {
   uint64_t tex_ao = 0;
   uint8_t uv_ao = 0;
 
-  uint64_t tex_normal = 0;
-  uint8_t uv_normal = 0;
+  uint64_t tex_glossiness = 0;
+  uint8_t uv_glossiness = 0;
 
   float metallic = 0;
   uint64_t tex_metallic = 0;
@@ -157,137 +162,6 @@ uint64_t hash_material_config(const MaterialConfig &config)
   append_boolean_to_bitmask(bitmask, config.uv_ao == 0);
   append_boolean_to_bitmask(bitmask, config.uv_normal == 0);
   return bitmask;
-}
-
-std::string shader_from_config(const MaterialConfig &config)
-{
-  std::string shader = R"SHADER(
-        void material(inout MaterialInputs material) {
-    )SHADER";
-
-  if (config.tex_normal) {
-    shader += "float2 uv_normal = getUV" + std::to_string(config.uv_normal) + "();\n";
-    shader += R"SHADER(
-      vec3 nrm_dis = texture(materialParams_normalMap, uv_normal).xyz * 2.0 - 1.0;
-      nrm_dis.y = -nrm_dis.y;
-      material.normal += nrm_dis;
-    )SHADER";
-  }
-
-  shader += R"SHADER(
-        prepareMaterial(material);
-        material.baseColor = materialParams.baseColor; 
-    )SHADER";
-
-  if (config.tex_base_color) {
-    shader += "float2 uv_base_color = getUV" + std::to_string(config.uv_base_color) + "();\n";
-    shader += R"SHADER(
-      vec4 baseColor = texture(materialParams_baseColorMap, uv_base_color);
-      material.baseColor = baseColor;
-    )SHADER";
-  }
-
-  if (config.tex_specular_color) {
-    shader += "float2 uv_specular_color = getUV" + std::to_string(config.uv_specular_color) + "();\n";
-    shader += R"SHADER(
-      vec3 specularColor = texture(materialParams_specularColorMap, uv_specular_color).rgb;
-      material.specularColor = specularColor; 
-    )SHADER";
-  }
-
-  if (config.tex_specular_factor) {
-    shader += "float2 uv_specular_factor = getUV" + std::to_string(config.uv_specular_factor) + "();\n";
-    shader += R"SHADER(
-      float specularFactor = texture(materialParams_specularFactorMap, uv_specular_factor).r;
-      material.specularFactor = specularFactor;
-    )SHADER";
-  }
-
-  //shader += "float2 uv_ao = getUV" + std::to_string(config.uv_ao) + "();\n";
-  //shader += "float2 uv_emissive = getUV" + std::to_string(config.uv_emissive) + "();\n";
-
-  // shader += "float2 uv_metallic_rough = getUV" + std::to_string(config.uv_metallic_rough) + "();\n";
-  shader += R"SHADER(
-        //material.metallic = materialParams.metallicFactor;
-        //material.roughness = materialParams.roughnessFactor;
-        //material.roughness = materialParams.roughnessFactor * metallicRoughness.g;
-        //material.metallic = materialParams.metallicFactor * metallicRoughness.b;
-        //vec4 metallicRoughness = texture(materialParams_metallicRoughnessMap, uv_metallic_rough);
-        //material.ambientOcclusion = texture(materialParams_aoMap, uv_ao).r;
-        //material.emissive.rgb = texture(materialParams_emissiveMap, uv_emissive).rgb;
-        //material.emissive.rgb *= materialParams.emissiveFactor.rgb;
-        //material.emissive.a = 0.0;
-    )SHADER";
-
-  // if (config.tex_shiness) {
-  //   shader += "float2 uv_roughness = getUV" + std::to_string(config.uv_roughness) + "();\n";
-  //   shader += "vec3 rclr = texture(materialParams_roughnessMap, uv_roughness).rgb;\n";
-  //   shader += "material.roughness = 1.0 - (0.213 * rclr.r + 0.715 * rclr.g + 0.072 * rclr.b);\n";
-  // }
-
-  shader += "}\n";
-
-  return shader;
-}
-
-Material *create_material_from_config(Engine &engine, MaterialConfig &config)
-{
-  std::string shader = shader_from_config(config);
-  MaterialBuilder::init();
-  MaterialBuilder builder;
-  builder.name("material")
-    .targetApi(MaterialBuilder::TargetApi::VULKAN)
-    .material(shader.c_str())
-    .doubleSided(config.twoside)
-    .require(VertexAttribute::UV0)
-    .parameter("baseColor", MaterialBuilder::UniformType::FLOAT4)
-    .parameter("baseColorMap", MaterialBuilder::SamplerType::SAMPLER_2D)
-    .parameter("metallicFactor", MaterialBuilder::UniformType::FLOAT)
-    .parameter("roughnessFactor", MaterialBuilder::UniformType::FLOAT);
-
-  if (config.tex_normal)
-    builder.parameter("normalMap", MaterialBuilder::SamplerType::SAMPLER_2D);
-
-    //.parameter("metallicRoughnessMap", MaterialBuilder::SamplerType::SAMPLER_2D)
-    //.parameter("normalScale", MaterialBuilder::UniformType::FLOAT)
-    //.parameter("aoStrength", MaterialBuilder::UniformType::FLOAT)
-    //.parameter("emissiveFactor", MaterialBuilder::UniformType::FLOAT3)
-
-  if (config.tex_ao)
-    builder.parameter("aoMap", MaterialBuilder::SamplerType::SAMPLER_2D);
-  if (config.tex_emissive)
-    builder.parameter("emissiveMap", MaterialBuilder::SamplerType::SAMPLER_2D);
-
-  if (config.tex_specular_color) {
-    builder.parameter("specularColorMap", MaterialBuilder::SamplerType::SAMPLER_2D);
-  }
-  if(config.tex_specular_factor) {
-    builder.parameter("specularFactorMap", MaterialBuilder::SamplerType::SAMPLER_2D); 
-  }
-
-  if (config.max_uv_index() > 0) {
-    builder.require(VertexAttribute::UV1);
-  }
-
-  switch (config.alpha_mode) {
-  case AlphaMode::MASKED:
-    builder.blending(MaterialBuilder::BlendingMode::MASKED);
-    builder.maskThreshold(config.mask_threshold);
-    break;
-  case AlphaMode::TRANSPARENT:
-    builder.blending(MaterialBuilder::BlendingMode::TRANSPARENT);
-    break;
-  default:
-    builder.blending(MaterialBuilder::BlendingMode::OPAQUE);
-  }
-
-  if (config.tex_specular_color)
-    builder.shading(Shading::SPECULAR_GLOSSINESS);
-  else
-    builder.shading(Shading::LIT);
-
-  Package pkg = builder.build(engine.getJobSystem());
-  return Material::Builder().package(pkg.getData(), pkg.getSize()).build(engine);
 }
 
 template <typename VECTOR, typename INDEX> Box computeTransformedAABB(VECTOR const *vertices, INDEX const *indices, size_t count, const mat4f &transform) noexcept
@@ -399,22 +273,6 @@ Texture *create_texture(uint32_t pixel, Engine *engine)
   return texture;
 }
 
-// Takes a texture filename and returns the index of the embedded texture,
-// -1 if the texture is not embedded
-int32_t get_embedded_texture_id(const aiString &path)
-{
-  const char *pathStr = path.C_Str();
-  if (path.length >= 2 && pathStr[0] == '*') {
-    for (int i = 1; i < path.length; i++) {
-      if (!isdigit(pathStr[i])) {
-        return -1;
-      }
-    }
-    return std::atoi(pathStr + 1); // NOLINT
-  }
-  return -1;
-}
-
 TextureSampler::WrapMode map_texture_mode(aiTextureMapMode map_mode)
 {
   switch (map_mode) {
@@ -467,16 +325,17 @@ bool MeshAssimp::load_assert(const utils::Path &path)
   importer.SetPropertyBool(AI_CONFIG_PP_PTV_KEEP_HIERARCHY, true);
 
   const aiScene *scene = importer.ReadFile(path,
-                                           // normals and tangents
-                                           aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_FixInfacingNormals |
-                                             // UV Coordinates
-                                             aiProcess_GenUVCoords |
-                                             // topology optimization
-                                             aiProcess_FindInstances | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices |
-                                             // misc optimization
-                                             aiProcess_ImproveCacheLocality | aiProcess_SortByPType |
-                                             // we only support triangles
-                                             aiProcess_Triangulate);
+       // normals and tangents
+       aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_FixInfacingNormals |
+       // UV Coordinates
+       aiProcess_GenUVCoords |
+       // topology optimization
+       aiProcess_FindInstances | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices |
+       // misc optimization
+       aiProcess_ImproveCacheLocality | aiProcess_SortByPType |
+       // we only support triangles
+       aiProcess_Triangulate
+  );
 
   if (!scene) {
     std::cout << "No scene" << std::endl;
@@ -491,8 +350,8 @@ bool MeshAssimp::load_assert(const utils::Path &path)
   auto asset = std::make_unique<Asset>();
   asset->file = path;
 
-  const std::function<void(aiNode const *node, size_t &totalVertexCount, size_t &totalIndexCount)> countVertices = [scene, &countVertices](aiNode const *node, size_t &totalVertexCount,
-                                                                                                                                           size_t &totalIndexCount) {
+  const std::function<void(aiNode const *node, size_t &totalVertexCount, size_t &totalIndexCount)> countVertices = 
+    [scene, &countVertices](aiNode const *node, size_t &totalVertexCount, size_t &totalIndexCount) {
     for (size_t i = 0; i < node->mNumMeshes; i++) {
       aiMesh const *mesh = scene->mMeshes[node->mMeshes[i]];
       totalVertexCount += mesh->mNumVertices;
@@ -531,9 +390,11 @@ bool MeshAssimp::load_assert(const utils::Path &path)
   float2 maxUV1 = float2(std::numeric_limits<float>::lowest());
   getMinMaxUV(scene, node, minUV1, maxUV1, 1);
 
-  asset->snorm_uv0 = minUV0.x >= -1.0f && minUV0.x <= 1.0f && maxUV0.x >= -1.0f && maxUV0.x <= 1.0f && minUV0.y >= -1.0f && minUV0.y <= 1.0f && maxUV0.y >= -1.0f && maxUV0.y <= 1.0f;
+  asset->snorm_uv0 = minUV0.x >= -1.0f && minUV0.x <= 1.0f && maxUV0.x >= -1.0f && maxUV0.x <= 1.0f 
+    && minUV0.y >= -1.0f && minUV0.y <= 1.0f && maxUV0.y >= -1.0f && maxUV0.y <= 1.0f;
 
-  asset->snorm_uv1 = minUV1.x >= -1.0f && minUV1.x <= 1.0f && maxUV1.x >= -1.0f && maxUV1.x <= 1.0f && minUV1.y >= -1.0f && minUV1.y <= 1.0f && maxUV1.y >= -1.0f && maxUV1.y <= 1.0f;
+  asset->snorm_uv1 = minUV1.x >= -1.0f && minUV1.x <= 1.0f && maxUV1.x >= -1.0f && maxUV1.x <= 1.0f 
+    && minUV1.y >= -1.0f && minUV1.y <= 1.0f && maxUV1.y >= -1.0f && maxUV1.y <= 1.0f;
 
   if (asset->snorm_uv0) {
     if (asset->snorm_uv1) {
@@ -595,7 +456,9 @@ bool MeshAssimp::load_assert(const utils::Path &path)
   return true;
 }
 
-template <bool SNORMUV0, bool SNORMUV1> void MeshAssimp::process_node(Asset &asset, const aiScene *scene, size_t deep, size_t matCount, const aiNode *node, int parentIndex, size_t &depth) const
+template <bool SNORMUV0, bool SNORMUV1> 
+void MeshAssimp::process_node(Asset &asset, const aiScene *scene, size_t deep, size_t matCount, 
+  const aiNode *node, int parentIndex, size_t &depth) const
 {
   mat4f const &current = transpose(*reinterpret_cast<mat4f const *>(&node->mTransformation));
 
@@ -881,8 +744,8 @@ std::string find_file(const std::string &path, const std::string &filename)
 
 std::shared_ptr<TextureConfig> load_texture(const aiScene *scene, const std::string &dir_name, const aiString &tex_file)
 {
-  int32_t embedId = get_embedded_texture_id(tex_file);
-  if (embedId == -1) {
+  auto [tex, idx] = scene->GetEmbeddedTextureAndIndex(tex_file.C_Str());
+  if (!tex) {
     auto pf = find_file(dir_name, tex_file.C_Str());
     if (!std::filesystem::exists(pf))
       return nullptr;
@@ -898,12 +761,10 @@ std::shared_ptr<TextureConfig> load_texture(const aiScene *scene, const std::str
     return tex_config;
   }
 
-  auto tex = scene->mTextures[embedId];
   auto tex_config = std::make_unique<TextureConfig>();
   tex_config->pixels = (uint8_t *)tex->pcData;
   tex_config->width = tex->mWidth;
   tex_config->height = tex->mHeight;
-  tex->pcData = nullptr;
 
   if (strcmp(tex->achFormatHint, "rgba888") == 0) {
     tex_config->format = backend::TextureFormat::RGB8;
@@ -936,6 +797,8 @@ auto MeshAssimp::load_textures(const aiScene *scene, const aiMaterial *material,
     material->Get("$tex.mappingfiltermin", type, i, min_type);
     material->Get("$tex.mappingfiltermag", type, i, mag_type);
     auto tex = ::load_texture(scene, folder, tex_name);
+    if (!tex)
+      continue;
     tex->type = tex_type;
     tex->minfilter = ai_minfilter_to_filament(min_type);
     tex->magfilter = ai_magfilter_to_filament(mag_type);
@@ -943,10 +806,10 @@ auto MeshAssimp::load_textures(const aiScene *scene, const aiMaterial *material,
     uint64_t tex_code = std::hash<std::string>()(std::string(tex_name.C_Str()) + std::to_string(type));
     _texture_config[tex_code] = tex;
 
-    return std::tuple(tex_code, uvindex);
+    return std::tuple(tex_code, uvindex, std::string(tex_name.C_Str()));
   }
 
-  return std::make_tuple<uint64_t, uint32_t>(0, 0);
+  return std::make_tuple<uint64_t, uint32_t>(0, 0, std::string(""));
 }
 
 std::unique_ptr<MaterialConfig> MeshAssimp::load_material(const aiScene *scene, const aiMaterial *material)
@@ -960,15 +823,12 @@ std::unique_ptr<MaterialConfig> MeshAssimp::load_material(const aiScene *scene, 
   aiShadingMode sm;
   material->Get<aiShadingMode>(AI_MATKEY_SHADING_MODEL, sm);
 
+  std::string tex_name;
   {
     aiColor4D color;
     material->Get(AI_MATKEY_BASE_COLOR, color);
     mtl_config.base_color = float4(color.r, color.g, color.b, color.a);
-    auto [tex, uv] = load_textures(scene, material, aiTextureType_BASE_COLOR);
-    if (tex) {
-      mtl_config.tex_base_color = tex;
-      mtl_config.uv_base_color = uv;
-    }
+    std::tie(mtl_config.tex_base_color, mtl_config.uv_base_color, tex_name) = load_textures(scene, material, aiTextureType_BASE_COLOR);
   }
 
   {
@@ -976,7 +836,7 @@ std::unique_ptr<MaterialConfig> MeshAssimp::load_material(const aiScene *scene, 
     if (aiReturn_SUCCESS == material->Get(AI_MATKEY_COLOR_DIFFUSE, color))
       mtl_config.base_color = float4(color.r, color.g, color.b, color.a);
 
-    auto [tex, uv] = load_textures(scene, material, aiTextureType_DIFFUSE);
+    auto [tex, uv, n] = load_textures(scene, material, aiTextureType_DIFFUSE);
     if (tex) {
       mtl_config.tex_base_color = tex;
       mtl_config.uv_base_color = uv;
@@ -985,28 +845,38 @@ std::unique_ptr<MaterialConfig> MeshAssimp::load_material(const aiScene *scene, 
 
   {
     material->Get(AI_MATKEY_METALLIC_FACTOR, mtl_config.metallic);
-    std::tie(mtl_config.tex_metallic, mtl_config.uv_metallic) = load_textures(scene, material, aiTextureType_METALNESS);
+    std::tie(mtl_config.tex_metallic, mtl_config.uv_metallic, tex_name) = load_textures(scene, material, aiTextureType_METALNESS);
+    if (mtl_config.tex_metallic)
+      spdlog::debug("metallic texture : %s", tex_name);
   }
 
   {
     material->Get(AI_MATKEY_ROUGHNESS_FACTOR, mtl_config.roughness);
-    std::tie(mtl_config.tex_roughness, mtl_config.uv_roughness) = load_textures(scene, material, aiTextureType_DIFFUSE_ROUGHNESS);
+    std::tie(mtl_config.tex_roughness, mtl_config.uv_roughness, tex_name) = load_textures(scene, material, aiTextureType_DIFFUSE_ROUGHNESS);
   }
 
   {
-    std::tie(mtl_config.tex_specular_color, mtl_config.uv_specular_color) = load_textures(scene, material, aiTextureType_SHININESS);
+    std::tie(mtl_config.tex_specular_color, mtl_config.uv_specular_color, tex_name) = load_textures(scene, material, aiTextureType_SHININESS);
+    if(mtl_config.tex_specular_color)
+      spdlog::debug("shininess texture(specular color) : %s", tex_name);
   }
 
   {
-    std::tie(mtl_config.tex_specular_factor, mtl_config.uv_specular_factor) = load_textures(scene, material, aiTextureType_SPECULAR);
+    auto [tex, uv, name] = load_textures(scene, material, aiTextureType_SPECULAR);
+    if (tex) {
+      mtl_config.tex_glossiness = tex;
+      mtl_config.uv_glossiness = uv;
+    }
+    if (mtl_config.tex_glossiness)
+      spdlog::debug("glossiness texture : %s", name);
   }
 
   {
-    std::tie(mtl_config.tex_height, mtl_config.uv_height) = load_textures(scene, material, aiTextureType_HEIGHT);
+    std::tie(mtl_config.tex_height, mtl_config.uv_height, tex_name) = load_textures(scene, material, aiTextureType_HEIGHT);
   }
 
   {
-    std::tie(mtl_config.tex_normal, mtl_config.uv_normal) = load_textures(scene, material, aiTextureType_NORMALS);
+    std::tie(mtl_config.tex_normal, mtl_config.uv_normal, tex_name) = load_textures(scene, material, aiTextureType_NORMALS);
   }
 
   {
@@ -1022,7 +892,7 @@ std::unique_ptr<MaterialConfig> MeshAssimp::load_material(const aiScene *scene, 
 
 void MeshAssimp::build_materials(filament::Engine *engine)
 {
-  auto build_texture = [this, engine](uint64_t tex_id) {
+  auto build_texture = [this, engine](uint64_t tex_id) -> filament::Texture * {
     filament::Texture *texture = nullptr;
 
     auto iter = _textures.find(tex_id);
@@ -1035,6 +905,8 @@ void MeshAssimp::build_materials(filament::Engine *engine)
     if (tc->height == 0) {
       int width, height, channel;
       auto data = stbi_load_from_memory((unsigned char *)tc->pixels, tc->width, &width, &height, &channel, 0);
+      if (data == nullptr)
+        return nullptr;
       builder.width(width).height(height);
       tc->channel = channel;
       if (channel == 4) {
@@ -1043,8 +915,8 @@ void MeshAssimp::build_materials(filament::Engine *engine)
       } else if (channel == 3) {
         fmt = Texture::Format::RGB;
         builder.format(filament::Texture::InternalFormat::RGB8);
-      } else if(channel == 1) {
-        fmt = Texture::Format::R; 
+      } else if (channel == 1) {
+        fmt = Texture::Format::R;
         builder.format(filament::Texture::InternalFormat::R8);
       }
       texture = builder.build(*engine);
@@ -1062,8 +934,7 @@ void MeshAssimp::build_materials(filament::Engine *engine)
         fmt = Texture::Format::RGB;
         break;
       }
-      Texture::PixelBufferDescriptor buf(tc->pixels, size_t(tc->width * tc->height * tc->channel), 
-        fmt, Texture::Type::UBYTE, (Texture::PixelBufferDescriptor::Callback)&free);
+      Texture::PixelBufferDescriptor buf(tc->pixels, size_t(tc->width * tc->height * tc->channel), fmt, Texture::Type::UBYTE, (Texture::PixelBufferDescriptor::Callback)&free);
       texture->setImage(*engine, 0, std::move(buf));
     }
     texture->generateMipmaps(*engine);
@@ -1072,8 +943,14 @@ void MeshAssimp::build_materials(filament::Engine *engine)
   };
 
   auto fun2 = [this, engine](MaterialInstance *mtl, uint64_t tex_id) {
-    if (tex_id == 0)
-      return;
+    {
+      if (tex_id == 0)
+        return;
+      auto iter = _textures.find(tex_id);
+      if (iter == _textures.end())
+        return;
+    }
+
     auto &tc = _texture_config[tex_id];
     TextureSampler sampler(tc->minfilter, tc->magfilter);
     auto iter = tex_name.find(tc->type);
@@ -1108,7 +985,150 @@ void MeshAssimp::build_materials(filament::Engine *engine)
     fun2(mtl, c->tex_specular);
     fun2(mtl, c->tex_specular_factor);
     fun2(mtl, c->tex_specular_color);
+    fun2(mtl, c->tex_glossiness);
   }
+}
+
+bool MeshAssimp::has_texture(uint64_t id)
+{
+  return id && _textures.find(id) != _textures.end();
+}
+
+std::string MeshAssimp::shader_from_config(const MaterialConfig &config)
+{
+  std::string shader = R"SHADER(
+        void material(inout MaterialInputs material) {
+    )SHADER";
+
+  if (has_texture(config.tex_normal)) {
+    shader += "float2 uv_normal = getUV" + std::to_string(config.uv_normal) + "();\n";
+    shader += R"SHADER(
+      vec3 nrm_dis = texture(materialParams_normalMap, uv_normal).xyz * 2.0 - 1.0;
+      nrm_dis.y = -nrm_dis.y;
+      material.normal += nrm_dis;
+    )SHADER";
+  }
+
+  shader += R"SHADER(
+        prepareMaterial(material);
+        material.baseColor = materialParams.baseColor; 
+    )SHADER";
+
+  if (has_texture(config.tex_base_color)) {
+    shader += "float2 uv_base_color = getUV" + std::to_string(config.uv_base_color) + "();\n";
+    shader += R"SHADER(
+      vec4 baseColor = texture(materialParams_baseColorMap, uv_base_color);
+      material.baseColor = baseColor;
+    )SHADER";
+  }
+
+  if (has_texture(config.tex_specular_color)) {
+    shader += "float2 uv_specular_color = getUV" + std::to_string(config.uv_specular_color) + "();\n";
+    shader += R"SHADER(
+      vec3 specularColor = texture(materialParams_specularColorMap, uv_specular_color).rgb;
+      material.specularColor = specularColor; 
+    )SHADER";
+  }
+
+  if (has_texture(config.tex_glossiness)) {
+    shader += "float2 uv_glossiness = getUV" + std::to_string(config.uv_glossiness) + "();\n";
+    shader += R"(
+      float glossiness = texture(materialParams_glossinessMap, uv_glossiness).r;
+      material.glossiness = glossiness;
+    )";
+  }
+
+  //shader += "float2 uv_ao = getUV" + std::to_string(config.uv_ao) + "();\n";
+  //shader += "float2 uv_emissive = getUV" + std::to_string(config.uv_emissive) + "();\n";
+
+  // shader += "float2 uv_metallic_rough = getUV" + std::to_string(config.uv_metallic_rough) + "();\n";
+  shader += R"SHADER(
+        //material.metallic = materialParams.metallicFactor;
+        //material.roughness = materialParams.roughnessFactor;
+        //material.roughness = materialParams.roughnessFactor * metallicRoughness.g;
+        //material.metallic = materialParams.metallicFactor * metallicRoughness.b;
+        //vec4 metallicRoughness = texture(materialParams_metallicRoughnessMap, uv_metallic_rough);
+        //material.ambientOcclusion = texture(materialParams_aoMap, uv_ao).r;
+        //material.emissive.rgb = texture(materialParams_emissiveMap, uv_emissive).rgb;
+        //material.emissive.rgb *= materialParams.emissiveFactor.rgb;
+        //material.emissive.a = 0.0;
+    )SHADER";
+
+  // if (config.tex_shiness) {
+  //   shader += "float2 uv_roughness = getUV" + std::to_string(config.uv_roughness) + "();\n";
+  //   shader += "vec3 rclr = texture(materialParams_roughnessMap, uv_roughness).rgb;\n";
+  //   shader += "material.roughness = 1.0 - (0.213 * rclr.r + 0.715 * rclr.g + 0.072 * rclr.b);\n";
+  // }
+
+  shader += "}\n";
+
+  return shader;
+}
+
+filament::Material *MeshAssimp::create_material_from_config(Engine &engine, MaterialConfig &config)
+{
+  std::string shader = shader_from_config(config);
+  MaterialBuilder::init();
+  MaterialBuilder builder;
+  builder.name("material")
+    .targetApi(MaterialBuilder::TargetApi::VULKAN)
+    .material(shader.c_str())
+    .doubleSided(config.twoside)
+    .require(VertexAttribute::UV0)
+    .parameter("baseColor", MaterialBuilder::UniformType::FLOAT4)
+    .parameter("baseColorMap", MaterialBuilder::SamplerType::SAMPLER_2D)
+    .parameter("metallicFactor", MaterialBuilder::UniformType::FLOAT)
+    .parameter("roughnessFactor", MaterialBuilder::UniformType::FLOAT);
+
+  if (config.tex_normal)
+    builder.parameter("normalMap", MaterialBuilder::SamplerType::SAMPLER_2D);
+
+  //.parameter("metallicRoughnessMap", MaterialBuilder::SamplerType::SAMPLER_2D)
+  //.parameter("normalScale", MaterialBuilder::UniformType::FLOAT)
+  //.parameter("aoStrength", MaterialBuilder::UniformType::FLOAT)
+  //.parameter("emissiveFactor", MaterialBuilder::UniformType::FLOAT3)
+
+  if (has_texture(config.tex_ao))
+    builder.parameter("aoMap", MaterialBuilder::SamplerType::SAMPLER_2D);
+  if (has_texture(config.tex_emissive))
+    builder.parameter("emissiveMap", MaterialBuilder::SamplerType::SAMPLER_2D);
+
+  if (has_texture(config.tex_specular_color)) {
+    builder.parameter("specularColorMap", MaterialBuilder::SamplerType::SAMPLER_2D);
+  }
+  if (has_texture(config.tex_glossiness)) {
+    builder.parameter("glossinessMap", MaterialBuilder::SamplerType::SAMPLER_2D);
+  }
+
+  if (config.max_uv_index() > 0) {
+    builder.require(VertexAttribute::UV1);
+  }
+
+  switch (config.alpha_mode) {
+  case AlphaMode::MASKED:
+    builder.blending(MaterialBuilder::BlendingMode::MASKED);
+    builder.maskThreshold(config.mask_threshold);
+    break;
+  case AlphaMode::TRANSPARENT:
+    builder.blending(MaterialBuilder::BlendingMode::TRANSPARENT);
+    break;
+  default:
+    builder.blending(MaterialBuilder::BlendingMode::OPAQUE);
+  }
+
+  if (config.tex_specular_color || config.tex_glossiness)
+    builder.shading(Shading::SPECULAR_GLOSSINESS);
+  else
+    builder.shading(Shading::LIT);
+
+  using namespace filament;
+  // builder.shading(Shading::UNLIT);
+  // builder.variantFilter((filament::UserVariantFilterMask)filament::UserVariantFilterBit::ALL);
+  builder.variantFilter(
+    (UserVariantFilterMask)(UserVariantFilterBit::FOG | UserVariantFilterBit::VSM | UserVariantFilterBit::DYNAMIC_LIGHTING | UserVariantFilterBit::STE | UserVariantFilterBit::SHADOW_RECEIVER));
+
+  Package pkg = builder.build(engine.getJobSystem());
+  return Material::Builder().package(pkg.getData(), pkg.getSize()).build(engine);
 }
 
 void MeshAssimp::adjust_material_config(MaterialConfig *material)

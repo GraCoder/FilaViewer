@@ -107,6 +107,12 @@ private:
 
   void build_materials(filament::Engine *engine);
 
+  inline bool has_texture(uint64_t id);
+
+  std::string shader_from_config(const MaterialConfig &config);
+
+  filament::Material *create_material_from_config(filament::Engine &engine, MaterialConfig &config);
+
   void adjust_material_config(MaterialConfig *material);
 
 private:
