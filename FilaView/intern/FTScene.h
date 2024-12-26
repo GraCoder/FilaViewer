@@ -6,6 +6,7 @@
 #include <mutex>
 
 #include "TScene.h"
+#include "tsl/robin_map.h"
 
 namespace filament {
 class View;
@@ -21,7 +22,6 @@ class PCDispatch;
 }
 
 class FTView;
-class MeshAssimp;
 
 class FTScene : public TScene {
 public:
@@ -48,15 +48,17 @@ public:
 
 public:
 
+  void _add_node(const std::shared_ptr<Node> &node);
+
+public:
+
   void realize(filament::Engine *engine);
 
-  void process(float delta);
+  void process(double delta);
 
 private:
 
   void gui(filament::Engine *, filament::View *);
-
-  void assimp_load(const std::string &file, float sz);
 
 private:
   bool _realized = false;
@@ -77,6 +79,6 @@ private:
   std::mutex _mutex;
   std::queue<std::function<void()>> _tasks;
 
-  std::unique_ptr<MeshAssimp> _assimp;
+  tsl::robin_map<uint32_t, std::shared_ptr<Node>> _nodes;
 };
 

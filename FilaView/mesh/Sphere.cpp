@@ -33,7 +33,7 @@ using namespace filament;
 using namespace filament::math;
 using namespace utils;
 
-struct Geometry {
+struct SphereGeometry {
   IcoSphere sphere = IcoSphere{2};
   std::vector<filament::math::short4> tangents;
   filament::VertexBuffer* vertexBuffer = nullptr;
@@ -42,16 +42,16 @@ struct Geometry {
 
 // note: this will be leaked since we don't have a good time to free it.
 // this should be a cache indexed on the sphere's subdivisions
-static Geometry* gGeometry = nullptr;
+static SphereGeometry* gSphereGeometry = nullptr;
 
 Sphere::Sphere(Engine& engine, Material const* material, bool culling) : mEngine(engine)
 {
-  Geometry* geometry = gGeometry;
+  SphereGeometry* geometry = gSphereGeometry;
 
   static_assert(sizeof(IcoSphere::Triangle) == sizeof(IcoSphere::Index) * 3, "indices are not packed");
 
   if (geometry == nullptr) {
-    geometry = gGeometry = new Geometry;
+    geometry = gSphereGeometry = new SphereGeometry;
 
     auto const& indices = geometry->sphere.getIndices();
     auto const& vertices = geometry->sphere.getVertices();

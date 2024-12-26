@@ -43,7 +43,7 @@ void FTView::set_pivot(const tg::vec3d &pos, double dis)
              .targetPosition(pos.x(), pos.y(), pos.z())
              .orbitHomePosition(pos.x(), pos.y(), pos.z() + dis)
              .viewport(vp.width, vp.height)
-             .orbitSpeed(0.005, 0.005)
+             .orbitSpeed(0.004, 0.004)
              //
              //.fovDirection(Fov::VERTICAL)
              //.fovDegrees(_camera->getFieldOfViewInDegrees(Camera::Fov::VERTICAL))
@@ -97,7 +97,7 @@ void FTView::set_scene(const std::shared_ptr<FTScene> &scene)
     _view->setScene(scene->fila_scene());
 }
 
-void FTView::process(float delta)
+void FTView::process(double delta)
 { 
   update_camera();
 

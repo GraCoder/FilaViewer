@@ -601,7 +601,8 @@ void MeshAssimp::process_node(Asset &asset, const aiScene *scene, size_t deep, s
   }
 }
 
-void MeshAssimp::build_assert(filament::Engine *engine, const filament::Material *basic_mtl, const filament::Material *default_mtl, bool override_mtl)
+void MeshAssimp::build_assert(filament::Engine *engine, 
+  const filament::Material *basic_mtl, const filament::Material *default_mtl, bool override_mtl)
 {
   if (!_asset)
     return;

@@ -14,7 +14,7 @@ namespace FilaMat.Views
             InitializeComponent();
         }
 
-        private async Task OpenFileHandle(InteractionContext<string?, string[]?> context)
+        private async Task OpenFileHandle(IInteractionContext<string?, string[]?> context)
         {
             var topl = TopLevel.GetTopLevel(this);
 

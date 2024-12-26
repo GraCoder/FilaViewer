@@ -37,7 +37,12 @@ TScene::~TScene()
 #endif
 }
 
-void TScene::add_pc(const std::shared_ptr<fpc::PCNode> &node)
+void TScene::add_node(const std::shared_ptr<Node> &node) 
+{
+  downcast(this)->_add_node(node);
+}
+
+void TScene::add_pointcloud(const std::shared_ptr<fpc::PCNode> &node)
 {
 #ifdef POINT_CLOUD_SUPPORT
   if (!_dispacher) {

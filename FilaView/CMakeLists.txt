@@ -79,6 +79,13 @@ set(intern_src
   intern/FTScene.h
   intern/FTScene.cpp
 
+  intern/RD_Gltf.h
+  intern/RD_Gltf.cpp
+  intern/RD_Model.h
+  intern/RD_Model.cpp
+  intern/RD_Geometry.h
+  intern/RD_Geometry.cpp
+
   #intern/PCCDispatch.h
   #intern/PCCDispatch.cpp
 )
@@ -111,8 +118,21 @@ set(source_files
   TScene.cpp
 )
 
-add_library(${target_name} SHARED ${source_files} ${intern_src} ${imgui_src} ${source_mesh} ${resgen_output})
+set(node_src
+  node/Node.h
+  node/Node.cpp
+  node/GltfNode.h
+  node/GltfNode.cpp
+  node/ModelNode.h
+  node/ModelNode.cpp
+  node/Geometry.h
+  node/Geometry.cpp
+)
+source_group(node FILES ${node_src})
 
+add_library(${target_name} SHARED ${source_files} ${intern_src} ${imgui_src} ${source_mesh} ${resgen_output}
+  ${node_src}
+)
 
 if(filament_single_thread)
 target_compile_definitions(${target_name} PRIVATE FILAMENT_SINGLE_THREADED)
@@ -147,6 +167,8 @@ set(filament_libs
   ${filament_dir}/lib/x86_64/dracodec.lib
   ${filament_dir}/lib/x86_64/image.lib
   ${filament_dir}/lib/x86_64/ktxreader.lib
+  ${filament_dir}/lib/x86_64/basis_transcoder.lib
+  ${filament_dir}/lib/x86_64/zstd.lib
   ${filament_dir}/lib/x86_64/bluevk.lib
 )
 

@@ -206,8 +206,8 @@ void FTWin::create_engine()
 
 void FTWin::poll_events() 
 {
-  float freq = SDL_GetPerformanceFrequency();
-  _time = SDL_GetPerformanceCounter();
+  float freq = SDL_GetPerformanceFrequency() / 1000.0;
+  uint64_t time = SDL_GetPerformanceCounter();
 
   static constexpr int mk[4] = {0, 0, 1, 2};
 
@@ -314,8 +314,7 @@ void FTWin::poll_events()
     }
 
     uint64_t now = SDL_GetPerformanceCounter();
-    float timestamp = (now - _time) / freq;
-    _time = now;
+    double timestamp = (now - time) / freq;
 
     //if (_gui && view()->gui_callback()) {
     //  ImGui::GetIO().DeltaTime = timestamp;

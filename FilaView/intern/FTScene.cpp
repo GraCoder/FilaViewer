@@ -10,24 +10,18 @@
 #include <filament/LightManager.h>
 #include <filament/Scene.h>
 #include <filament/Skybox.h>
+#include <filament/IndirectLight.h>
 #include <utils/Entity.h>
 #include <utils/EntityManager.h>
 
 #include <ibl/CubemapUtils.h>
-#include <filament/IndirectLight.h>
-
 #include <ktxreader/Ktx1Reader.h>
-
-#include <gltfio/AssetLoader.h>
-#include <gltfio/MaterialProvider.h>
-#include <gltfio/ResourceLoader.h>
 
 #include "FTView.h"
 
 #include "pcv_mat.h"
 #include "mesh/Cube.h"
 #include "mesh/Sphere.h"
-#include "MeshAssimp.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_WINDOWS_UTF8
@@ -42,6 +36,13 @@ Cube *_cube = 0;
 #include "PCDispatch.h"
 #include "PCNode.h"
 #endif
+
+#include "node/GltfNode.h"
+#include "node/ModelNode.h"
+#include "node/Geometry.h"
+#include "intern/RD_Gltf.h"
+#include "intern/RD_Model.h"
+#include "intern/RD_Geometry.h"
 
 using namespace filament;
 using namespace filament::math;
@@ -163,62 +164,42 @@ void FTScene::set_environment(const std::string &img_path, bool filter)
 
 void FTScene::load_model(const std::string &file, float size)
 {
-  FILE *fp = nullptr;
-  if (file.ends_with("gltf")) {
-    fp = fopen(file.c_str(), "rt");
-  } else if (file.ends_with("glb")) {
-    fp = fopen(file.c_str(), "rb");
-  } else {
-    assimp_load(file, size);
+  if (file.ends_with("gltf") || file.ends_with("glb")) {
+    auto node = std::make_shared<GltfNode>(file);
+    std::unique_lock<std::mutex> lock(_mutex);
+    _tasks.push(std::bind(
+      [this](const std::shared_ptr<GltfNode> &node) {
+        auto rd = static_cast<RD_Gltf *>(node->get_rd(true).get());
+        rd->build(_engine);
+        add_node(node);
+      },
+      node));
+    return;
   }
 
-  if (!fp)
-    return;
-
-  fseek(fp, 0, SEEK_END);
-  auto sz = ftell(fp);
-  std::vector<uint8_t> data(sz, 0);
-  data.resize(sz);
-  fseek(fp, 0, SEEK_SET);
-  fread(data.data(), 1, sz, fp);
-  fclose(fp);
+  auto node = std::make_shared<ModelNode>(file);
 
   std::unique_lock<std::mutex> lock(_mutex);
+  _tasks.push([this, node]() { 
+    auto rd = static_cast<RD_Model *>(node->get_rd(true).get());
+    rd->build(_engine, _basic_material, _default_material);
+    add_node(node);
+  });
 
-  _tasks.push(std::bind(
-    [this](const std::vector<uint8_t> &data) {
-      auto mp = gltfio::createJitShaderProvider(_engine);
-      auto loader = gltfio::AssetLoader::create({_engine, mp});
-      auto asset = loader->createAsset(data.data(), data.size());
+}
 
-      gltfio::ResourceLoader res_loader({_engine});
-      res_loader.loadResources(asset);
+void FTScene::_add_node(const std::shared_ptr<Node> &node) 
+{
+  auto &rd = node->get_rd();
+  if (!rd) return;
 
-      asset->releaseSourceData();
+  _nodes.insert_or_assign(node->id(), node);
 
-      _scene->addEntities(asset->getLightEntities(), asset->getLightEntityCount());
+  auto &ents = rd->get_renderables();
 
-      auto &rm = _engine->getRenderableManager();
-      auto &tm = _engine->getTransformManager();
-
-      {
-        auto root = tm.getInstance(asset->getRoot());
-        auto instance = asset->getInstance();
-        auto aabb = instance ? instance->getBoundingBox() : asset->getBoundingBox();
-        filament::math::mat4f transform;
-        tm.setTransform(root, transform);
-      }
-
-      for (int i = 0, n = asset->getRenderableEntityCount(); i < n; i++) {
-        auto ent = asset->getRenderableEntities()[i];
-
-        _scene->addEntity(ent);
-
-        // auto ri = rm.getInstance(ent);
-        // rm.setScreenSpaceContactShadows(ri, true);
-      }
-    },
-    std::move(data)));
+  for (auto ent : ents) {
+    _scene->addEntity(utils::Entity::import(ent));
+  }
 }
 
 void FTScene::realize(filament::Engine *engine)
@@ -248,17 +229,24 @@ void FTScene::realize(filament::Engine *engine)
   }
 
   set_environment("D:\\06_Test\\godot\\gd_material\\materials\\texture\\background\\background");
-  //set_environment("C:\\Users\\t\\dev\\0\\filament\\samples\\assets\\ibl\\lightroom_14b\\lightroom_14b");
+  // set_environment("C:\\Users\\t\\dev\\0\\filament\\samples\\assets\\ibl\\lightroom_14b\\lightroom_14b");
 
-  //add_test_scene();
+  // add_test_scene();
 }
-void FTScene::process(float delta)
+void FTScene::process(double timestamp)
 {
 #ifdef POINT_CLOUD_SUPPORT
   for (auto &iter : _pcs) {
     iter.second->_process(delta);
   }
 #endif
+
+  for (auto &iter : _nodes) {
+    auto &rd = iter.second->get_rd();
+    if (!rd)
+      continue;
+    rd->update(timestamp);
+  }
 
   if (_tasks.empty())
     return;
@@ -298,32 +286,4 @@ void FTScene::gui(filament::Engine *, filament::View *)
 
   ImGui::End();
 #endif
-}
-
-void FTScene::assimp_load(const std::string &file, float sz)
-{
-  if (!_assimp)
-    _assimp = std::make_unique<MeshAssimp>();
-
-  if (!_assimp->load_assert(file.c_str()))
-    return;
-
-  std::unique_lock<std::mutex> lock(_mutex);
-  _tasks.push([this, sz]() {
-    _assimp->build_assert(_engine, _basic_material, _default_material);
-
-    for (auto ent : _assimp->renderables()) {
-      _scene->addEntity(ent);
-    }
-
-    if (sz) {
-      auto &tcm = _engine->getTransformManager();
-      auto ti = tcm.getInstance(_assimp->root());
-      auto &mi = _assimp->min_bound();
-      auto &ma = _assimp->max_bound();
-      auto m = ma - mi;
-      auto f = std::max({m.x, m.y, m.z});
-      tcm.setTransform(ti, mat4::scaling(sz / f) * mat4::translation((mi + ma) / 2.0));
-    }
-  });
 }

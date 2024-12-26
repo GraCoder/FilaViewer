@@ -16,6 +16,7 @@ class FTScene;
 class FTView : public TView {
   friend class TView;
   friend class FTWin;
+
 public:
 
   FTView();
@@ -23,7 +24,7 @@ public:
 
   filament::Engine *engine() { return _engine; }
 
-  operator filament::View*() { return _view; }
+  operator filament::View *() { return _view; }
   filament::View *fila_view() { return _view; }
 
   void set_pivot(const tg::vec3d &pos, double dis = 100);
@@ -35,14 +36,14 @@ public:
   const std::shared_ptr<FTScene> &scene() { return _scene; }
   void set_scene(const std::shared_ptr<FTScene> &scene);
 
-  void process(float delta);
+  void process(double delta);
 
 public:
 
   void reset_projection();
 
-  //typedef std::function<void(filament::Engine*, filament::View*)> GuiCallback;
-  //void set_gui_callback(const GuiCallback &cb) { _gui_callback = cb; }
+  // typedef std::function<void(filament::Engine*, filament::View*)> GuiCallback;
+  // void set_gui_callback(const GuiCallback &cb) { _gui_callback = cb; }
 
   void clean();
 
@@ -57,16 +58,16 @@ protected:
 
   void set_viewport(int x, int y, uint32_t w, uint32_t h);
   void update_camera();
-    
+
 private:
 
-  filament::Engine    *_engine = nullptr;
-  filament::View      *_view = nullptr;
-  filament::Camera    *_camera = nullptr;
+  filament::Engine *_engine = nullptr;
+  filament::View *_view = nullptr;
+  filament::Camera *_camera = nullptr;
 
   Manipulator *_manip = nullptr;
 
-  bool    _grabing = false;
+  bool _grabing = false;
 
   std::shared_ptr<FTScene> _scene = nullptr;
 };

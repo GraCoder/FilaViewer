@@ -65,8 +65,6 @@ private:
 
   SDL_Window *_window = nullptr;
 
-  uint64_t _time = 0;
-
   filament::Engine *_engine = nullptr;
   filament::SwapChain *_swapchain = nullptr;
   filament::Renderer *_renderer = nullptr;
