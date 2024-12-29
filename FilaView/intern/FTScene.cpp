@@ -20,6 +20,9 @@
 #include "FTView.h"
 
 #include "pcv_mat.h"
+#include "res/ibl.h"
+#include "res/skybox.h"
+
 #include "mesh/Cube.h"
 #include "mesh/Sphere.h"
 
@@ -120,7 +123,11 @@ void FTScene::add_test_scene()
   if (1) {
     auto cube = new Cube(*_engine, _basic_material, math::float3(0, 10, 0));
     _cube = cube;
-    _scene->addEntity(cube->getWireFrameRenderable());
+    auto ce = cube->getWireFrameRenderable();
+    _scene->addEntity(ce);
+    auto &tm = _engine->getTransformManager();
+    auto s = filament::math::mat4::scaling(20);
+    tm.setTransform(tm.getInstance(ce), s);
   }
 }
 
@@ -147,14 +154,19 @@ void FTScene::set_environment(const std::string &img_path, bool filter)
     return new image::Ktx1Bundle(contents.data(), contents.size());
   };
 
-  _skybox_tex = ktxreader::Ktx1Reader::createTexture(_engine, create_ktx(img_path + "_skybox.ktx"), true);
+  auto skybox_ktx = new image::Ktx1Bundle(skybox, skybox_length);
+  //skybox_ktx = create_ktx(img_path + "_skybox.ktx");
+  _skybox_tex = ktxreader::Ktx1Reader::createTexture(_engine, skybox_ktx, true);
+  new image::Ktx1Bundle((uint8_t *)skybox, skybox_length);
   _skybox = Skybox::Builder()
     .environment(_skybox_tex)
     .showSun(true)
     .build(*_engine);
   _scene->setSkybox(_skybox);
 
-  auto irrtex = ktxreader::Ktx1Reader::createTexture(_engine, create_ktx(img_path + "_ibl.ktx"), true);
+  auto ibl_ktx = new image::Ktx1Bundle(::ibl, ibl_length);
+  //ibl_ktx = create_ktx(img_path + "_ibl.ktx");
+  auto irrtex = ktxreader::Ktx1Reader::createTexture(_engine, ibl_ktx, true);
   auto irrlight = IndirectLight::Builder()
     .reflections(irrtex)
     //.intensity(30000)
@@ -231,7 +243,7 @@ void FTScene::realize(filament::Engine *engine)
   set_environment("D:\\06_Test\\godot\\gd_material\\materials\\texture\\background\\background");
   // set_environment("C:\\Users\\t\\dev\\0\\filament\\samples\\assets\\ibl\\lightroom_14b\\lightroom_14b");
 
-  // add_test_scene();
+  add_test_scene();
 }
 void FTScene::process(double timestamp)
 {

@@ -66,11 +66,11 @@ void FTView::realize(filament::Engine *engine)
 
   _view = engine->createView();
 
-  _view->setDithering(filament::Dithering::NONE);
+  //_view->setDithering(filament::Dithering::NONE);
   //_view->setAntiAliasing(filament::AntiAliasing::NONE);
   {
     auto opts = _view->getTemporalAntiAliasingOptions(); 
-    opts.enabled = false;
+    opts.enabled = true;
     _view->setTemporalAntiAliasingOptions(opts);
   }
   //_view->setPostProcessingEnabled(false);
