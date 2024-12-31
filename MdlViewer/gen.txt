@@ -1,1 +1,1 @@
-D:\06_Test\CppSharp\bin\Release_x64\CppSharp.CLI.exe -a=x64  -m=FilaView.dll C:\Users\t\dev\FilaViewer\FilaView\TWin.h
+D:\06_Test\CppSharp\bin\Release_x64\CppSharp.CLI.exe -a=x64  -m=FilaView.dll C:\Users\t\dev\FilaViewer\FilaView\IWin.h

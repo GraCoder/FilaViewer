@@ -1,33 +1,32 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using FilaMat.ViewModels;
-using FilaMat.Views;
+using MdlViewer.ViewModels;
+using MdlViewer.Views;
 
-namespace FilaMat
+namespace MdlViewer;
+
+public partial class App : Application
 {
-    public partial class App : Application
+    public override void Initialize()
     {
-        public override void Initialize()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
+        AvaloniaXamlLoader.Load(this);
+    }
 
-        public override void OnFrameworkInitializationCompleted()
+    public override void OnFrameworkInitializationCompleted()
+    {
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            var main_window = new MainWindow
             {
-                var main_window = new MainWindow
-                {
-                    DataContext = new MainWindowViewModel(),
-                };
+                DataContext = new MainWindowViewModel(),
+            };
 
-                main_window.RegistInteraction();
+            main_window.RegistInteraction();
 
-                desktop.MainWindow = main_window; 
-            }
-
-            base.OnFrameworkInitializationCompleted();
+            desktop.MainWindow = main_window; 
         }
+
+        base.OnFrameworkInitializationCompleted();
     }
 }

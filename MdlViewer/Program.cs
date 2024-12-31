@@ -2,7 +2,7 @@
 using Avalonia;
 using Avalonia.ReactiveUI;
 
-namespace FilaMat
+namespace MdlViewer
 {
     internal sealed class Program
     {

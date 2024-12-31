@@ -174,7 +174,7 @@ void FTScene::set_environment(const std::string &img_path, bool filter)
   _scene->setIndirectLight(irrlight);
 }
 
-void FTScene::load_model(const std::string &file, float size)
+int FTScene::load_model(const std::string &file, float size)
 {
   if (file.ends_with("gltf") || file.ends_with("glb")) {
     auto node = std::make_shared<GltfNode>(file);
@@ -186,7 +186,7 @@ void FTScene::load_model(const std::string &file, float size)
         add_node(node);
       },
       node));
-    return;
+    return node->id();
   }
 
   auto node = std::make_shared<ModelNode>(file);
@@ -197,6 +197,8 @@ void FTScene::load_model(const std::string &file, float size)
     rd->build(_engine, _basic_material, _default_material);
     add_node(node);
   });
+
+  return node->id();
 
 }
 

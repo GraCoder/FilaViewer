@@ -1077,9 +1077,11 @@ filament::Material *MeshAssimp::create_material_from_config(Engine &engine, Mate
     .doubleSided(config.twoside)
     .require(VertexAttribute::UV0)
     .parameter("baseColor", MaterialBuilder::UniformType::FLOAT4)
-    .parameter("baseColorMap", MaterialBuilder::SamplerType::SAMPLER_2D)
     .parameter("metallicFactor", MaterialBuilder::UniformType::FLOAT)
     .parameter("roughnessFactor", MaterialBuilder::UniformType::FLOAT);
+
+  if (config.tex_base_color)
+    builder.parameter("baseColorMap", MaterialBuilder::SamplerType::SAMPLER_2D);
 
   if (config.tex_normal)
     builder.parameter("normalMap", MaterialBuilder::SamplerType::SAMPLER_2D);

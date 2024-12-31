@@ -44,7 +44,7 @@ public:
 
   void set_environment(const std::string &img, bool filter = false);
 
-  void load_model(const std::string &file, float sz);
+  int load_model(const std::string &file, float sz);
 
 public:
 

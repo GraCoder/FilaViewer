@@ -1,5 +1,3 @@
-#include "FTWin.h"
-
 #include <functional>
 #include <stdexcept>
 
@@ -23,6 +21,7 @@
 
 #include "FTView.h"
 #include "FTScene.h"
+#include "FTWin.h"
 
 HWND native_window(SDL_Window *win)
 {
@@ -32,7 +31,7 @@ HWND native_window(SDL_Window *win)
   return wmi.info.win.window;
 };
 
-TWin *TWin::create(TWin *s, bool with_border)
+IWin *IWin::create(IWin *s, bool with_border)
 {
   auto win = new FTWin(static_cast<FTWin *>(s));
   uint32_t flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;

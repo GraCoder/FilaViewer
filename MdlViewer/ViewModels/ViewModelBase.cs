@@ -1,8 +1,7 @@
 ﻿using ReactiveUI;
 
-namespace FilaMat.ViewModels
+namespace MdlViewer.ViewModels;
+
+public class ViewModelBase : ReactiveObject
 {
-    public class ViewModelBase : ReactiveObject
-    {
-    }
 }

@@ -5,3 +5,5 @@
 #else
 #define FILAVIEW_EXPORT
 #endif
+
+#include <cstdint>

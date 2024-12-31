@@ -11,7 +11,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
 using Avalonia.Platform.Storage;
 
-namespace FilaMat.Views
+namespace MdlViewer.Views
 {
     public partial class NativeEmbedView : UserControl
     {
@@ -24,7 +24,7 @@ namespace FilaMat.Views
         {
             AvaloniaXamlLoader.Load(this);
 
-            _view = this.FindNameScope()?.Find<global::FilaMat.Views.EmbedView>("_view");
+            _view = this.FindNameScope()?.Find<global::MdlViewer.Views.EmbedView>("_view");
         }
 
         public async void ShowPopupDelay(object sender, RoutedEventArgs args)
@@ -53,19 +53,18 @@ namespace FilaMat.Views
             }
         }
 
-        public void load_file(IStorageFile f)
+        public int load_file(string p)
         {
             var exts = new string[] {
                 ".gltf", ".glb", ".obj", ".fbx"
             };
 
-            string p = f.TryGetLocalPath();
             var ext = Path.GetExtension(p);
-            if (exts.Contains(ext))
-            {
-                var vk_win = (VulkanWin)(_view as EmbedView).Implementation;
-                vk_win.load_file(p);
-            }
+            if (!exts.Contains(ext))
+                return -1;
+
+            var vk_win = (VulkanWin)(_view as EmbedView).Implementation;
+            return vk_win.load_file(p);
         }
     }
 
@@ -98,18 +97,29 @@ namespace FilaMat.Views
 
     public unsafe class VulkanWin : INativeControl
     {
-        TWin.TWin _win = null;
+        IWin.IWin _win = null;
 
         public IPlatformHandle CreateControl(IPlatformHandle parent, Func<IPlatformHandle> createDefault)
         {
-            _win = TWin.TWin.Create(null, false);
+#if true 
+            _win = IWin.IWin.Create(null, false);
             _win.Exec(true);
+
+            FilaIns.Instance.Win = _win;
+            FilaIns.Instance.View = _win.View(0);
+
             return new Win32WindowControlHandle((IntPtr)_win.Handle, "HWND");
+#else
+            return null;
+#endif
         }
 
-        public void load_file(String file)
+        public int load_file(String file)
         {
-            _win.LoadModel(file, 8);
+            if (_win == null)
+                return -1;
+            
+            return _win.LoadModel(file, 8);
         }
     }
 

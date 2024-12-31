@@ -37,6 +37,8 @@ void FTView::set_pivot(const tg::vec3d &pos, double dis)
   if (_manip)
     delete _manip;
 
+  using namespace filament::camutils;
+
   auto &vp = _view->getViewport();
 
   _manip = Manipulator::Builder()

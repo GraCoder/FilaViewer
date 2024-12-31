@@ -4,6 +4,7 @@
 
 #include <functional>
 #include <SDL2/SDL_scancode.h>
+#include <camutils/Manipulator.h>
 
 namespace filament {
 class View;
@@ -65,6 +66,7 @@ private:
   filament::View *_view = nullptr;
   filament::Camera *_camera = nullptr;
 
+  using Manipulator = filament::camutils::Manipulator<float>;
   Manipulator *_manip = nullptr;
 
   bool _grabing = false;

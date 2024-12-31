@@ -54,7 +54,7 @@ private:
 
   void poll_events();
 
-  inline FTView *view() { return _view.get(); }
+  inline FTView *view(int id = 0) { return _view.get(); }
 
 private:
 

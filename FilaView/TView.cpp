@@ -26,10 +26,10 @@ TView::~TView() {
 }
 
 
-TView::Manipulator *TView::manip()
-{
-  return downcast(this)->_manip;
-}
+//TView::Manipulator *TView::manip()
+//{
+//  return downcast(this)->_manip;
+//}
 
 void TView::set_manip_factor(float f)
 {
@@ -70,5 +70,9 @@ std::optional<tg::vec3d> TView::get_pos(int x, int y)
   }
 
   return std::optional<tg::vec3d>();
+}
+
+void TView::show_model(int id, bool show) 
+{
 }
 

@@ -1,30 +1,26 @@
 #pragma once
 
-#include <memory>
-
 #include "FilaViewExport.h"
+#include "IWin.h"
+#include "TView.h"
 
-class TView;
-
-class FILAVIEW_EXPORT TWin {
+class FILAVIEW_EXPORT TWin : public IWin {
 public:
-  static TWin* create(TWin *win = nullptr, bool with_border = true);
-
-  uint64_t handle();
-
   ~TWin();
 
   void resize(int w, int h);
 
   void realize_context();
 
-  void exec(bool thead = false);
-
-  TView *view();
-
 public:
 
-  void load_model(const char *file, float sz = 0);
+  uint64_t handle() override;
+
+  void exec(bool thread = false) override;
+
+  TView *view(int id = 0) override;
+
+  int load_model(const char *file, float sz = 0) override;
 
 protected:
 

@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace FilaMat.Views;
+namespace MdlViewer.Views;
 
 internal unsafe class WinApi
 {

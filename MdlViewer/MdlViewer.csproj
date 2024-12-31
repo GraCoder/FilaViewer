@@ -36,6 +36,13 @@
   </ItemGroup>
 
 
+  <ItemGroup>
+    <Compile Update="Views\ModelListView.axaml.cs">
+      <DependentUpon>ModelListView.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
   </Target>
 </Project>

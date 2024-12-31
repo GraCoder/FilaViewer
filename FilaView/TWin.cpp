@@ -1,8 +1,10 @@
 #include "TWin.h"
 
-#include "intern/FTWin.h"
-#include "intern/FTView.h"
+#include "TView.h"
+
 #include "intern/FTScene.h"
+#include "intern/FTView.h"
+#include "intern/FTWin.h"
 
 #include "TDef.h"
 //#include "TApp.h"
@@ -11,12 +13,16 @@
 
 FT_DOWNCAST(TWin)
 
-
 TWin::~TWin()
 {
 }
 
 uint64_t TWin::handle() { return downcast(this)->handle(); }
+
+void TWin::exec(bool thread) 
+{
+  downcast(this)->exec(thread);
+}
 
 void TWin::resize(int w, int h)
 {
@@ -31,19 +37,14 @@ void TWin::realize_context()
   downcast(this)->realize_render();
 }
 
-void TWin::exec(bool thread) 
+TView *TWin::view(int id)
 {
-  downcast(this)->exec(thread);
-}
-
-TView *TWin::view()
-{
-  return downcast(this)->view();
+  return downcast(this)->view(id);
 }
 
 
-void TWin::load_model(const char *file, float sz) 
+int TWin::load_model(const char *file, float sz) 
 {
-  auto scene = downcast(this)->view()->scene();
-  scene->load_model(file, sz);
+  auto scene = downcast(this)->view(0)->scene();
+  return scene->load_model(file, sz);
 }

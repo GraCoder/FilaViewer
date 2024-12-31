@@ -5,7 +5,7 @@ using System.Windows.Input;
 using Avalonia.Controls;
 using ReactiveUI;
 
-namespace FilaMat.ViewModels
+namespace MdlViewer.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
