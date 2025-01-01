@@ -44,7 +44,7 @@ private:
 
   void create_window();
 
-  void realize_render();
+  void realize_context();
 
   void create_engine();
 
@@ -59,7 +59,7 @@ private:
 private:
 
   bool _close = false;
-  bool _render_realized = false;
+  bool _realized = false;
 
   uint32_t _win_flags = 0;
 

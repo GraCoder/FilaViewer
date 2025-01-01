@@ -37,6 +37,7 @@ IWin *IWin::create(IWin *s, bool with_border)
   uint32_t flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
   if(!with_border)
     flags |= SDL_WINDOW_BORDERLESS;
+  //flags |= SDL_WINDOW_FULLSCREEN;
   win->set_flags(flags);
   return win;
 }
@@ -94,7 +95,7 @@ void FTWin::configure_cameras()
   float dpiScaleX = 1.0f;
   float dpiScaleY = 1.0f;
 
-  //SDL_GL_GetDrawableSize(_window, &_width, &_height);
+  // SDL_GL_GetDrawableSize(_window, &_width, &_height);
   uint32_t width = _width, height = _height;
 
   int virtualWidth, virtualHeight;
@@ -171,10 +172,12 @@ void FTWin::create_window()
   _window = win;
 }
 
-void FTWin::realize_render() 
+void FTWin::realize_context() 
 {
-  if (_render_realized)
+  if (_realized)
     return;
+
+  _realized = true;
 
   create_engine(); 
 
@@ -188,8 +191,6 @@ void FTWin::realize_render()
   _renderer = _engine->createRenderer();
 
   setup_gui();
-
-  _render_realized = true;
 }
 
 void FTWin::create_engine()
@@ -205,8 +206,8 @@ void FTWin::create_engine()
 
 void FTWin::poll_events() 
 {
-  float freq = SDL_GetPerformanceFrequency() / 1000.0;
-  uint64_t time = SDL_GetPerformanceCounter();
+  uint32_t freq = SDL_GetPerformanceFrequency() / 1000;
+  uint64_t stamp = SDL_GetPerformanceCounter(), prev_time = stamp;
 
   static constexpr int mk[4] = {0, 0, 1, 2};
 
@@ -217,8 +218,7 @@ void FTWin::poll_events()
     constexpr int max_event = 16;
     SDL_Event events[max_event];
     int ev_count = 0;
-    while (ev_count < max_event && SDL_PollEvent(&events[ev_count++]) != 0) {
-    }
+    while (ev_count < max_event && SDL_PollEvent(&events[ev_count++]) != 0) {}
     for (int i = 0; i < ev_count; i++) {
       const SDL_Event &event = events[i];
       switch (event.type) {
@@ -293,14 +293,15 @@ void FTWin::poll_events()
           if (_gui) {
             _gui->setDisplaySize(w, h);
           }
-          if(_gui_view) {
-            _gui_view->setViewport({0, 0, w, h}); 
+          if (_gui_view) {
+            _gui_view->setViewport({0, 0, w, h});
           }
           break;
         }
+        case SDL_WINDOWEVENT_EXPOSED:
         case SDL_WINDOWEVENT_SHOWN: {
-          if (!_render_realized)
-            realize_render();
+          if (!_realized)
+            realize_context();
           break;
         }
         default:
@@ -312,23 +313,30 @@ void FTWin::poll_events()
       }
     }
 
+    if (!_realized)
+      continue;
+
+    // if (_gui && view()->gui_callback()) {
+    //   ImGui::GetIO().DeltaTime = timestamp;
+    //   _gui->render(timestamp, view()->gui_callback());
+    // }
+
+    // SDL_DisplayMode mode;
+    // if(SDL_GetDesktopDisplayMode(SDL_GetWindowDisplayIndex(_window), &mode) == 0 && mode.refresh_rate != 0) {
+    //   round(1000.0 / mode.refresh_rate);
+    // }
+
     uint64_t now = SDL_GetPerformanceCounter();
-    double timestamp = (now - time) / freq;
-
-    //if (_gui && view()->gui_callback()) {
-    //  ImGui::GetIO().DeltaTime = timestamp;
-    //  _gui->render(timestamp, view()->gui_callback());
-    //}
-
+    double timestamp = (now - stamp) / freq;
     view()->process(timestamp);
 
-    SDL_DisplayMode mode;
-    int refresh_interval_ms =
-      (SDL_GetDesktopDisplayMode(SDL_GetWindowDisplayIndex(_window), &mode) == 0 && mode.refresh_rate != 0)
-        ? round(1000.0 / mode.refresh_rate)
-        : 16;
-    SDL_Delay(refresh_interval_ms);
+    uint32_t interval = uint32_t(now - prev_time) / freq;
+    if(interval < 10) {
+      SDL_Delay(10 - interval);
+      continue;
+    }
 
+    prev_time = SDL_GetPerformanceCounter();
     if (_renderer->beginFrame(getSwapChain())) {
       _renderer->render(*view());
       _renderer->endFrame();

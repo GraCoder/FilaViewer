@@ -68,11 +68,11 @@ void FTView::realize(filament::Engine *engine)
 
   _view = engine->createView();
 
-  //_view->setDithering(filament::Dithering::NONE);
+  _view->setDithering(filament::Dithering::NONE);
   //_view->setAntiAliasing(filament::AntiAliasing::NONE);
   {
     auto opts = _view->getTemporalAntiAliasingOptions(); 
-    opts.enabled = true;
+    opts.enabled = false;
     _view->setTemporalAntiAliasingOptions(opts);
   }
   //_view->setPostProcessingEnabled(false);
@@ -108,6 +108,8 @@ void FTView::process(double delta)
 
 void FTView::reset_projection()
 {
+  if (_view == nullptr)
+    return;
   static constexpr const float SENSOR_SIZE = 0.024f; // 24mm
   auto &vp = _view->getViewport();
   if (vp.width == 0 || vp.height == 0)
@@ -173,7 +175,8 @@ void FTView::set_viewport(int x, int y, uint32_t width, uint32_t height)
   //auto aspectRatio = double(width) / height;
   //_camera->setScaling({1.0 / aspectRatio, 1.0});
 
-  _view->setViewport({x, y, width, height});
+  if(_view)
+    _view->setViewport({x, y, width, height});
 
   if(_manip)
     _manip->setViewport(width, height);
@@ -183,6 +186,9 @@ void FTView::set_viewport(int x, int y, uint32_t width, uint32_t height)
 
 void FTView::update_camera()
 {
+  if (!_camera)
+    return;
+
   if (!_camera_dirty)
     return;
 

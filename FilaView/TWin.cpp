@@ -34,7 +34,9 @@ void TWin::resize(int w, int h)
 
 void TWin::realize_context() 
 {
-  downcast(this)->realize_render();
+  downcast(this)->realize_context();
+
+  downcast(this)->configure_cameras();
 }
 
 TView *TWin::view(int id)

@@ -25,8 +25,9 @@ int main(int argc, char **argv)
     // win->load_model((ptr + "\\03_Dat\\Models\\models\\windmill\\windmill.obj").c_str(), 10);
     // win->load_model((ptr + "\\03_Dat\\Models\\models\\knight\\KnightCharacter.gltf").c_str(), 10);
     // win->load_model("D:\\06_Test\\LearnOpenGL\\resources\\objects\\backpack\\backpack.obj");
-  } else
-    win->load_model(argv[1], 10);
+  } else {
+    //win->load_model(argv[1], 10);
+  }
 
-  win->exec();
+  win->exec(false);
 }
