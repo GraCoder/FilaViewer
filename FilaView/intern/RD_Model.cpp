@@ -2,7 +2,7 @@
 
 #include "MeshAssimp.h"
 
-RD_Model::RD_Model(const std::shared_ptr<ModelNode> &node)
+RD_Model::RD_Model(ModelNode *node)
   : RDNode(node)
 {
 }
@@ -14,7 +14,7 @@ void RD_Model::build(filament::Engine *engine, const filament::Material *basicmt
   if (!_assimp)
     _assimp = std::make_unique<MeshAssimp>();
 
-  auto node = std::static_pointer_cast<ModelNode>(_node.lock());
+  auto node = static_cast<ModelNode*>(_node);
   if (!_assimp->load_assert(node->file().c_str()))
     return;
 

@@ -8,7 +8,7 @@ class Node;
 class RDNode {
   constexpr static int size = 4;
 public:
-  RDNode(const std::shared_ptr<Node> &node) : _node(node) {}
+  RDNode(Node *node) : _node(node) {}
 
   const boost::container::small_vector<uint32_t, size> &get_renderables() { return _entities; };
 
@@ -16,7 +16,7 @@ public:
 
 protected:
 
-  std::weak_ptr<Node> _node;
+  Node *_node = nullptr;
 
   boost::container::small_vector<uint32_t, size> _entities;
 };

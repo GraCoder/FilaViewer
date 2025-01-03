@@ -36,6 +36,10 @@
         <MenuItem Header="File">
           <MenuItem Header="Open" Command="{Binding OpenFileCommand}"/>
         </MenuItem>
+        <MenuItem Header="Debug">
+          <MenuItem Header="Cube" Command="{Binding AddCube}"/>
+          <MenuItem Header="Sphere" Command="{Binding AddSphere}"/>
+        </MenuItem>
       </Menu>
     </DockPanel>
 

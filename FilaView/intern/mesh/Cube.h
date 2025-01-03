@@ -19,40 +19,39 @@
 
 #include <vector>
 
-#include <filament/Engine.h>
 #include <filament/Box.h>
 #include <filament/Camera.h>
-#include <filament/Material.h>
 #include <filament/MaterialInstance.h>
-#include <utils/Entity.h>
 
-class Cube {
+#include "RDShape.h"
+
+class Cube : public RDShape {
 public:
-  Cube(filament::Engine& engine, filament::Material const* material, filament::math::float3 linearColor, bool culling = true);
-
-  utils::Entity getSolidRenderable() { return mSolidRenderable; }
-
-  utils::Entity getWireFrameRenderable() { return mWireFrameRenderable; }
-
+  Cube(CubeNode *node);
   ~Cube();
 
-  void mapFrustum(filament::Engine& engine, filament::Camera const* camera);
-  void mapFrustum(filament::Engine& engine, filament::math::mat4 const& transform);
-  void mapAabb(filament::Engine& engine, filament::Box const& box);
+  void build(filament::Engine *engine, filament::Material const *material) override;
+
+  utils::Entity getSolidRenderable() { return mSolidRenderable; }
+  utils::Entity getWireFrameRenderable() { return mWireFrameRenderable; }
+
+  void mapFrustum(filament::Engine &engine, filament::Camera const *camera);
+  void mapFrustum(filament::Engine &engine, filament::math::mat4 const &transform);
+  void mapAabb(filament::Engine &engine, filament::Box const &box);
 
 private:
   static constexpr size_t WIREFRAME_OFFSET = 3 * 2 * 6;
   static const uint32_t mIndices[];
   static const filament::math::float3 mVertices[];
 
-  filament::Engine& mEngine;
-  filament::VertexBuffer* mVertexBuffer = nullptr;
-  filament::IndexBuffer* mIndexBuffer = nullptr;
-  filament::Material const* mMaterial = nullptr;
-  filament::MaterialInstance* mMaterialInstanceSolid = nullptr;
-  filament::MaterialInstance* mMaterialInstanceWireFrame = nullptr;
+  filament::Engine *mEngine = nullptr;
+  filament::VertexBuffer *mVertexBuffer = nullptr;
+  filament::IndexBuffer *mIndexBuffer = nullptr;
+  filament::Material const *mMaterial = nullptr;
+  filament::MaterialInstance *mMaterialInstanceSolid = nullptr;
+  filament::MaterialInstance *mMaterialInstanceWireFrame = nullptr;
   utils::Entity mSolidRenderable;
   utils::Entity mWireFrameRenderable;
 };
 
-#endif  // TNT_FILAMENT_SAMPLE_CUBE_H
+#endif // TNT_FILAMENT_SAMPLE_CUBE_H

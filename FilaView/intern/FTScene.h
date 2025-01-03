@@ -40,11 +40,15 @@ public:
 
   void show_box(const tg::boundingbox &box);
 
-  void add_test_scene();
+  void set_environment(const std::string &img = "", bool filter = false);
 
-  void set_environment(const std::string &img, bool filter = false);
+public:
 
-  int load_model(const std::string &file, float sz);
+  int     load_model(const std::string &file, float sz);
+
+  void    show_model(int id, bool show);
+
+  int     add_shape(int);
 
 public:
 

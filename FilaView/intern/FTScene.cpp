@@ -5,8 +5,8 @@
 #include <filament/Engine.h>
 #include <filament/View.h>
 #include <filament/Material.h>
-#include <filament/TransformManager.h>
 #include <filament/RenderableManager.h>
+#include <filament/TransformManager.h>
 #include <filament/LightManager.h>
 #include <filament/Scene.h>
 #include <filament/Skybox.h>
@@ -40,9 +40,7 @@ Cube *_cube = 0;
 #include "PCNode.h"
 #endif
 
-#include "node/GltfNode.h"
-#include "node/ModelNode.h"
-#include "node/Geometry.h"
+#include "intern/mesh/RDShape.h"
 #include "intern/RD_Gltf.h"
 #include "intern/RD_Model.h"
 #include "intern/RD_Geometry.h"
@@ -107,29 +105,29 @@ void FTScene::show_box(const tg::boundingbox &box)
 #endif
 }
 
-void FTScene::add_test_scene()
-{
-  {
-    auto sphere = new Sphere(*_engine, _default_material);
-    _sphere = sphere;
-    auto material = sphere->getMaterialInstance();
-    material->setParameter("baseColor", RgbType::sRGB, math::float3(1, 0, 0));
-    material->setParameter("metallic", 0);
-    material->setParameter("roughness", 1);
-    material->setParameter("reflectance", 0);
-    _scene->addEntity(sphere->getSolidRenderable());
-  }
-
-  if (1) {
-    auto cube = new Cube(*_engine, _basic_material, math::float3(0, 10, 0));
-    _cube = cube;
-    auto ce = cube->getWireFrameRenderable();
-    _scene->addEntity(ce);
-    auto &tm = _engine->getTransformManager();
-    auto s = filament::math::mat4::scaling(20);
-    tm.setTransform(tm.getInstance(ce), s);
-  }
-}
+//void FTScene::add_test_scene()
+//{
+//  {
+//    auto sphere = new Sphere(*_engine, _default_material);
+//    _sphere = sphere;
+//    auto material = sphere->getMaterialInstance();
+//    material->setParameter("baseColor", RgbType::sRGB, math::float3(1, 0, 0));
+//    material->setParameter("metallic", 0);
+//    material->setParameter("roughness", 1);
+//    material->setParameter("reflectance", 0);
+//    _scene->addEntity(sphere->getSolidRenderable());
+//  }
+//
+//  if (1) {
+//    auto cube = new Cube(*_engine, _basic_material, math::float3(0, 10, 0));
+//    _cube = cube;
+//    auto ce = cube->getWireFrameRenderable();
+//    _scene->addEntity(ce);
+//    auto &tm = _engine->getTransformManager();
+//    auto s = filament::math::mat4::scaling(20);
+//    tm.setTransform(tm.getInstance(ce), s);
+//  }
+//}
 
 void FTScene::set_environment(const std::string &img_path, bool filter)
 {
@@ -154,8 +152,11 @@ void FTScene::set_environment(const std::string &img_path, bool filter)
     return new image::Ktx1Bundle(contents.data(), contents.size());
   };
 
-  auto skybox_ktx = new image::Ktx1Bundle(skybox, skybox_length);
-  //skybox_ktx = create_ktx(img_path + "_skybox.ktx");
+  image::Ktx1Bundle *skybox_ktx = nullptr;
+  if(img_path.empty())
+    skybox_ktx = new image::Ktx1Bundle(skybox, skybox_length);
+  else
+    skybox_ktx = create_ktx(img_path + "_skybox.ktx");
   _skybox_tex = ktxreader::Ktx1Reader::createTexture(_engine, skybox_ktx, true);
   new image::Ktx1Bundle((uint8_t *)skybox, skybox_length);
   _skybox = Skybox::Builder()
@@ -164,8 +165,11 @@ void FTScene::set_environment(const std::string &img_path, bool filter)
     .build(*_engine);
   _scene->setSkybox(_skybox);
 
-  auto ibl_ktx = new image::Ktx1Bundle(::ibl, ibl_length);
-  //ibl_ktx = create_ktx(img_path + "_ibl.ktx");
+  image::Ktx1Bundle *ibl_ktx = nullptr;
+  if(img_path.empty())
+    ibl_ktx = new image::Ktx1Bundle(::ibl, ibl_length);
+  else
+    ibl_ktx = create_ktx(img_path + "_ibl.ktx");
   auto irrtex = ktxreader::Ktx1Reader::createTexture(_engine, ibl_ktx, true);
   auto irrlight = IndirectLight::Builder()
     .reflections(irrtex)
@@ -199,7 +203,39 @@ int FTScene::load_model(const std::string &file, float size)
   });
 
   return node->id();
+}
 
+void FTScene::show_model(int id, bool show) 
+{
+  auto iter = _nodes.find(id);
+  if (iter == _nodes.end())
+    return;
+  auto &rds = iter->second->get_rd()->get_renderables();
+  auto &rm = _engine->getRenderableManager();
+  for(auto &e : rds) {
+    auto instance = rm.getInstance(utils::Entity::import(e));
+    auto mask = rm.getLayerMask(instance);
+    rm.setLayerMask(instance, 0x255, show ? 1 : 0);
+  }
+}
+
+int FTScene::add_shape(int pri)
+{
+  std::shared_ptr<ShapeNode> node;
+  if (pri == 0) {
+    node = std::make_shared<CubeNode>();
+  }
+
+  if (!node)
+    return -1;
+
+  std::unique_lock<std::mutex> lock(_mutex);
+  _tasks.push(std::bind([this, node]() {
+    auto rd = static_cast<RDShape *>(node->get_rd().get());
+    rd->build(_engine, _default_material);
+    _add_node(node);
+  }));
+  return node->id();
 }
 
 void FTScene::_add_node(const std::shared_ptr<Node> &node) 
@@ -242,10 +278,8 @@ void FTScene::realize(filament::Engine *engine)
     _legacy_material = legacy_mtl;
   }
 
-  set_environment("D:\\06_Test\\godot\\gd_material\\materials\\texture\\background\\background");
+  set_environment();
   // set_environment("C:\\Users\\t\\dev\\0\\filament\\samples\\assets\\ibl\\lightroom_14b\\lightroom_14b");
-
-  add_test_scene();
 }
 void FTScene::process(double timestamp)
 {

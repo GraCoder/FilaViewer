@@ -14,7 +14,7 @@ class FilamentInstance;
 
 class RD_Gltf : public RDNode {
 public:
-  RD_Gltf(const std::shared_ptr<GltfNode> &node);
+  RD_Gltf(GltfNode *node);
 
   void build(filament::Engine *engine);
 

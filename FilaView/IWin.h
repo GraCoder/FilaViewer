@@ -14,4 +14,6 @@ public:
   virtual IView *view(int id = 0) = 0;
 
   virtual int load_model(const char *file, float sz = 0) = 0;
+
+  virtual int operator_s(const char *ops, int len) = 0;
 };
