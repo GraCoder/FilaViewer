@@ -21,19 +21,6 @@ set(filament_dir "" CACHE PATH "")
 option(filament_single_thread "" OFF)
 
 ####################################################################################
-
-set(source_mesh
-  mesh/Cube.h
-  mesh/Cube.cpp
-  mesh/Sphere.h
-  mesh/Sphere.cpp
-  mesh/IcoSphere.h
-  mesh/IcoSphere.cpp
-)
-
-source_group(mesh FILES ${source_mesh})
-
-####################################################################################
 set(gen_root ${CMAKE_CURRENT_BINARY_DIR})
 set(resource_dir  "${gen_root}/generated/resources")
 set(material_dir  "${gen_root}/generated/material")
@@ -54,7 +41,7 @@ foreach (mat_src ${material_src})
     set(output_path "${material_dir}/${localname}.filamat")
     add_custom_command(
             OUTPUT ${output_path}
-            COMMAND ${filament_dir}/bin/matc -a vulkan -o ${output_path} ${fullname}
+            COMMAND ${filament_dir}/bin/matc -a opengl -a vulkan -o ${output_path} ${fullname}
             DEPENDS ${mat_src}
             COMMENT "Compiling material ${mat_src} to ${output_path}"
     )
@@ -70,6 +57,16 @@ add_custom_command(
 )
 ####################################################################################
 
+set(mesh_src
+  intern/mesh/RDShape.h
+  intern/mesh/RDShape.cpp
+  intern/mesh/Cube.h
+  intern/mesh/Cube.cpp
+  intern/mesh/Sphere.h
+  intern/mesh/Sphere.cpp
+  intern/mesh/IcoSphere.h
+  intern/mesh/IcoSphere.cpp
+)
 
 set(intern_src
   intern/FTWin.h
@@ -78,6 +75,9 @@ set(intern_src
   intern/FTView.cpp
   intern/FTScene.h
   intern/FTScene.cpp
+
+  intern/mesh/Cube.h
+  intern/mesh/Cube.h
 
   intern/RD_Gltf.h
   intern/RD_Gltf.cpp
@@ -89,13 +89,13 @@ set(intern_src
   #intern/PCCDispatch.h
   #intern/PCCDispatch.cpp
 )
+
 if(Assimp_FOUND)
 list(APPEND intern_src
   intern/MeshAssimp.h
   intern/MeshAssimp.cpp
 )
 endif()
-source_group(intern FILES ${intern_src})
 
 set(imgui_src
   imgui/ImGuiHelper.cpp
@@ -107,20 +107,12 @@ set(imgui_src
   imgui/imgui_widgets.cpp
   imgui/imgui_tables.cpp
 )
-source_group(imgui FILES ${imgui_src})
-
-set(source_files
-  TView.h
-  TView.cpp
-  TWin.h
-  TWin.cpp
-  TScene.h
-  TScene.cpp
-)
 
 set(node_src
   node/Node.h
   node/Node.cpp
+  node/ShapeNode.h
+  node/ShapeNode.cpp
   node/GltfNode.h
   node/GltfNode.cpp
   node/ModelNode.h
@@ -128,11 +120,26 @@ set(node_src
   node/Geometry.h
   node/Geometry.cpp
 )
-source_group(node FILES ${node_src})
 
-add_library(${target_name} SHARED ${source_files} ${intern_src} ${imgui_src} ${source_mesh} ${resgen_output}
+list(APPEND source_files
+  ${intern_src} 
+  ${imgui_src} 
+  ${mesh_src} 
   ${node_src}
 )
+
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${source_files})
+
+list(APPEND source_files
+  TView.h 
+  TView.cpp
+  TWin.h 
+  TWin.cpp
+  TScene.h 
+  TScene.cpp
+)
+
+add_library(${target_name} SHARED ${source_files} ${resgen_output})
 
 if(filament_single_thread)
 target_compile_definitions(${target_name} PRIVATE FILAMENT_SINGLE_THREADED)

@@ -10,7 +10,7 @@ class MeshAssimp;
 
 class RD_Model : public RDNode {
 public:
-  RD_Model(const std::shared_ptr<ModelNode> &node);
+  RD_Model(ModelNode *node);
 
   ~RD_Model();
 

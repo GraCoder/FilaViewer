@@ -197,11 +197,11 @@ void FTWin::create_engine()
 {
   using namespace filament;
 
-  auto backend = Engine::Backend::VULKAN;
+  backend::Backend backend = Engine::Backend::VULKAN;
+  //backend = Engine::Backend::OPENGL;
+  //Engine::Config engineConfig = {};
 
-  // Engine::Config engineConfig = {};
-
-  _engine = Engine::Builder() /*.config(&engineConfig)*/.build();
+  _engine = Engine::Builder().backend(backend) /*.config(&engineConfig)*/.build();
 }
 
 void FTWin::poll_events() 
@@ -333,7 +333,6 @@ void FTWin::poll_events()
     uint32_t interval = uint32_t(now - prev_time) / freq;
     if(interval < 10) {
       SDL_Delay(10 - interval);
-      continue;
     }
 
     prev_time = SDL_GetPerformanceCounter();

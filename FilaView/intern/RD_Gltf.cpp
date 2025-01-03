@@ -10,7 +10,7 @@
 
 using namespace filament::gltfio;
 
-RD_Gltf::RD_Gltf(const std::shared_ptr<GltfNode> &node)
+RD_Gltf::RD_Gltf(GltfNode *node)
   : RDNode(node)
 {
 }
@@ -48,7 +48,7 @@ void RD_Gltf::build(filament::Engine *engine)
 {
   using namespace filament;
 
-  auto node = std::static_pointer_cast<GltfNode>(_node.lock());
+  auto node = static_cast<GltfNode*>(_node);
 
   auto fp = fopen(node->file().c_str(), "rb");
   if (!fp)
@@ -67,6 +67,9 @@ void RD_Gltf::build(filament::Engine *engine)
   auto asset = loader->createAsset(data.data(), data.size());
   if (asset == nullptr)
     return;
+
+  _loader = loader;
+  _asset = asset;
 
   loadResources(engine, asset, node->file());
 
@@ -126,5 +129,12 @@ void RD_Gltf::update(double timestamp)
     } else {
       animator.updateBoneMatrices();
     }
+  }
+}
+
+void RD_Gltf::release() 
+{
+  if(_loader) {
+    _loader->destroyAsset(_asset); 
   }
 }

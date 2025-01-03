@@ -5,9 +5,8 @@
 #include <filament/Viewport.h>
 
 #include "TDef.h"
-#include "TScene.h"
-#include "TWin.h"
 
+#include "intern/FTScene.h"
 #include "intern/FTView.h"
 #include "intern/FTWin.h"
 
@@ -74,5 +73,6 @@ std::optional<tg::vec3d> TView::get_pos(int x, int y)
 
 void TView::show_model(int id, bool show) 
 {
+  downcast(this)->scene()->show_model(id, show);
 }
 

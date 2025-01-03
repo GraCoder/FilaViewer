@@ -7,9 +7,7 @@
 #include "intern/FTWin.h"
 
 #include "TDef.h"
-//#include "TApp.h"
-//#include "TView.h"
-//#include "TScene.h"
+#include "nlohmann/json.hpp"
 
 FT_DOWNCAST(TWin)
 
@@ -49,4 +47,17 @@ int TWin::load_model(const char *file, float sz)
 {
   auto scene = downcast(this)->view(0)->scene();
   return scene->load_model(file, sz);
+}
+
+int TWin::operator_s(const char *ops, int len)
+{
+  auto js = nlohmann::json::parse(std::string(ops, len));
+  auto iter = js.find("OperType");
+  if (iter == js.end())
+    return -1;
+  if (iter.value() == 1000) {
+    auto scene = downcast(this)->view(0)->scene();
+    scene->add_shape(js.at("PrimType"));
+  }
+  return 0;
 }

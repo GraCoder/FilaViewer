@@ -22,6 +22,8 @@ public:
 
   int load_model(const char *file, float sz = 0) override;
 
+  int operator_s(const char *ops, int len) override;
+
 protected:
 
   TWin() = default;
