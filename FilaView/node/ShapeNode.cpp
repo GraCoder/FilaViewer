@@ -18,4 +18,5 @@ CubeNode::CubeNode()
 SphereNode::SphereNode()
   : ShapeNode()
 {
+  _rd = std::make_unique<Sphere>(this);
 }

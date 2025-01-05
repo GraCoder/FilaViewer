@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "Sphere.h"
-
 #include <filament/Engine.h>
 #include <filament/IndexBuffer.h>
 #include <filament/Material.h>
@@ -27,86 +24,155 @@
 
 #include <geometry/SurfaceOrientation.h>
 
-#include "IcoSphere.h"
+#include <map>
+#include <array>
+
+#include "Sphere.h"
 
 using namespace filament;
 using namespace filament::math;
 using namespace utils;
 
-struct SphereGeometry {
-  IcoSphere sphere = IcoSphere{2};
-  std::vector<filament::math::short4> tangents;
-  filament::VertexBuffer* vertexBuffer = nullptr;
-  filament::IndexBuffer* indexBuffer = nullptr;
+using TriangleList = std::vector<ushort3>;
+using VertexList = std::vector<float3>;
+using IndexedMesh = std::pair<VertexList, TriangleList>;
+
+static constexpr float X = .525731112119133606f;
+static constexpr float Z = .850650808352039932f;
+static constexpr float N = 0.f;
+
+const VertexList sVertices = {
+  {-X, N, Z}, {X, N, Z}, 
+  {-X, N, -Z}, {X, N, -Z}, 
+  {N, Z, X}, {N, Z, -X}, 
+  {N, -Z, X}, {N, -Z, -X}, 
+  {Z, X, N}, {-Z, X, N}, 
+  {Z, -X, N}, {-Z, -X, N}
 };
 
-// note: this will be leaked since we don't have a good time to free it.
-// this should be a cache indexed on the sphere's subdivisions
-static SphereGeometry* gSphereGeometry = nullptr;
+const TriangleList sTriangles = {
+  {1, 4, 0}, {4, 9, 0}, {4, 5, 9}, 
+  {8, 5, 4}, {1, 8, 4}, {1, 10, 8}, 
+  {10, 3, 8}, {8, 3, 5}, {3, 2, 5},  {3, 7, 2},  {3, 10, 7}, {10, 6, 7}, {6, 11, 7}, {6, 0, 11},
+  {6, 1, 0}, {10, 1, 6}, {11, 0, 9}, {2, 11, 9}, {5, 2, 9},  {11, 2, 7}};
 
-Sphere::Sphere(Engine& engine, Material const* material, bool culling) : mEngine(engine)
+
+namespace {
+using Lookup = std::map<std::pair<uint16_t, uint16_t>, uint16_t>;
+uint16_t vertex_for_edge(Lookup &lookup, VertexList &vertices, uint16_t first, uint16_t second)
 {
-  SphereGeometry* geometry = gSphereGeometry;
-
-  static_assert(sizeof(IcoSphere::Triangle) == sizeof(IcoSphere::Index) * 3, "indices are not packed");
-
-  if (geometry == nullptr) {
-    geometry = gSphereGeometry = new SphereGeometry;
-
-    auto const& indices = geometry->sphere.getIndices();
-    auto const& vertices = geometry->sphere.getVertices();
-    uint32_t indexCount = (uint32_t)(indices.size() * 3);
-
-    geometry->tangents.resize(vertices.size());
-    auto* quats = geometry::SurfaceOrientation::Builder().vertexCount(vertices.size()).normals(vertices.data(), sizeof(float3)).build();
-    quats->getQuats((short4*)geometry->tangents.data(), vertices.size(), sizeof(filament::math::short4));
-    delete quats;
-
-    // todo produce correct u,v
-
-    geometry->vertexBuffer = VertexBuffer::Builder()
-                                 .vertexCount((uint32_t)vertices.size())
-                                 .bufferCount(2)
-                                 .attribute(VertexAttribute::POSITION, 0, VertexBuffer::AttributeType::FLOAT3)
-                                 .attribute(VertexAttribute::TANGENTS, 1, VertexBuffer::AttributeType::SHORT4)
-                                 .normalized(VertexAttribute::TANGENTS)
-                                 .build(engine);
-
-    geometry->vertexBuffer->setBufferAt(engine, 0, VertexBuffer::BufferDescriptor(vertices.data(), vertices.size() * sizeof(float3)));
-
-    geometry->vertexBuffer->setBufferAt(engine, 1,
-                                        VertexBuffer::BufferDescriptor(geometry->tangents.data(), geometry->tangents.size() * sizeof(filament::math::short4)));
-
-    geometry->indexBuffer = IndexBuffer::Builder().bufferType(IndexBuffer::IndexType::USHORT).indexCount(indexCount).build(engine);
-
-    geometry->indexBuffer->setBuffer(engine, IndexBuffer::BufferDescriptor(indices.data(), indexCount * sizeof(IcoSphere::Index)));
+  Lookup::key_type key(first, second);
+  if (key.first > key.second) {
+    std::swap(key.first, key.second);
   }
 
-  if (material) {
-    mMaterialInstance = material->createInstance();
+  auto inserted = lookup.insert({key, (Lookup::mapped_type)vertices.size()});
+  if (inserted.second) {
+    auto edge0 = vertices[first];
+    auto edge1 = vertices[second];
+    auto point = normalize(edge0 + edge1);
+    vertices.push_back(point);
   }
 
-  utils::EntityManager& em = utils::EntityManager::get();
-  mRenderable = em.create();
-  RenderableManager::Builder(1)
-      .boundingBox({{0}, {1}})
-      .material(0, mMaterialInstance)
-      .geometry(0, RenderableManager::PrimitiveType::TRIANGLES, geometry->vertexBuffer, geometry->indexBuffer)
-      .culling(culling)
-      .build(engine, mRenderable);
+  return inserted.first->second;
+}
+
+TriangleList subdivide(VertexList &vertices, TriangleList const &triangles)
+{
+  Lookup lookup;
+  TriangleList result;
+  for (ushort3 const &each : triangles) {
+    std::array<uint16_t, 3> mid;
+    mid[0] = vertex_for_edge(lookup, vertices, each[0], each[1]);
+    mid[1] = vertex_for_edge(lookup, vertices, each[1], each[2]);
+    mid[2] = vertex_for_edge(lookup, vertices, each[2], each[0]);
+    result.push_back({each[0], mid[0], mid[2]});
+    result.push_back({each[1], mid[1], mid[0]});
+    result.push_back({each[2], mid[2], mid[1]});
+    result.push_back({mid[0], mid[1], mid[2]});
+  }
+  return result;
+}
+
+auto create_sphere(const float3 &pos, float sz, int subdiv = 5) 
+{
+  VertexList vertices = sVertices;
+  TriangleList triangles = sTriangles;
+  for (int i = 0; i < subdiv; ++i) {
+    triangles = subdivide(vertices, triangles);
+  }
+  return std::make_tuple(vertices, triangles);
+}
+
+}
+
+Sphere::Sphere(SphereNode *node)
+  : RDShape(node)
+{
 }
 
 Sphere::~Sphere()
 {
-  mEngine.destroy(mMaterialInstance);
-  mEngine.destroy(mRenderable);
-  utils::EntityManager& em = utils::EntityManager::get();
+  mEngine->destroy(mMaterialInstance);
+  mEngine->destroy(mRenderable);
+  utils::EntityManager &em = utils::EntityManager::get();
   em.destroy(mRenderable);
 }
 
-Sphere& Sphere::setPosition(filament::math::float3 const& position) noexcept
+void Sphere::build(filament::Engine *engine, filament::Material const *material)
 {
-  auto& tcm = mEngine.getTransformManager();
+  mEngine = engine;
+  auto sph = static_cast<SphereNode *>(_node);
+  auto [vertices, indices] = create_sphere(*(float3 *)&sph->pos(), sph->radius());
+
+  _tangents.resize(vertices.size());
+  auto *quats = geometry::SurfaceOrientation::Builder().vertexCount(vertices.size()).normals(vertices.data(), sizeof(float3)).build();
+  quats->getQuats((short4 *)_tangents.data(), vertices.size(), sizeof(filament::math::short4));
+  delete quats;
+
+  _vertexBuffer = VertexBuffer::Builder()
+                    .vertexCount((uint32_t)vertices.size())
+                    .bufferCount(2)
+                    .attribute(VertexAttribute::POSITION, 0, VertexBuffer::AttributeType::FLOAT3)
+                    .attribute(VertexAttribute::TANGENTS, 1, VertexBuffer::AttributeType::SHORT4)
+                    .normalized(VertexAttribute::TANGENTS)
+                    .build(*engine);
+
+  _vertexs = std::move(vertices);
+  _indices = std::move(indices);
+  _vertexBuffer->setBufferAt(*engine, 0, VertexBuffer::BufferDescriptor(_vertexs.data(), _vertexs.size() * sizeof(float3)));
+  _vertexBuffer->setBufferAt(*engine, 1, VertexBuffer::BufferDescriptor(_tangents.data(), _tangents.size() * sizeof(filament::math::short4)));
+
+  uint32_t indexCount = (uint32_t)(_indices.size() * 3);
+  _indexBuffer = IndexBuffer::Builder().bufferType(IndexBuffer::IndexType::USHORT).indexCount(indexCount).build(*engine);
+  _indexBuffer->setBuffer(*engine, IndexBuffer::BufferDescriptor(_indices.data(), indexCount * sizeof(uint16_t)));
+
+  if (material) {
+    mMaterialInstance = material->createInstance();
+    mMaterialInstance->setParameter("baseColor", RgbaType::LINEAR, LinearColorA(0.8, 0, 0, 1.0));
+  }
+
+  utils::EntityManager &em = utils::EntityManager::get();
+  mRenderable = em.create();
+  RenderableManager::Builder(1)
+    .boundingBox({{0}, {1}})
+    .material(0, mMaterialInstance)
+    .geometry(0, RenderableManager::PrimitiveType::TRIANGLES, _vertexBuffer, _indexBuffer)
+    .culling(true)
+    .build(*engine, mRenderable);
+
+  _entities.clear();
+  _entities.push_back(mRenderable.getId());
+}
+
+void Sphere::release() 
+{
+  mEngine->destroy(mMaterialInstance);
+}
+
+Sphere &Sphere::setPosition(filament::math::float3 const &position) noexcept
+{
+  auto &tcm = mEngine->getTransformManager();
   auto ci = tcm.getInstance(mRenderable);
   mat4f model = tcm.getTransform(ci);
   model[3].xyz = position;
@@ -114,9 +180,9 @@ Sphere& Sphere::setPosition(filament::math::float3 const& position) noexcept
   return *this;
 }
 
-Sphere& Sphere::setRadius(float radius) noexcept
+Sphere &Sphere::setRadius(float radius) noexcept
 {
-  auto& tcm = mEngine.getTransformManager();
+  auto &tcm = mEngine->getTransformManager();
   auto ci = tcm.getInstance(mRenderable);
   mat4f model = tcm.getTransform(ci);
   model[0].x = radius;

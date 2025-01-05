@@ -30,9 +30,6 @@
 #define STBI_WINDOWS_UTF8
 #include "stb_image.h"
 
-Sphere *_sphere = 0;
-Cube *_cube = 0;
-
 #include "imgui/imgui.h"
 
 #ifdef POINT_CLOUD_SUPPORT
@@ -78,15 +75,20 @@ FTScene::FTScene()
 
 FTScene::~FTScene()
 {
-  if (_sphere)
-    delete _sphere;
-  if (_cube)
-    delete _cube;
+  for (auto &iter : _nodes) {
+    auto rd = iter.second->get_rd().get();
+    if (rd == nullptr)
+      continue;
+    rd->release();
+  }
 
   if (_engine) {
     _engine->destroy(_default_material);
     _engine->destroy(_basic_material);
     _engine->destroy(_scene);
+    _engine->destroy(_skybox);
+    _engine->destroy(_skybox_tex);
+    _engine->destroy(_ibl);
   }
 }
 
@@ -104,30 +106,6 @@ void FTScene::show_box(const tg::boundingbox &box)
   tcm.setTransform(ti, fm);
 #endif
 }
-
-//void FTScene::add_test_scene()
-//{
-//  {
-//    auto sphere = new Sphere(*_engine, _default_material);
-//    _sphere = sphere;
-//    auto material = sphere->getMaterialInstance();
-//    material->setParameter("baseColor", RgbType::sRGB, math::float3(1, 0, 0));
-//    material->setParameter("metallic", 0);
-//    material->setParameter("roughness", 1);
-//    material->setParameter("reflectance", 0);
-//    _scene->addEntity(sphere->getSolidRenderable());
-//  }
-//
-//  if (1) {
-//    auto cube = new Cube(*_engine, _basic_material, math::float3(0, 10, 0));
-//    _cube = cube;
-//    auto ce = cube->getWireFrameRenderable();
-//    _scene->addEntity(ce);
-//    auto &tm = _engine->getTransformManager();
-//    auto s = filament::math::mat4::scaling(20);
-//    tm.setTransform(tm.getInstance(ce), s);
-//  }
-//}
 
 void FTScene::set_environment(const std::string &img_path, bool filter)
 {
@@ -170,12 +148,12 @@ void FTScene::set_environment(const std::string &img_path, bool filter)
     ibl_ktx = new image::Ktx1Bundle(::ibl, ibl_length);
   else
     ibl_ktx = create_ktx(img_path + "_ibl.ktx");
-  auto irrtex = ktxreader::Ktx1Reader::createTexture(_engine, ibl_ktx, true);
-  auto irrlight = IndirectLight::Builder()
-    .reflections(irrtex)
-    //.intensity(30000)
+  _ibl_tex = ktxreader::Ktx1Reader::createTexture(_engine, ibl_ktx, true);
+  _ibl = IndirectLight::Builder()
+    .reflections(_ibl_tex)
+    .intensity(30000)
     .build(*_engine);
-  _scene->setIndirectLight(irrlight);
+  _scene->setIndirectLight(_ibl);
 }
 
 int FTScene::load_model(const std::string &file, float size)
@@ -224,6 +202,8 @@ int FTScene::add_shape(int pri)
   std::shared_ptr<ShapeNode> node;
   if (pri == 0) {
     node = std::make_shared<CubeNode>();
+  } else if(pri == 1) {
+    node = std::make_shared<SphereNode>();
   }
 
   if (!node)
@@ -308,30 +288,4 @@ void FTScene::process(double timestamp)
     _tasks.front()();
     _tasks.pop();
   }
-}
-
-void FTScene::gui(filament::Engine *, filament::View *)
-{
-#ifdef POINT_CLOUD_SUPPORT
-  ImGui::SetNextWindowSize(ImVec2(400, 200), ImGuiCond_Once);
-  ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_Once);
-
-  ImGui::Begin("Point Cloud");
-  if (ImGui::Button("Add PC")) {
-    auto pc = std::make_shared<fpc::PCNode>();
-    if (pc->load_file("D:\\07_Temp\\tiny\\test.tpcd")) {
-      add_pc(pc);
-      auto ab = pc->get_aabb();
-      view()->set_pivot(ab.center(), 200);
-    }
-  }
-  if (ImGui::Button("Calculate Point")) {
-    _point_count = 0;
-    for (auto iter : _pcs)
-      _point_count += iter.second->point_count();
-  }
-  ImGui::Text("Point Count: %d", _point_count);
-
-  ImGui::End();
-#endif
 }

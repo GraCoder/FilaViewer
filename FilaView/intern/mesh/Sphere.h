@@ -17,8 +17,11 @@
 #ifndef TNT_FILAMENT_SAMPLE_SPHERE_H
 #define TNT_FILAMENT_SAMPLE_SPHERE_H
 
-#include <utils/Entity.h>
 #include <math/vec3.h>
+#include <utils/Entity.h>
+#include <vector>
+
+#include "RDShape.h"
 
 namespace filament {
 class Engine;
@@ -26,33 +29,38 @@ class IndexBuffer;
 class Material;
 class MaterialInstance;
 class VertexBuffer;
-}  // namespace filament
+} // namespace filament
 
-class Sphere {
+class Sphere : public RDShape {
 public:
-  Sphere(filament::Engine& engine, filament::Material const* material, bool culling = true);
+  Sphere(SphereNode *node);
   ~Sphere();
 
-  Sphere(Sphere const&) = delete;
-  Sphere& operator=(Sphere const&) = delete;
+  void build(filament::Engine *engine, filament::Material const *material) override;
+  void release();
 
-  Sphere(Sphere&& rhs) noexcept : mEngine(rhs.mEngine), mMaterialInstance(rhs.mMaterialInstance), mRenderable(rhs.mRenderable)
-  {
-    rhs.mMaterialInstance = {};
-    rhs.mRenderable = {};
-  }
+  Sphere(Sphere const &) = delete;
+  Sphere &operator=(Sphere const &) = delete;
 
   utils::Entity getSolidRenderable() const { return mRenderable; }
 
-  filament::MaterialInstance* getMaterialInstance() { return mMaterialInstance; }
+  filament::MaterialInstance *getMaterialInstance() { return mMaterialInstance; }
 
-  Sphere& setPosition(filament::math::float3 const& position) noexcept;
-  Sphere& setRadius(float radius) noexcept;
+  Sphere &setPosition(filament::math::float3 const &position) noexcept;
+  Sphere &setRadius(float radius) noexcept;
 
 private:
-  filament::Engine& mEngine;
-  filament::MaterialInstance* mMaterialInstance = nullptr;
+  filament::Engine *mEngine = nullptr;
+  filament::MaterialInstance *mMaterialInstance = nullptr;
+
+  filament::VertexBuffer *_vertexBuffer = nullptr;
+  filament::IndexBuffer *_indexBuffer = nullptr;
+
   utils::Entity mRenderable;
+
+  std::vector<filament::math::float3>   _vertexs;
+  std::vector<filament::math::short4>   _tangents;
+  std::vector<filament::math::ushort3>  _indices;
 };
 
-#endif  // TNT_FILAMENT_SAMPLE_SPHERE_H
+#endif // TNT_FILAMENT_SAMPLE_SPHERE_H

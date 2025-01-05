@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using MdlViewer.ViewModels;
@@ -39,5 +41,25 @@ public partial class MainWindow : Window
     public void RegistInteraction()
     {
         (DataContext as MainWindowViewModel).SelectFileInteraction.RegisterHandler(this.OpenFileHandle);
+    }
+
+    public void AddCube()
+    {
+        var cubeOps = new PrimitiveOperator(PrimitiveOperator.PrimitiveType.Cube);
+        var ops = JsonSerializer.Serialize<PrimitiveOperator>(cubeOps, OperatorSerializeContext.Default.PrimitiveOperator);
+        int id = FilaIns.Instance.Win.OperatorS(ops, ops.Length);
+        if (id == -1)
+            return;
+        mdllist.AddModel(id, "Cube");
+    }
+
+    public void AddSphere()
+    {
+        var cubeOps = new PrimitiveOperator(PrimitiveOperator.PrimitiveType.Sphere);
+        var ops = JsonSerializer.Serialize<PrimitiveOperator>(cubeOps, OperatorSerializeContext.Default.PrimitiveOperator);
+        int id = FilaIns.Instance.Win.OperatorS(ops, ops.Length);
+        if (id == -1)
+            return;
+        mdllist.AddModel(id, "Sphere");
     }
 }

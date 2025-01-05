@@ -37,13 +37,6 @@ internal class ModelListViewModel : ViewModelBase
     public ModelListViewModel()
     {
         Nodes = new ObservableCollection<ModelNode>();
-
-        Nodes.Add(new ModelNode(1, "1"));
-        Nodes.Add(new ModelNode(2, "2"));
-        Nodes.Add(new ModelNode(3, "3"));
-        Nodes.Add(new ModelNode(4, "4"));
-        Nodes.Add(new ModelNode(5, "5"));
-        Nodes.Add(new ModelNode(6, "6"));
     }
 
     public void AddNode(int id, string name)

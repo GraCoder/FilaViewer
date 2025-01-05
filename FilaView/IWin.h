@@ -5,7 +5,8 @@
 
 class FILAVIEW_EXPORT IWin {
 public:
-  static IWin* create(IWin *win = nullptr, bool with_border = true);
+  static IWin*  create(IWin *win = nullptr, bool with_border = true);
+  static void   destroy(IWin *win);
 
   virtual uint64_t handle() = 0;
 

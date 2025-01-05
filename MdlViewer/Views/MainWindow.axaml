@@ -12,7 +12,9 @@
         TransparencyLevelHint="AcrylicBlur"
         Background="Transparent"
         ExtendClientAreaToDecorationsHint="True"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Name="mainwindow"
+        >
 
   <Design.DataContext>
     <!-- This only sets the DataContext for the previewer in an IDE,
@@ -37,16 +39,17 @@
           <MenuItem Header="Open" Command="{Binding OpenFileCommand}"/>
         </MenuItem>
         <MenuItem Header="Debug">
-          <MenuItem Header="Cube" Command="{Binding AddCube}"/>
-          <MenuItem Header="Sphere" Command="{Binding AddSphere}"/>
+          <MenuItem Header="Cube" Command="{Binding #mainwindow.AddCube}"/>
+          <MenuItem Header="Sphere" Command="{Binding #mainwindow.AddSphere}"/>
         </MenuItem>
       </Menu>
     </DockPanel>
 
-    <Panel Margin="10,40,10,10">
-      <Grid ColumnDefinitions="200,*">
+    <Panel Margin="5,40,5,5">
+      <Grid ColumnDefinitions="200,*,300">
         <cc:ModelListView Grid.Column="0" Name="mdllist"/>
         <cc:NativeEmbedView x:Name="vkview" Grid.Column="1"/>
+        <cc:PropertyView Grid.Column="2" Name="propview" />
       </Grid>
     </Panel>
   </Panel>

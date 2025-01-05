@@ -15,6 +15,7 @@ class Engine;
 class Skybox;
 class Texture;
 class Material;
+class IndirectLight;
 } // namespace filament
 
 namespace fpc{
@@ -44,11 +45,11 @@ public:
 
 public:
 
-  int     load_model(const std::string &file, float sz);
+  void show_model(int id, bool show);
 
-  void    show_model(int id, bool show);
+  int load_model(const std::string &file, float sz);
 
-  int     add_shape(int);
+  int add_shape(int);
 
 public:
 
@@ -61,10 +62,6 @@ public:
   void process(double delta);
 
 private:
-
-  void gui(filament::Engine *, filament::View *);
-
-private:
   bool _realized = false;
 
   filament::Engine  *_engine = nullptr;
@@ -72,6 +69,8 @@ private:
 
   filament::Texture *_skybox_tex = nullptr;
   filament::Skybox  *_skybox = nullptr;
+  filament::Texture *_ibl_tex = nullptr;
+  filament::IndirectLight *_ibl = nullptr;
 
   filament::Material const *_basic_material = nullptr;
   filament::Material const *_default_material = nullptr;

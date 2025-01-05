@@ -1,7 +1,5 @@
 ﻿using System.Linq;
 using System.Reactive.Linq;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia.Controls;
@@ -39,19 +37,5 @@ namespace MdlViewer.ViewModels
         }
 
         public Interaction<string?, string[]?> SelectFileInteraction => this._select_file_interaction;
-
-        public void AddCube()
-        {
-            var cubeOps = new PrimitiveOperator(PrimitiveOperator.PrimitiveType.Cube);
-            var ops = JsonSerializer.Serialize<PrimitiveOperator>(cubeOps, OperatorSerializeContext.Default.PrimitiveOperator);
-            FilaIns.Instance.Win.OperatorS(ops, ops.Length);
-        }
-
-        public void AddSphere()
-        {
-            var cubeOps = new PrimitiveOperator(PrimitiveOperator.PrimitiveType.Sphere);
-            var ops = JsonSerializer.Serialize<PrimitiveOperator>(cubeOps, OperatorSerializeContext.Default.PrimitiveOperator);
-            FilaIns.Instance.Win.OperatorS(ops, ops.Length);
-        }
     }
 }

@@ -6,7 +6,7 @@
 
 class FILAVIEW_EXPORT TWin : public IWin {
 public:
-  ~TWin();
+  virtual ~TWin();
 
   void resize(int w, int h);
 

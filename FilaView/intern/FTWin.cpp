@@ -33,13 +33,19 @@ HWND native_window(SDL_Window *win)
 
 IWin *IWin::create(IWin *s, bool with_border)
 {
-  auto win = new FTWin(static_cast<FTWin *>(s));
+  FTWin* win = new FTWin(static_cast<FTWin *>(s));
   uint32_t flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
   if(!with_border)
     flags |= SDL_WINDOW_BORDERLESS;
   //flags |= SDL_WINDOW_FULLSCREEN;
   win->set_flags(flags);
   return win;
+}
+
+void IWin::destroy(IWin *win) 
+{
+  FTWin *w = static_cast<FTWin *>(win);
+  delete w;
 }
 
 FTWin::FTWin(FTWin *win)
@@ -56,15 +62,26 @@ FTWin::FTWin(FTWin *win)
 
 FTWin::~FTWin()
 {
-  if (_gui)
+  if (_gui) {
     delete _gui;
+    _gui = nullptr;
+  }
+
+  if(_gui_view) {
+    _engine->destroy(_gui_view);
+    _gui_view = nullptr;
+  }
+
+  if (_swapchain) {
+    _engine->destroy(_swapchain);
+    _swapchain = nullptr;
+  }
+  if (_renderer) {
+    _engine->destroy(_renderer);
+    _renderer = nullptr;
+  }
 
   _view.reset();
-
-  if (_swapchain)
-    _engine->destroy(_swapchain);
-  if (_renderer)
-    _engine->destroy(_renderer);
 
   filament::Engine::destroy(_engine);
 }
@@ -114,6 +131,7 @@ void FTWin::setup_gui()
 {
   if (_gui)
     return;
+
   using namespace filagui;
 
   _gui_view = _engine->createView();
@@ -316,11 +334,6 @@ void FTWin::poll_events()
     if (!_realized)
       continue;
 
-    // if (_gui && view()->gui_callback()) {
-    //   ImGui::GetIO().DeltaTime = timestamp;
-    //   _gui->render(timestamp, view()->gui_callback());
-    // }
-
     // SDL_DisplayMode mode;
     // if(SDL_GetDesktopDisplayMode(SDL_GetWindowDisplayIndex(_window), &mode) == 0 && mode.refresh_rate != 0) {
     //   round(1000.0 / mode.refresh_rate);
@@ -330,6 +343,11 @@ void FTWin::poll_events()
     double timestamp = (now - stamp) / freq;
     view()->process(timestamp);
 
+    if (_gui) {
+      ImGui::GetIO().DeltaTime = timestamp;
+      _gui->render(timestamp, std::bind(&FTWin::gui, this, std::placeholders::_1, std::placeholders::_2));
+    }
+
     uint32_t interval = uint32_t(now - prev_time) / freq;
     if(interval < 10) {
       SDL_Delay(10 - interval);
@@ -337,9 +355,44 @@ void FTWin::poll_events()
 
     prev_time = SDL_GetPerformanceCounter();
     if (_renderer->beginFrame(getSwapChain())) {
-      _renderer->render(*view());
+      _renderer->render(*_view);
+      
+      if (_gui_view) {
+        _renderer->render(_gui_view);
+      }
+
       _renderer->endFrame();
       //_renderer->readPixels();
     }
   }
 }
+
+void FTWin::gui(filament::Engine *, filament::View *)
+{
+  ImGui::SetNextWindowSize(ImVec2(400, 200), ImGuiCond_Once);
+  ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_Once);
+  ImGui::Begin("Panel");
+  if(ImGui::Button("Add Cube")) 
+    _view->scene()->add_shape(0);
+  if(ImGui::Button("Add Sphere"))
+    _view->scene()->add_shape(1);
+#ifdef POINT_CLOUD_SUPPORT
+
+  if (ImGui::Button("Add PC")) {
+    auto pc = std::make_shared<fpc::PCNode>();
+    if (pc->load_file("D:\\07_Temp\\tiny\\test.tpcd")) {
+      add_pc(pc);
+      auto ab = pc->get_aabb();
+      view()->set_pivot(ab.center(), 200);
+    }
+  }
+  if (ImGui::Button("Calculate Point")) {
+    _point_count = 0;
+    for (auto iter : _pcs)
+      _point_count += iter.second->point_count();
+  }
+  ImGui::Text("Point Count: %d", _point_count);
+#endif
+  ImGui::End();
+}
+

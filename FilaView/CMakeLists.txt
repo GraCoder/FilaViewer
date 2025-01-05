@@ -64,8 +64,6 @@ set(mesh_src
   intern/mesh/Cube.cpp
   intern/mesh/Sphere.h
   intern/mesh/Sphere.cpp
-  intern/mesh/IcoSphere.h
-  intern/mesh/IcoSphere.cpp
 )
 
 set(intern_src

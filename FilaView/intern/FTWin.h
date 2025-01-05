@@ -58,6 +58,10 @@ private:
 
 private:
 
+  void gui(filament::Engine *, filament::View *);
+
+private:
+
   bool _close = false;
   bool _realized = false;
 

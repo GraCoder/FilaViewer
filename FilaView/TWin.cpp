@@ -57,7 +57,7 @@ int TWin::operator_s(const char *ops, int len)
     return -1;
   if (iter.value() == 1000) {
     auto scene = downcast(this)->view(0)->scene();
-    scene->add_shape(js.at("PrimType"));
+    return scene->add_shape(js.at("PrimType"));
   }
   return 0;
 }

@@ -27,4 +27,13 @@ private:
 class SphereNode : public ShapeNode{
 public:
   SphereNode();
+
+  const tg::vec3 &pos() { return _pos; }
+  float radius() { return _radius; }
+  void set_pos(const tg::vec3 &pos) { _pos = pos; }
+  void set_radius(const float &radius) { _radius = radius; }
+
+private:
+  tg::vec3 _pos;
+  float _radius;
 };

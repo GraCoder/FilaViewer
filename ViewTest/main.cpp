@@ -30,4 +30,5 @@ int main(int argc, char **argv)
   }
 
   win->exec(false);
+  TWin::destroy(win);
 }

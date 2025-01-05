@@ -103,8 +103,8 @@ void Cube::build(filament::Engine *engine, filament::Material const *material)
   if (mMaterial) {
     mMaterialInstanceSolid = mMaterial->createInstance();
     mMaterialInstanceWireFrame = mMaterial->createInstance();
-    mMaterialInstanceSolid->setParameter("baseColor", RgbaType::LINEAR, LinearColorA(0.8, 0.8, 0.8, 0.5));
-    mMaterialInstanceWireFrame->setParameter("baseColor", RgbaType::LINEAR, LinearColorA{0.6, 0.6, 0.6, 0.25f});
+    mMaterialInstanceSolid->setParameter("baseColor", RgbaType::LINEAR, LinearColorA(0.4, 0.41, 0.4, 1.0));
+    mMaterialInstanceWireFrame->setParameter("baseColor", RgbaType::LINEAR, LinearColorA{0.0, 0.6, 0.0, 0.5});
   }
 
   auto cube = static_cast<CubeNode*>(_node);
@@ -131,12 +131,12 @@ void Cube::build(filament::Engine *engine, filament::Material const *material)
   auto *quats = geometry::SurfaceOrientation::Builder()
     .vertexCount(_vertexs.size()).positions(_vertexs.data(), sizeof(float3))
     .triangleCount(12).triangles((ushort3 *)_indices.data()).build();
-  _normals.resize(24);
-  quats->getQuats((short4 *)_normals.data(), 24);
+  _tangents.resize(24);
+  quats->getQuats((short4 *)_tangents.data(), 24);
   delete quats;
 
   mVertexBuffer->setBufferAt(*engine, 0, VertexBuffer::BufferDescriptor(_vertexs.data(), _vertexs.size() * sizeof(float3)));
-  mVertexBuffer->setBufferAt(*engine, 1, VertexBuffer::BufferDescriptor(_normals.data(), _normals.size() * sizeof(short4)));
+  mVertexBuffer->setBufferAt(*engine, 1, VertexBuffer::BufferDescriptor(_tangents.data(), _tangents.size() * sizeof(short4)));
   mIndexBuffer->setBuffer(*engine, IndexBuffer::BufferDescriptor(_indices.data(), _indices.size() * sizeof(uint16_t)));
 
   utils::EntityManager &em = utils::EntityManager::get();
@@ -160,6 +160,12 @@ void Cube::build(filament::Engine *engine, filament::Material const *material)
 
   _entities.push_back(mSolidRenderable.getId());
   //_entities.push_back(mWireFrameRenderable.getId());
+}
+
+void Cube::release() 
+{
+  mEngine->destroy(mMaterialInstanceSolid);
+  mEngine->destroy(mMaterialInstanceWireFrame);
 }
 
 void Cube::mapFrustum(filament::Engine &engine, Camera const *camera)

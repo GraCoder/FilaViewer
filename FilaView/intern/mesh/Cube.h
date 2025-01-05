@@ -31,6 +31,7 @@ public:
   ~Cube();
 
   void build(filament::Engine *engine, filament::Material const *material) override;
+  void release() override;
 
   utils::Entity getSolidRenderable() { return mSolidRenderable; }
   utils::Entity getWireFrameRenderable() { return mWireFrameRenderable; }
@@ -50,7 +51,7 @@ private:
   utils::Entity mWireFrameRenderable;
 
   std::vector<filament::math::float3>   _vertexs;
-  std::vector<filament::math::short4>   _normals;
+  std::vector<filament::math::short4>   _tangents;
   std::vector<uint16_t>                 _indices;
 };
 
