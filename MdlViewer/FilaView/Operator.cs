@@ -4,7 +4,8 @@ internal class Operator
 {
     public enum OperatorType
     {
-        AddPrimitive = 1000
+        AddPrimitive = 1000,
+        PickEntity
     }
 
     public OperatorType OperType { get; }

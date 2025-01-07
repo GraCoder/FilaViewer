@@ -1,7 +1,3 @@
-using Avalonia.Rendering.Composition;
-using Splat;
-using System.Security.Cryptography.X509Certificates;
-
 class PrimitiveOperator : Operator
 {
     public enum PrimitiveType

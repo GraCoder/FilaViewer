@@ -26,9 +26,7 @@ class FTView;
 
 class FTScene : public TScene {
 public:
-
   FTScene();
-
   ~FTScene();
 
   filament::Engine* engine() { return _engine; }
@@ -50,6 +48,8 @@ public:
   int load_model(const std::string &file, float sz);
 
   int add_shape(int);
+
+  std::shared_ptr<Node> find_node(uint32_t rent);
 
 public:
 

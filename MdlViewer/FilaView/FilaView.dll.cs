@@ -30,6 +30,21 @@ namespace IWin
 
             [SuppressUnmanagedCodeSecurity, DllImport("FilaView.dll", EntryPoint = "?create@IWin@@SAPEAV1@PEAV1@_N@Z", CallingConvention = __CallingConvention.Cdecl)]
             internal static extern __IntPtr Create(__IntPtr win, bool with_border);
+
+            [SuppressUnmanagedCodeSecurity, DllImport("FilaView.dll", EntryPoint = "?destroy@IWin@@SAXPEAV1@@Z", CallingConvention = __CallingConvention.Cdecl)]
+            internal static extern void Destroy(__IntPtr win);
+
+            [SuppressUnmanagedCodeSecurity, DllImport("FilaView.dll", EntryPoint = "?load_model@IWin@@QEAAHPEBDM@Z", CallingConvention = __CallingConvention.Cdecl)]
+            internal static extern int LoadModel(__IntPtr __instance, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(CppSharp.Runtime.UTF8Marshaller))] string file, float sz);
+
+            [SuppressUnmanagedCodeSecurity, DllImport("FilaView.dll", EntryPoint = "?operator_s@IWin@@QEAAHPEBDH@Z", CallingConvention = __CallingConvention.Cdecl)]
+            internal static extern int OperatorS(__IntPtr __instance, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(CppSharp.Runtime.UTF8Marshaller))] string ops, int len);
+
+            [SuppressUnmanagedCodeSecurity, DllImport("FilaView.dll", EntryPoint = "?create_operators@IWin@@QEAAXXZ", CallingConvention = __CallingConvention.Cdecl)]
+            internal static extern void CreateOperators(__IntPtr __instance);
+
+            [SuppressUnmanagedCodeSecurity, DllImport("FilaView.dll", EntryPoint = "?regist_select@IWin@@QEAAXP6AXI@Z@Z", CallingConvention = __CallingConvention.Cdecl)]
+            internal static extern void RegistSelect(__IntPtr __instance, __IntPtr fun);
         }
 
         public __IntPtr __Instance { get; protected set; }
@@ -135,9 +150,28 @@ namespace IWin
 
         public abstract global::IWin.IView View(int id);
 
-        public abstract int LoadModel(string file, float sz);
+        public int LoadModel(string file, float sz)
+        {
+            var ___ret = __Internal.LoadModel(__Instance, file, sz);
+            return ___ret;
+        }
 
-        public abstract int OperatorS(string ops, int len);
+        public int OperatorS(string ops, int len)
+        {
+            var ___ret = __Internal.OperatorS(__Instance, ops, len);
+            return ___ret;
+        }
+
+        public void CreateOperators()
+        {
+            __Internal.CreateOperators(__Instance);
+        }
+
+        public void RegistSelect(global::IWin.Delegates.Action_uint fun)
+        {
+            var __arg0 = fun == null ? global::System.IntPtr.Zero : Marshal.GetFunctionPointerForDelegate(fun);
+            __Internal.RegistSelect(__Instance, __arg0);
+        }
 
         public static global::IWin.IWin Create(global::IWin.IWin win, bool with_border)
         {
@@ -145,6 +179,12 @@ namespace IWin
             var ___ret = __Internal.Create(__arg0, with_border);
             var __result0 = global::IWin.IWin.__GetOrCreateInstance(___ret, false);
             return __result0;
+        }
+
+        public static void Destroy(global::IWin.IWin win)
+        {
+            var __arg0 = win is null ? __IntPtr.Zero : win.__Instance;
+            __Internal.Destroy(__arg0);
         }
 
         public abstract ulong Handle
@@ -183,31 +223,11 @@ namespace IWin
             return ___ret is null ? __IntPtr.Zero : ___ret.__Instance;
         }
 
-        // int load_model(const char *file, float sz = 0) = 0
-        private static global::IWin.Delegates.Func_int___IntPtr_string8_float _LoadModelDelegateInstance;
-
-        private static int _LoadModelDelegateHook(__IntPtr __instance, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(CppSharp.Runtime.UTF8Marshaller))] string file, float sz)
-        {
-            var __target = global::IWin.IWin.__GetInstance(__instance);
-            var ___ret = __target.LoadModel(file, sz);
-            return ___ret;
-        }
-
-        // int operator_s(const char *ops, int len) = 0
-        private static global::IWin.Delegates.Func_int___IntPtr_string8_int _OperatorSDelegateInstance;
-
-        private static int _OperatorSDelegateHook(__IntPtr __instance, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(CppSharp.Runtime.UTF8Marshaller))] string ops, int len)
-        {
-            var __target = global::IWin.IWin.__GetInstance(__instance);
-            var ___ret = __target.OperatorS(ops, len);
-            return ___ret;
-        }
-
         internal static class VTableLoader
         {
             private static volatile bool initialized;
             private static readonly IntPtr*[] ManagedVTables = new IntPtr*[1];
-            private static readonly IntPtr[] Thunks = new IntPtr[5];
+            private static readonly IntPtr[] Thunks = new IntPtr[3];
             private static CppSharp.Runtime.VTables VTables;
             private static readonly global::System.Collections.Generic.List<CppSharp.Runtime.SafeUnmanagedMemoryHandle>
                 SafeHandles = new global::System.Collections.Generic.List<CppSharp.Runtime.SafeUnmanagedMemoryHandle>();
@@ -217,13 +237,9 @@ namespace IWin
                 _HandleDelegateInstance += _HandleDelegateHook;
                 _ExecDelegateInstance += _ExecDelegateHook;
                 _ViewDelegateInstance += _ViewDelegateHook;
-                _LoadModelDelegateInstance += _LoadModelDelegateHook;
-                _OperatorSDelegateInstance += _OperatorSDelegateHook;
                 Thunks[0] = Marshal.GetFunctionPointerForDelegate(_HandleDelegateInstance);
                 Thunks[1] = Marshal.GetFunctionPointerForDelegate(_ExecDelegateInstance);
                 Thunks[2] = Marshal.GetFunctionPointerForDelegate(_ViewDelegateInstance);
-                Thunks[3] = Marshal.GetFunctionPointerForDelegate(_LoadModelDelegateInstance);
-                Thunks[4] = Marshal.GetFunctionPointerForDelegate(_OperatorSDelegateInstance);
             }
 
             public static CppSharp.Runtime.VTables SetupVTables(IntPtr instance, bool destructorOnly = false)
@@ -237,13 +253,11 @@ namespace IWin
                             initialized = true;
                             VTables.Tables = new IntPtr[] { *(IntPtr*)(instance + 0) };
                             VTables.Methods = new Delegate[1][];
-                            ManagedVTables[0] = CppSharp.Runtime.VTables.CloneTable(SafeHandles, instance, 0, 5, 0);
+                            ManagedVTables[0] = CppSharp.Runtime.VTables.CloneTable(SafeHandles, instance, 0, 3, 0);
                             ManagedVTables[0][0] = Thunks[0];
                             ManagedVTables[0][1] = Thunks[1];
                             ManagedVTables[0][2] = Thunks[2];
-                            ManagedVTables[0][3] = Thunks[3];
-                            ManagedVTables[0][4] = Thunks[4];
-                            VTables.Methods[0] = new Delegate[5];
+                            VTables.Methods[0] = new Delegate[3];
                             if (destructorOnly)
                                 return VTables;
                         }
@@ -309,20 +323,6 @@ namespace IWin
             var ___ret = ___ViewDelegate(__Instance, id);
             var __result0 = global::IWin.IView.__GetOrCreateInstance(___ret, false);
             return __result0;
-        }
-
-        public override int LoadModel(string file, float sz)
-        {
-            var ___LoadModelDelegate = __VTables.GetMethodDelegate<global::IWin.Delegates.Func_int___IntPtr_string8_float>(0, 3);
-            var ___ret = ___LoadModelDelegate(__Instance, file, sz);
-            return ___ret;
-        }
-
-        public override int OperatorS(string ops, int len)
-        {
-            var ___OperatorSDelegate = __VTables.GetMethodDelegate<global::IWin.Delegates.Func_int___IntPtr_string8_int>(0, 4);
-            var ___ret = ___OperatorSDelegate(__Instance, ops, len);
-            return ___ret;
         }
 
         public override ulong Handle
@@ -563,10 +563,7 @@ namespace IWin
         internal unsafe delegate __IntPtr Func___IntPtr___IntPtr_int(__IntPtr __instance, int arg1);
 
         [SuppressUnmanagedCodeSecurity, UnmanagedFunctionPointer(__CallingConvention.Cdecl)]
-        internal unsafe delegate int Func_int___IntPtr_string8_float(__IntPtr __instance, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(CppSharp.Runtime.UTF8Marshaller))] string arg1, float arg2);
-
-        [SuppressUnmanagedCodeSecurity, UnmanagedFunctionPointer(__CallingConvention.Cdecl)]
-        internal unsafe delegate int Func_int___IntPtr_string8_int(__IntPtr __instance, [MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(CppSharp.Runtime.UTF8Marshaller))] string arg1, int arg2);
+        public unsafe delegate void Action_uint(uint __0);
 
         [SuppressUnmanagedCodeSecurity, UnmanagedFunctionPointer(__CallingConvention.Cdecl)]
         internal unsafe delegate void Action___IntPtr_int_bool(__IntPtr __instance, int arg1, [MarshalAs(UnmanagedType.I1)] bool arg2);

@@ -32,7 +32,7 @@ public:
 
 public:
 
-  void clean();
+  void release();
 
   void dispatch();
 

@@ -12,11 +12,11 @@ CubeNode::CubeNode()
   , _pos(0, 0, 0)
   , _size(2, 2, 2)
 {
-  _rd = std::make_unique<Cube>(this);
+  _rd = new Cube(this);
 }
 
 SphereNode::SphereNode()
   : ShapeNode()
 {
-  _rd = std::make_unique<Sphere>(this);
+  _rd = new Sphere(this);
 }

@@ -29,6 +29,7 @@ int main(int argc, char **argv)
     //win->load_model(argv[1], 10);
   }
 
+  win->create_operators();
   win->exec(false);
   TWin::destroy(win);
 }

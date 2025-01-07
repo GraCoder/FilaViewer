@@ -86,6 +86,7 @@ namespace MdlViewer.Views
         protected override void DestroyNativeControlCore(IPlatformHandle control)
         {
             base.DestroyNativeControlCore(control);
+            ((VulkanWin)Implementation)?.DestroyControl();
         }
     }
 
@@ -103,6 +104,7 @@ namespace MdlViewer.Views
         {
 #if true 
             _win = IWin.IWin.Create(null, false);
+            _win.CreateOperators();
             _win.Exec(true);
 
             FilaIns.Instance.Win = _win;
@@ -112,6 +114,13 @@ namespace MdlViewer.Views
 #else
             return null;
 #endif
+        }
+
+        public void DestroyControl()
+        {
+            if (_win != null) {
+                IWin.IWin.Destroy(_win);
+            }
         }
 
         public int load_file(String file)

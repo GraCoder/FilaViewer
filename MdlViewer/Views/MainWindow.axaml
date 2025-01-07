@@ -47,8 +47,8 @@
 
     <Panel Margin="5,40,5,5">
       <Grid ColumnDefinitions="200,*,300">
-        <cc:ModelListView Grid.Column="0" Name="mdllist"/>
         <cc:NativeEmbedView x:Name="vkview" Grid.Column="1"/>
+        <cc:ModelListView Grid.Column="0" Name="mdllist"/>
         <cc:PropertyView Grid.Column="2" Name="propview" />
       </Grid>
     </Panel>

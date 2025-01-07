@@ -11,4 +11,10 @@ Node::Node()
 {
 }
 
-Node::~Node() {}
+Node::~Node() 
+{
+  if(_rd) {
+    delete _rd; 
+    _rd = nullptr;
+  }
+}

@@ -243,7 +243,7 @@ void FTWin::poll_events()
       const SDL_Event &event = events[i];
       switch (event.type) {
       case SDL_QUIT: {
-        view()->clean();
+        view()->release();
         _close = true;
         break;
       }

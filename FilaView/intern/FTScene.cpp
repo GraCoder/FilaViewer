@@ -76,7 +76,7 @@ FTScene::FTScene()
 FTScene::~FTScene()
 {
   for (auto &iter : _nodes) {
-    auto rd = iter.second->get_rd().get();
+    auto rd = iter.second->get_rd();
     if (rd == nullptr)
       continue;
     rd->release();
@@ -164,7 +164,7 @@ int FTScene::load_model(const std::string &file, float size)
     std::unique_lock<std::mutex> lock(_mutex);
     _tasks.push(std::bind(
       [this](const std::shared_ptr<GltfNode> &node) {
-        auto rd = static_cast<RD_Gltf *>(node->get_rd(true).get());
+        auto rd = static_cast<RD_Gltf *>(node->get_rd(true));
         rd->build(_engine);
         add_node(node);
       },
@@ -176,7 +176,7 @@ int FTScene::load_model(const std::string &file, float size)
 
   std::unique_lock<std::mutex> lock(_mutex);
   _tasks.push([this, node]() { 
-    auto rd = static_cast<RD_Model *>(node->get_rd(true).get());
+    auto rd = static_cast<RD_Model *>(node->get_rd(true));
     rd->build(_engine, _basic_material, _default_material);
     add_node(node);
   });
@@ -212,16 +212,31 @@ int FTScene::add_shape(int pri)
 
   std::unique_lock<std::mutex> lock(_mutex);
   _tasks.push(std::bind([this, node]() {
-    auto rd = static_cast<RDShape *>(node->get_rd().get());
+    auto rd = static_cast<RDShape *>(node->get_rd());
     rd->build(_engine, _default_material);
     _add_node(node);
   }));
   return node->id();
 }
 
+std::shared_ptr<Node> FTScene::find_node(uint32_t rent)
+{
+  for (auto &iter : _nodes) {
+    auto rd = iter.second->get_rd();
+    if (!rd)
+      continue;
+    auto rds = rd->get_renderables();
+    for (auto &r : rds) {
+      if (r == rent)
+        return iter.second;
+    }
+  }
+  return nullptr;
+}
+
 void FTScene::_add_node(const std::shared_ptr<Node> &node) 
 {
-  auto &rd = node->get_rd();
+  auto rd = node->get_rd();
   if (!rd) return;
 
   _nodes.insert_or_assign(node->id(), node);
@@ -271,7 +286,7 @@ void FTScene::process(double timestamp)
 #endif
 
   for (auto &iter : _nodes) {
-    auto &rd = iter.second->get_rd();
+    auto rd = iter.second->get_rd();
     if (!rd)
       continue;
     rd->update(timestamp);

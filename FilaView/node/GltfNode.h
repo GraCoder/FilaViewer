@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include "node/Node.h"
 
 class GltfNode : public Node {
@@ -8,7 +9,7 @@ class GltfNode : public Node {
 public:
   GltfNode(const std::string &file);
 
-  const std::unique_ptr<RDNode> &get_rd(bool create = false) override;
+  RDNode *get_rd(bool create = false) override;
 
   const std::string &file() { return _file; }
 

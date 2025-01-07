@@ -92,7 +92,7 @@ void TScene::get_pos(tg::vec4d planes[5])
 #endif
 }
 
-void TScene::clean()
+void TScene::release()
 {
 #ifdef POINT_CLOUD_SUPPORT
   _pcs.clear();

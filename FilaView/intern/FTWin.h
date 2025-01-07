@@ -21,7 +21,6 @@ class ImGuiHelper;
 
 class FTWin : public TWin {
   friend class TWin;
-
 public:
 
   FTWin(FTWin *);
@@ -41,6 +40,10 @@ public:
 
   void set_flags(uint32_t flags);
 
+  inline FTView *view(int id = 0) { return _view.get(); }
+
+  std::vector<std::shared_ptr<TOperator>> &operators() { return _operators; }
+
 private:
 
   void create_window();
@@ -54,8 +57,6 @@ private:
   void fixup_mouse_coord(int& x, int& y) const;
 
   void poll_events();
-
-  inline FTView *view(int id = 0) { return _view.get(); }
 
 private:
 

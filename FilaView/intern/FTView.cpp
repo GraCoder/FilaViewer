@@ -92,7 +92,7 @@ void FTView::reset_projection()
   _camera->setCustomProjection(fmat, _near, _far);
 }
 
-void FTView::clean() { _scene->clean(); }
+void FTView::release() { _scene->release(); }
 
 void FTView::set_viewport(int x, int y, uint32_t width, uint32_t height)
 {

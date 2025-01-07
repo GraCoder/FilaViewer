@@ -41,7 +41,7 @@ public:
   void dirty_cam() { _camera_dirty = true; }
   void reset_projection();
 
-  void clean();
+  void release();
 
 protected:
 

@@ -67,6 +67,7 @@ set(mesh_src
 )
 
 set(intern_src
+  intern/IWin.cpp
   intern/FTWin.h
   intern/FTWin.cpp
   intern/FTView.h
@@ -118,11 +119,17 @@ set(node_src
   node/Geometry.cpp
 )
 
+set(operator_src
+  operator/PickOperator.h
+  operator/PickOperator.cpp
+)
+
 list(APPEND source_files
   ${intern_src} 
   ${imgui_src} 
   ${mesh_src} 
   ${node_src}
+  ${operator_src}
 )
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${source_files})
