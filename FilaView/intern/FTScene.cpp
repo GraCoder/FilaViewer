@@ -86,8 +86,9 @@ FTScene::~FTScene()
     _engine->destroy(_default_material);
     _engine->destroy(_basic_material);
     _engine->destroy(_scene);
-    _engine->destroy(_skybox);
     _engine->destroy(_skybox_tex);
+    _engine->destroy(_skybox);
+    _engine->destroy(_ibl_tex);
     _engine->destroy(_ibl);
   }
 }
@@ -99,7 +100,7 @@ void FTScene::show_box(const tg::boundingbox &box)
     return;
 
   auto &tcm = _engine.getTransformManager();
-  auto ti = tcm.getInstance(_cube->getWireFrameRenderable());
+  auto ti = tcm.getInstance(_cube->wire_entity());
   tg::vec3 ct = box.center(), sz = box.max() - box.min();
   auto fm = math::mat4f::translation<float>(math::float3(ct.x(), ct.y(), ct.z())) *
             math::mat4f::scaling<float>(math::float3(sz.x(), sz.y(), sz.z()));

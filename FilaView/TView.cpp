@@ -30,14 +30,8 @@ TView::~TView() {
 //  return downcast(this)->_manip;
 //}
 
-void TView::set_manip_factor(float f)
-{
-  //_manip->
-}
-
 void TView::zoom_box(const tg::boundingbox &box)
 {
-  using namespace filament::camutils;
   auto m = downcast(this)->_camera->getProjectionMatrix();
   float l = m[1][1] * box.radius();
 }

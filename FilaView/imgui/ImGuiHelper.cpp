@@ -88,8 +88,8 @@ ImGuiHelper::ImGuiHelper(Engine *engine, filament::View *view, const Path &fontP
   // Attach a scene for our one and only Renderable.
   view->setScene(mScene);
 
-  mRenderable = em.create();
-  mScene->addEntity(mRenderable);
+  _entity = em.create();
+  mScene->addEntity(_entity);
 
   ImGui::StyleColorsDark();
 }
@@ -120,7 +120,7 @@ void ImGuiHelper::createAtlasTexture(Engine *engine)
 ImGuiHelper::~ImGuiHelper()
 {
   mEngine->destroy(mScene);
-  mEngine->destroy(mRenderable);
+  mEngine->destroy(_entity);
   mEngine->destroyCameraComponent(mCameraEntity);
 
   for (auto &mi : mMaterialInstances) {
@@ -136,7 +136,7 @@ ImGuiHelper::~ImGuiHelper()
   }
 
   EntityManager &em = utils::EntityManager::get();
-  em.destroy(mRenderable);
+  em.destroy(_entity);
   em.destroy(mCameraEntity);
 
   ImGui::DestroyContext(mImGuiContext);
@@ -211,7 +211,7 @@ void ImGuiHelper::processImGuiCommands(ImDrawData *commands, const ImGuiIO &io)
   }
 
   // Recreate the Renderable component and point it to the vertex buffers.
-  rcm.destroy(mRenderable);
+  rcm.destroy(_entity);
   int bufferIndex = 0;
   int primIndex = 0;
   for (int cmdListIndex = 0; cmdListIndex < commands->CmdListsCount; cmdListIndex++) {
@@ -243,7 +243,7 @@ void ImGuiHelper::processImGuiCommands(ImDrawData *commands, const ImGuiIO &io)
     bufferIndex++;
   }
   if (commands->CmdListsCount > 0) {
-    rbuilder.build(*mEngine, mRenderable);
+    rbuilder.build(*mEngine, _entity);
   }
 }
 

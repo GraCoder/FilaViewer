@@ -15,8 +15,6 @@ public:
 
   ~TView();
 
-  void set_manip_factor(float f);
-
   void zoom_box(const tg::boundingbox &box);
 
   std::optional<tg::vec3d> get_pos(int x, int y);

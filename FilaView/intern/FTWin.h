@@ -5,6 +5,7 @@
 #include <thread>
 
 class FTView;
+class TOperator;
 class SDL_Window;
 
 namespace filament {
@@ -77,6 +78,8 @@ private:
   filagui::ImGuiHelper *_gui = nullptr;
 
   std::shared_ptr<FTView> _view = nullptr;
+
+  std::vector<std::shared_ptr<TOperator>> _operators;
 
   std::thread _thread;
 };

@@ -42,21 +42,21 @@ public:
   Sphere(Sphere const &) = delete;
   Sphere &operator=(Sphere const &) = delete;
 
-  utils::Entity getSolidRenderable() const { return mRenderable; }
+  utils::Entity solid_entity() const { return _entity; }
 
-  filament::MaterialInstance *getMaterialInstance() { return mMaterialInstance; }
+  filament::MaterialInstance *material_instance() { return _mtl_instance; }
 
   Sphere &setPosition(filament::math::float3 const &position) noexcept;
   Sphere &setRadius(float radius) noexcept;
 
 private:
-  filament::Engine *mEngine = nullptr;
-  filament::MaterialInstance *mMaterialInstance = nullptr;
+  filament::Engine *_engine = nullptr;
+  filament::MaterialInstance *_mtl_instance = nullptr;
 
-  filament::VertexBuffer *_vertexBuffer = nullptr;
-  filament::IndexBuffer *_indexBuffer = nullptr;
+  filament::VertexBuffer *_vert_buf = nullptr;
+  filament::IndexBuffer *_index_buf = nullptr;
 
-  utils::Entity mRenderable;
+  utils::Entity _entity;
 
   std::vector<filament::math::float3>   _vertexs;
   std::vector<filament::math::short4>   _tangents;

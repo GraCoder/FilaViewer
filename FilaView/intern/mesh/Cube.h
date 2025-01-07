@@ -33,22 +33,21 @@ public:
   void build(filament::Engine *engine, filament::Material const *material) override;
   void release() override;
 
-  utils::Entity getSolidRenderable() { return mSolidRenderable; }
-  utils::Entity getWireFrameRenderable() { return mWireFrameRenderable; }
+  utils::Entity solid_entity() { return _solid_entity; }
+  utils::Entity wire_entity() { return _wire_entity; }
 
   void mapFrustum(filament::Engine &engine, filament::Camera const *camera);
   void mapFrustum(filament::Engine &engine, filament::math::mat4 const &transform);
   void mapAabb(filament::Engine &engine, filament::Box const &box);
 
 private:
-  filament::Engine *mEngine = nullptr;
-  filament::VertexBuffer *mVertexBuffer = nullptr;
-  filament::IndexBuffer *mIndexBuffer = nullptr;
-  filament::Material const *mMaterial = nullptr;
-  filament::MaterialInstance *mMaterialInstanceSolid = nullptr;
-  filament::MaterialInstance *mMaterialInstanceWireFrame = nullptr;
-  utils::Entity mSolidRenderable;
-  utils::Entity mWireFrameRenderable;
+  filament::Engine *_engine = nullptr;
+  filament::VertexBuffer *_vert_buf = nullptr;
+  filament::IndexBuffer *_index_buf = nullptr;
+  filament::MaterialInstance *_solid_instance = nullptr;
+  filament::MaterialInstance *_wire_instance = nullptr;
+  utils::Entity _solid_entity;
+  utils::Entity _wire_entity;
 
   std::vector<filament::math::float3>   _vertexs;
   std::vector<filament::math::short4>   _tangents;

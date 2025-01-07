@@ -70,41 +70,29 @@ Cube::Cube(CubeNode *node)
 
 Cube::~Cube()
 {
-  if (!mEngine)
-    return;
-  mEngine->destroy(mVertexBuffer);
-  mEngine->destroy(mIndexBuffer);
-  mEngine->destroy(mMaterialInstanceSolid);
-  mEngine->destroy(mMaterialInstanceWireFrame);
-  mEngine->destroy(mSolidRenderable);
-  mEngine->destroy(mWireFrameRenderable);
-
-  utils::EntityManager &em = utils::EntityManager::get();
-  em.destroy(mSolidRenderable);
-  em.destroy(mWireFrameRenderable);
+  this->release();
 }
 
 void Cube::build(filament::Engine *engine, filament::Material const *material) 
 {
-  mEngine = engine;
-  mMaterial = material;
-  mVertexBuffer = VertexBuffer::Builder()
+  _engine = engine;
+  _vert_buf = VertexBuffer::Builder()
     .vertexCount(24)
     .bufferCount(2)
     .attribute(VertexAttribute::POSITION, 0, VertexBuffer::AttributeType::FLOAT3)
     .attribute(VertexAttribute::TANGENTS, 1, VertexBuffer::AttributeType::SHORT4)
     .build(*engine);
 
-  mIndexBuffer = IndexBuffer::Builder()
+  _index_buf = IndexBuffer::Builder()
     .bufferType(IndexBuffer::IndexType::USHORT)
     .indexCount(12 * 2 + 3 * 2 * 6)
     .build(*engine);
 
-  if (mMaterial) {
-    mMaterialInstanceSolid = mMaterial->createInstance();
-    mMaterialInstanceWireFrame = mMaterial->createInstance();
-    mMaterialInstanceSolid->setParameter("baseColor", RgbaType::LINEAR, LinearColorA(0.4, 0.41, 0.4, 1.0));
-    mMaterialInstanceWireFrame->setParameter("baseColor", RgbaType::LINEAR, LinearColorA{0.0, 0.6, 0.0, 0.5});
+  if (material) {
+    _solid_instance = material->createInstance();
+    _wire_instance = material->createInstance();
+    _solid_instance->setParameter("baseColor", RgbaType::LINEAR, LinearColorA(0.4, 0.41, 0.4, 1.0));
+    _wire_instance->setParameter("baseColor", RgbaType::LINEAR, LinearColorA{0.0, 0.6, 0.0, 0.5});
   }
 
   auto cube = static_cast<CubeNode*>(_node);
@@ -135,37 +123,50 @@ void Cube::build(filament::Engine *engine, filament::Material const *material)
   quats->getQuats((short4 *)_tangents.data(), 24);
   delete quats;
 
-  mVertexBuffer->setBufferAt(*engine, 0, VertexBuffer::BufferDescriptor(_vertexs.data(), _vertexs.size() * sizeof(float3)));
-  mVertexBuffer->setBufferAt(*engine, 1, VertexBuffer::BufferDescriptor(_tangents.data(), _tangents.size() * sizeof(short4)));
-  mIndexBuffer->setBuffer(*engine, IndexBuffer::BufferDescriptor(_indices.data(), _indices.size() * sizeof(uint16_t)));
+  _vert_buf->setBufferAt(*engine, 0, VertexBuffer::BufferDescriptor(_vertexs.data(), _vertexs.size() * sizeof(float3)));
+  _vert_buf->setBufferAt(*engine, 1, VertexBuffer::BufferDescriptor(_tangents.data(), _tangents.size() * sizeof(short4)));
+  _index_buf->setBuffer(*engine, IndexBuffer::BufferDescriptor(_indices.data(), _indices.size() * sizeof(uint16_t)));
 
   utils::EntityManager &em = utils::EntityManager::get();
-  mSolidRenderable = em.create();
+  _solid_entity = em.create();
   RenderableManager::Builder(1)
     .boundingBox({pos - size / 2.0, pos + size / 2.0})
-    .material(0, mMaterialInstanceSolid)
-    .geometry(0, RenderableManager::PrimitiveType::TRIANGLES, mVertexBuffer, mIndexBuffer, 0, 3 * 2 * 6)
+    .material(0, _solid_instance)
+    .geometry(0, RenderableManager::PrimitiveType::TRIANGLES, _vert_buf, _index_buf, 0, 3 * 2 * 6)
     .priority(7)
     .culling(true)
-    .build(*engine, mSolidRenderable);
+    .build(*engine, _solid_entity);
 
-  mWireFrameRenderable = em.create();
+  _wire_entity = em.create();
   RenderableManager::Builder(1)
     .boundingBox({pos - size / 2.0, pos + size / 2.0})
-    .material(0, mMaterialInstanceWireFrame)
-    .geometry(0, RenderableManager::PrimitiveType::LINES, mVertexBuffer, mIndexBuffer, WIREFRAME_OFFSET, 24)
+    .material(0, _wire_instance)
+    .geometry(0, RenderableManager::PrimitiveType::LINES, _vert_buf, _index_buf, WIREFRAME_OFFSET, 24)
     .priority(6)
     .culling(false)
-    .build(*engine, mWireFrameRenderable);
+    .build(*engine, _wire_entity);
 
-  _entities.push_back(mSolidRenderable.getId());
-  //_entities.push_back(mWireFrameRenderable.getId());
+  _entities.push_back(_solid_entity.getId());
+  //_entities.push_back(_wire_entity.getId());
 }
 
 void Cube::release() 
 {
-  mEngine->destroy(mMaterialInstanceSolid);
-  mEngine->destroy(mMaterialInstanceWireFrame);
+  if (!_engine)
+    return;
+
+  _engine->destroy(_vert_buf);
+  _engine->destroy(_index_buf);
+  _engine->destroy(_solid_instance);
+  _engine->destroy(_wire_instance);
+  _engine->destroy(_solid_entity);
+  _engine->destroy(_wire_entity);
+
+  _engine = nullptr;
+
+  utils::EntityManager &em = utils::EntityManager::get();
+  em.destroy(_solid_entity);
+  em.destroy(_wire_entity);
 }
 
 void Cube::mapFrustum(filament::Engine &engine, Camera const *camera)
@@ -181,8 +182,8 @@ void Cube::mapFrustum(filament::Engine &engine, filament::math::mat4 const &tran
   // the Camera far plane is at infinity, but we want it closer for display
   mat4f p(transform);
   auto &tcm = engine.getTransformManager();
-  tcm.setTransform(tcm.getInstance(mSolidRenderable), p);
-  tcm.setTransform(tcm.getInstance(mWireFrameRenderable), p);
+  tcm.setTransform(tcm.getInstance(_solid_entity), p);
+  tcm.setTransform(tcm.getInstance(_wire_entity), p);
 }
 
 void Cube::mapAabb(filament::Engine &engine, filament::Box const &box)

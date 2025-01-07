@@ -88,7 +88,7 @@ public:
       std::vector<filament::VertexBuffer*> mVertexBuffers;
       std::vector<filament::IndexBuffer*> mIndexBuffers;
       std::vector<filament::MaterialInstance*> mMaterialInstances;
-      utils::Entity mRenderable;
+      utils::Entity _entity;
       utils::Entity mCameraEntity;
       filament::Texture* mTexture = nullptr;
       bool mHasSynced = false;

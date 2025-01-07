@@ -113,15 +113,12 @@ Sphere::Sphere(SphereNode *node)
 
 Sphere::~Sphere()
 {
-  mEngine->destroy(mMaterialInstance);
-  mEngine->destroy(mRenderable);
-  utils::EntityManager &em = utils::EntityManager::get();
-  em.destroy(mRenderable);
+  this->release();
 }
 
 void Sphere::build(filament::Engine *engine, filament::Material const *material)
 {
-  mEngine = engine;
+  _engine = engine;
   auto sph = static_cast<SphereNode *>(_node);
   auto [vertices, indices] = create_sphere(*(float3 *)&sph->pos(), sph->radius());
 
@@ -130,7 +127,7 @@ void Sphere::build(filament::Engine *engine, filament::Material const *material)
   quats->getQuats((short4 *)_tangents.data(), vertices.size(), sizeof(filament::math::short4));
   delete quats;
 
-  _vertexBuffer = VertexBuffer::Builder()
+  _vert_buf = VertexBuffer::Builder()
                     .vertexCount((uint32_t)vertices.size())
                     .bufferCount(2)
                     .attribute(VertexAttribute::POSITION, 0, VertexBuffer::AttributeType::FLOAT3)
@@ -140,40 +137,51 @@ void Sphere::build(filament::Engine *engine, filament::Material const *material)
 
   _vertexs = std::move(vertices);
   _indices = std::move(indices);
-  _vertexBuffer->setBufferAt(*engine, 0, VertexBuffer::BufferDescriptor(_vertexs.data(), _vertexs.size() * sizeof(float3)));
-  _vertexBuffer->setBufferAt(*engine, 1, VertexBuffer::BufferDescriptor(_tangents.data(), _tangents.size() * sizeof(filament::math::short4)));
+  _vert_buf->setBufferAt(*engine, 0, VertexBuffer::BufferDescriptor(_vertexs.data(), _vertexs.size() * sizeof(float3)));
+  _vert_buf->setBufferAt(*engine, 1, VertexBuffer::BufferDescriptor(_tangents.data(), _tangents.size() * sizeof(filament::math::short4)));
 
   uint32_t indexCount = (uint32_t)(_indices.size() * 3);
-  _indexBuffer = IndexBuffer::Builder().bufferType(IndexBuffer::IndexType::USHORT).indexCount(indexCount).build(*engine);
-  _indexBuffer->setBuffer(*engine, IndexBuffer::BufferDescriptor(_indices.data(), indexCount * sizeof(uint16_t)));
+  _index_buf = IndexBuffer::Builder().bufferType(IndexBuffer::IndexType::USHORT).indexCount(indexCount).build(*engine);
+  _index_buf->setBuffer(*engine, IndexBuffer::BufferDescriptor(_indices.data(), indexCount * sizeof(uint16_t)));
 
   if (material) {
-    mMaterialInstance = material->createInstance();
-    mMaterialInstance->setParameter("baseColor", RgbaType::LINEAR, LinearColorA(0.8, 0, 0, 1.0));
+    _mtl_instance = material->createInstance();
+    _mtl_instance->setParameter("baseColor", RgbaType::LINEAR, LinearColorA(0.8, 0, 0, 1.0));
   }
 
   utils::EntityManager &em = utils::EntityManager::get();
-  mRenderable = em.create();
+  _entity = em.create();
   RenderableManager::Builder(1)
     .boundingBox({{0}, {1}})
-    .material(0, mMaterialInstance)
-    .geometry(0, RenderableManager::PrimitiveType::TRIANGLES, _vertexBuffer, _indexBuffer)
+    .material(0, _mtl_instance)
+    .geometry(0, RenderableManager::PrimitiveType::TRIANGLES, _vert_buf, _index_buf)
     .culling(true)
-    .build(*engine, mRenderable);
+    .build(*engine, _entity);
 
   _entities.clear();
-  _entities.push_back(mRenderable.getId());
+  _entities.push_back(_entity.getId());
 }
 
 void Sphere::release() 
 {
-  mEngine->destroy(mMaterialInstance);
+  if (_engine == nullptr)
+    return;
+
+  _engine->destroy(_vert_buf);
+  _engine->destroy(_index_buf);
+  _engine->destroy(_mtl_instance);
+  _engine->destroy(_entity);
+
+  _engine = nullptr;
+
+  utils::EntityManager &em = utils::EntityManager::get();
+  em.destroy(_entity);
 }
 
 Sphere &Sphere::setPosition(filament::math::float3 const &position) noexcept
 {
-  auto &tcm = mEngine->getTransformManager();
-  auto ci = tcm.getInstance(mRenderable);
+  auto &tcm = _engine->getTransformManager();
+  auto ci = tcm.getInstance(_entity);
   mat4f model = tcm.getTransform(ci);
   model[3].xyz = position;
   tcm.setTransform(ci, model);
@@ -182,8 +190,8 @@ Sphere &Sphere::setPosition(filament::math::float3 const &position) noexcept
 
 Sphere &Sphere::setRadius(float radius) noexcept
 {
-  auto &tcm = mEngine->getTransformManager();
-  auto ci = tcm.getInstance(mRenderable);
+  auto &tcm = _engine->getTransformManager();
+  auto ci = tcm.getInstance(_entity);
   mat4f model = tcm.getTransform(ci);
   model[0].x = radius;
   model[1].y = radius;

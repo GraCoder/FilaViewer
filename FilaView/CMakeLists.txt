@@ -73,9 +73,8 @@ set(intern_src
   intern/FTView.cpp
   intern/FTScene.h
   intern/FTScene.cpp
-
-  intern/mesh/Cube.h
-  intern/mesh/Cube.h
+  intern/ManipOperator.h
+  intern/ManipOperator.cpp
 
   intern/RD_Gltf.h
   intern/RD_Gltf.cpp
@@ -135,6 +134,8 @@ list(APPEND source_files
   TWin.cpp
   TScene.h 
   TScene.cpp
+  TOperator.h
+  TOperator.cpp
 )
 
 add_library(${target_name} SHARED ${source_files} ${resgen_output})

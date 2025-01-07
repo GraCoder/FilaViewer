@@ -11,12 +11,12 @@
 #include <utils/EntityManager.h>
 #include <camutils/Bookmark.h>
 
-#include <viewer/ViewerGui.h>
-#include "imgui/ImGuiHelper.h"
-
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
 
+#include "ManipOperator.h"
+
+#include "imgui/ImGuiHelper.h"
 #include "imgui/imgui.h"
 
 #include "FTView.h"
@@ -120,7 +120,8 @@ void FTWin::configure_cameras()
   dpiScaleX = (float)width / virtualWidth;
   dpiScaleY = (float)height / virtualHeight;
 
-  view()->set_viewport(0, 0, width, height);
+  _view->manip()->set_pivot({0, 0, 0}, 15);
+  _view->set_viewport(0, 0, width, height);
 }
 
 void FTWin::fixup_mouse_coord(int& x, int& y) const
@@ -203,12 +204,12 @@ void FTWin::realize_context()
 
   configure_cameras();
 
-  _view->set_pivot({0, 0, 0}, 15);
-
   _swapchain = _engine->createSwapChain(native_window(_window), filament::SwapChain::CONFIG_HAS_STENCIL_BUFFER);
   _renderer = _engine->createRenderer();
 
   setup_gui();
+
+  _operators.emplace_back(_view->manip());
 }
 
 void FTWin::create_engine()
@@ -222,6 +223,7 @@ void FTWin::create_engine()
   _engine = Engine::Builder().backend(backend) /*.config(&engineConfig)*/.build();
 }
 
+#define OperIter for(auto iter = _operators.rbegin(); iter != _operators.rend(); iter++)(*iter) 
 void FTWin::poll_events() 
 {
   uint32_t freq = SDL_GetPerformanceFrequency() / 1000;
@@ -246,21 +248,13 @@ void FTWin::poll_events()
         break;
       }
       case SDL_KEYDOWN:
-        if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
-          _close = true;
-        } else if (event.key.keysym.scancode == SDL_SCANCODE_LCTRL) {
-          view()->set_manip_factor(10.0);
-        } else if (event.key.keysym.scancode == SDL_SCANCODE_LSHIFT) {
-          view()->set_manip_factor(5.0);
-        }
-        view()->key_down(event.key.keysym.scancode);
+        OperIter->key_press(event.key);
         break;
       case SDL_KEYUP:
-        view()->key_up(event.key.keysym.scancode);
-        view()->set_manip_factor(1.0);
+        OperIter->key_release(event.key);
         break;
       case SDL_MOUSEWHEEL: {
-        view()->mouse_wheel(event.wheel.mouseX, event.wheel.mouseY, event.wheel.preciseY);
+        OperIter->mouse_wheel(event.wheel);
         break;
       }
       case SDL_MOUSEBUTTONDOWN: {
@@ -271,8 +265,7 @@ void FTWin::poll_events()
           if (io.WantCaptureMouse)
             break;
         }
-
-        view()->mouse_down(event.button.button, event.button.x, _height - event.button.y);
+        OperIter->mouse_press(event.button);
         break;
       }
       case SDL_MOUSEBUTTONUP: {
@@ -283,8 +276,7 @@ void FTWin::poll_events()
           if (io.WantCaptureMouse)
             break;
         }
-
-        view()->mouse_up(event.button.x, _height - event.button.y);
+        OperIter->mouse_release(event.button);
         break;
       }
       case SDL_MOUSEMOTION: {
@@ -294,8 +286,7 @@ void FTWin::poll_events()
           if (io.WantCaptureMouse)
             break;
         }
-
-        view()->mouse_move(event.motion.x, _height - event.motion.y);
+        OperIter->mouse_move(event.motion);
         break;
       }
       case SDL_DROPFILE:
