@@ -57,12 +57,12 @@ public:
 
 public:
 
-  void realize(filament::Engine *engine);
+  void initialize(filament::Engine *engine);
 
   void process(double delta);
 
 private:
-  bool _realized = false;
+  bool _initialized = false;
 
   filament::Engine  *_engine = nullptr;
   filament::Scene   *_scene = nullptr;

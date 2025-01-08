@@ -1,28 +1,35 @@
+using MdlViewer.Views;
+
 public class FilaIns
 {
     private static FilaIns instance = new FilaIns();
 
+    global::FilaView.Delegates.Action_uint _select;
+
     private FilaIns() 
     {
-        _select = this.SelectModel;
     }
 
     public static FilaIns Instance {
         get { return instance; }
     }
 
-    IWin.IWin ?_win = null;
-    public IWin.IWin? Win { 
+    FilaView.IWin? _win = null;
+    public FilaView.IWin Win { 
         get { return _win; } 
         set {
             _win = value; 
             _win!.RegistSelect(_select);
         } 
     }
-    public IWin.IView? View { get; set; }
+    public FilaView.IView? View { get; set; }
 
-    global::IWin.Delegates.Action_uint _select;
-    public void SelectModel(uint id) 
-    {
+    MainWindow? _main = null;
+    public MainWindow? MainWin { 
+        get { return _main; }
+        set {
+            _main = value;
+            _select = _main.SelectModel;
+        } 
     }
 }

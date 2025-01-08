@@ -7,6 +7,7 @@ using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using MdlViewer.ViewModels;
 using ReactiveUI;
+using Avalonia.Threading;
 
 namespace MdlViewer.Views;
 
@@ -15,6 +16,8 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+
+        FilaIns.Instance.MainWin = this;
     }
 
     private async Task OpenFileHandle(IInteractionContext<string?, string[]?> context)
@@ -61,5 +64,13 @@ public partial class MainWindow : Window
         if (id == -1)
             return;
         mdllist.AddModel(id, "Sphere");
+    }
+
+    public void SelectModel(uint id)
+    {
+        Dispatcher.UIThread.Post(() => {
+            var data = (ModelListViewModel)mdllist.DataContext;
+            data.SelectNode(id);
+        });
     }
 }

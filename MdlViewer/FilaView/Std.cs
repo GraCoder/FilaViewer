@@ -10,8 +10,21 @@ using System.Runtime.InteropServices;
 using System.Security;
 using __CallingConvention = global::System.Runtime.InteropServices.CallingConvention;
 using __IntPtr = global::System.IntPtr;
+
 [assembly:InternalsVisibleTo("FilaView.dll")]
 
 #pragma warning disable CS0109 // Member does not hide an inherited member; new keyword is not required
 #pragma warning disable CS9084 // Struct member returns 'this' or other instance members by reference
 
+namespace Std
+{
+    namespace WeakPtr
+    {
+        [StructLayout(LayoutKind.Sequential, Size = 16, Pack = 8)]
+        public unsafe partial struct __Internal
+        {
+            internal __IntPtr _Ptr;
+            internal __IntPtr _Rep;
+        }
+    }
+}

@@ -22,14 +22,19 @@ bool PickOperator::mouse_press(const SDL_MouseButtonEvent &btn)
 
 bool PickOperator::mouse_release(const SDL_MouseButtonEvent &btn)
 {
-  if (abs(_pos.x() - btn.x) > 2 || abs(_pos.y() - btn.y) > 2)
+  if (abs(_pos.x() - btn.x) > 3 || abs(_pos.y() - btn.y) > 3)
     return false;
 
   auto v = static_cast<FTView *>(_view)->fila_view();
   v->pick(btn.x, btn.y, [this](filament::View::PickingQueryResult const &result){ 
     auto s = static_cast<FTView *>(_view)->scene(); 
     auto node = s->find_node(result.renderable.getId());
-    if (_fun) _fun(node->id());
+    if (_fun) {
+      if (node)
+        _fun(node->id());
+      else
+        _fun(0);
+    }
   });
   return false;
 }

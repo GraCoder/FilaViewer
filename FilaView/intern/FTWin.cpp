@@ -34,11 +34,8 @@ HWND native_window(SDL_Window *win)
 IWin *IWin::create(IWin *s, bool with_border)
 {
   FTWin* win = new FTWin(static_cast<FTWin *>(s));
-  uint32_t flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
   if(!with_border)
-    flags |= SDL_WINDOW_BORDERLESS;
-  //flags |= SDL_WINDOW_FULLSCREEN;
-  win->set_flags(flags);
+    win->set_flags((uint32_t)TWin::en_Frameless);
   return win;
 }
 
@@ -124,10 +121,6 @@ void FTWin::configure_cameras()
   _view->set_viewport(0, 0, width, height);
 }
 
-void FTWin::fixup_mouse_coord(int& x, int& y) const
-{
-}
-
 void FTWin::setup_gui() 
 {
   if (_gui)
@@ -174,17 +167,15 @@ void FTWin::setup_gui()
   io.ClipboardUserData = nullptr;
 }
 
-void FTWin::set_flags(uint32_t flags) 
-{
-  _win_flags = flags;
-}
-
 void FTWin::create_window() 
 {
   const int x = SDL_WINDOWPOS_CENTERED;
   const int y = SDL_WINDOWPOS_CENTERED;
 
-  auto win = SDL_CreateWindow("", x, y, _width, _height, _win_flags);
+  uint32_t flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
+  if(_flags & en_Frameless)
+    flags |= SDL_WINDOW_BORDERLESS;
+  auto win = SDL_CreateWindow("", x, y, _width, _height, flags);
   SDL_SetWindowResizable(win, SDL_TRUE);
   SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1");
 
@@ -207,9 +198,10 @@ void FTWin::realize_context()
   _swapchain = _engine->createSwapChain(native_window(_window), filament::SwapChain::CONFIG_HAS_STENCIL_BUFFER);
   _renderer = _engine->createRenderer();
 
-  setup_gui();
-
   _operators.emplace_back(_view->manip());
+
+  if (_flags & en_SetupGui)
+    setup_gui();
 }
 
 void FTWin::create_engine()

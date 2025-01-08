@@ -116,7 +116,7 @@ void FTScene::set_environment(const std::string &img_path, bool filter)
   LightManager::Builder(LightManager::Type::SUN)
     .color(Color::toLinear<ACCURATE>(sRGBColor(0.98f, 0.92f, 0.89f)))
     .intensity(110000)
-    .direction({-1.0, 0, 0})
+    .direction({-1.0, -1.0, 0})
     .sunAngularRadius(1.9f)
     .castShadows(false)
     .sunHaloSize(10.0f)
@@ -173,7 +173,6 @@ int FTScene::load_model(const std::string &file, float size)
   }
 
   auto node = std::make_shared<ModelNode>(file);
-
   std::unique_lock<std::mutex> lock(_mutex);
   _tasks.push([this, node]() { 
     auto rd = static_cast<RD_Model *>(node->get_rd(true));
@@ -248,12 +247,12 @@ void FTScene::_add_node(const std::shared_ptr<Node> &node)
   }
 }
 
-void FTScene::realize(filament::Engine *engine)
+void FTScene::initialize(filament::Engine *engine)
 {
-  if (_realized)
+  if (_initialized)
     return;
 
-  _realized = true;
+  _initialized = true;
 
   _engine = engine;
   _scene = _engine->createScene();

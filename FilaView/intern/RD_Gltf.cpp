@@ -15,6 +15,11 @@ RD_Gltf::RD_Gltf(GltfNode *node)
 {
 }
 
+RD_Gltf::~RD_Gltf() 
+{
+  release();
+}
+
 namespace {
 void loadResources(filament::Engine *engine, filament::gltfio::FilamentAsset *asset, const utils::Path &filename)
 {
@@ -135,6 +140,9 @@ void RD_Gltf::update(double timestamp)
 void RD_Gltf::release() 
 {
   if(_loader) {
-    _loader->destroyAsset(_asset); 
+    if (_asset) {
+      _loader->destroyAsset(_asset);
+      _asset = nullptr;
+    }
   }
 }

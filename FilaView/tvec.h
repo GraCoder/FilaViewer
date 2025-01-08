@@ -178,6 +178,7 @@ public:
   inline T &operator[](int32_t i) { return data_[i]; }
   inline const T &operator[](int32_t i) const { return data_[i]; }
 
+  inline T *data() { return static_cast<T *>(data_); }
   inline const T *data() const { return static_cast<const T *>(data_); }
 
   inline static int32_t size(void) { return n; }

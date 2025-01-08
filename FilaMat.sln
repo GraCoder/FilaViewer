@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "filamat", "..\0\filament\li
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "filament", "..\0\filament\filament\filament.vcxproj", "{E3AE7DBD-42F8-3389-8781-01923CFE897A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "backend", "..\0\filament\filament\backend\backend.vcxproj", "{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -149,6 +151,30 @@ Global
 		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.RelWithDebInfo|x64.Build.0 = RelWithDebInfo|x64
 		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.RelWithDebInfo|x86.ActiveCfg = RelWithDebInfo|x64
 		{E3AE7DBD-42F8-3389-8781-01923CFE897A}.RelWithDebInfo|x86.Build.0 = RelWithDebInfo|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.Debug|Any CPU.Build.0 = Debug|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.Debug|x64.ActiveCfg = Debug|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.Debug|x64.Build.0 = Debug|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.Debug|x86.ActiveCfg = Debug|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.Debug|x86.Build.0 = Debug|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.MinSizeRel|Any CPU.ActiveCfg = MinSizeRel|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.MinSizeRel|Any CPU.Build.0 = MinSizeRel|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.MinSizeRel|x64.ActiveCfg = MinSizeRel|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.MinSizeRel|x64.Build.0 = MinSizeRel|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.MinSizeRel|x86.ActiveCfg = MinSizeRel|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.MinSizeRel|x86.Build.0 = MinSizeRel|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.Release|Any CPU.ActiveCfg = Release|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.Release|Any CPU.Build.0 = Release|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.Release|x64.ActiveCfg = Release|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.Release|x64.Build.0 = Release|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.Release|x86.ActiveCfg = Release|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.Release|x86.Build.0 = Release|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.RelWithDebInfo|Any CPU.ActiveCfg = RelWithDebInfo|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.RelWithDebInfo|Any CPU.Build.0 = RelWithDebInfo|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.RelWithDebInfo|x64.ActiveCfg = RelWithDebInfo|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.RelWithDebInfo|x64.Build.0 = RelWithDebInfo|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.RelWithDebInfo|x86.ActiveCfg = RelWithDebInfo|x64
+		{35E50C96-B325-3BEF-8DB9-8E2FB398C95F}.RelWithDebInfo|x86.Build.0 = RelWithDebInfo|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -17,6 +17,7 @@ class FilamentInstance;
 class RD_Gltf : public RDNode {
 public:
   RD_Gltf(GltfNode *node);
+  ~RD_Gltf();
 
   void build(filament::Engine *engine);
 

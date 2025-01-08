@@ -12,6 +12,7 @@ public:
 
   virtual void exec(bool thread) = 0;
 
+  virtual void setup_gui() = 0;
   virtual IView *view(int id = 0) = 0;
 
   int  load_model(const char *file, float sz = 0);

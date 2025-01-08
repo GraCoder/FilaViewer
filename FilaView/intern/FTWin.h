@@ -36,10 +36,6 @@ public:
 
   SDL_Window *getSDLWindow() { return _window; }
 
-  void setup_gui();
-
-  void set_flags(uint32_t flags);
-
   inline FTView *view(int id = 0) { return _view.get(); }
 
   std::vector<std::shared_ptr<TOperator>> &operators() { return _operators; }
@@ -54,7 +50,7 @@ private:
 
   void configure_cameras();
 
-  void fixup_mouse_coord(int& x, int& y) const;
+  void setup_gui();
 
   void poll_events();
 
@@ -66,8 +62,6 @@ private:
 
   bool _close = false;
   bool _realized = false;
-
-  uint32_t _win_flags = 0;
 
   SDL_Window *_window = nullptr;
 

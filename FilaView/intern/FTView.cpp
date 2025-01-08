@@ -52,7 +52,7 @@ void FTView::realize(filament::Engine *engine)
   reset_projection();
 
   if (_scene) {
-    _scene->realize(engine);
+    _scene->initialize(engine);
     _view->setScene(*_scene);
   }
 
