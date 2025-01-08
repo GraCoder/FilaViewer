@@ -1,10 +1,13 @@
+using MdlViewer.Views;
+
 public class FilaIns
 {
     private static FilaIns instance = new FilaIns();
 
+    global::IWin.Delegates.Action_uint _select;
+
     private FilaIns() 
     {
-        _select = this.SelectModel;
     }
 
     public static FilaIns Instance {
@@ -21,8 +24,12 @@ public class FilaIns
     }
     public IWin.IView? View { get; set; }
 
-    global::IWin.Delegates.Action_uint _select;
-    public void SelectModel(uint id) 
-    {
+    MainWindow? _main = null;
+    public MainWindow? MainWin { 
+        get { return _main; }
+        set {
+            _main = value;
+            _select = _main.SelectModel;
+        } 
     }
 }

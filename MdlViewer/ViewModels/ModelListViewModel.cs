@@ -1,7 +1,9 @@
-﻿using System;
+﻿using ReactiveUI;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reactive;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -42,5 +44,25 @@ internal class ModelListViewModel : ViewModelBase
     public void AddNode(int id, string name)
     {
         Nodes.Add(new ModelNode(id, name));
+    }
+
+    ModelNode? _sel_node = null;
+    public ModelNode? SelectedNode { 
+        get { return _sel_node; } 
+        set { 
+            this.RaiseAndSetIfChanged(ref _sel_node, value);
+        } 
+    }
+
+    public void SelectNode(uint id)
+    {
+        for (int i = 0; i < Nodes.Count; i++) 
+        {
+            if (Nodes[i].Id == id) {
+                SelectedNode = Nodes[i];
+                return;
+            }
+        }
+        SelectedNode = null;
     }
 }

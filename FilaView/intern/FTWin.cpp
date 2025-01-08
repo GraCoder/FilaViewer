@@ -207,8 +207,6 @@ void FTWin::realize_context()
   _swapchain = _engine->createSwapChain(native_window(_window), filament::SwapChain::CONFIG_HAS_STENCIL_BUFFER);
   _renderer = _engine->createRenderer();
 
-  setup_gui();
-
   _operators.emplace_back(_view->manip());
 }
 

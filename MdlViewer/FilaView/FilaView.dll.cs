@@ -148,6 +148,8 @@ namespace IWin
 
         public abstract void Exec(bool thread);
 
+        public abstract void SetupGui();
+
         public abstract global::IWin.IView View(int id);
 
         public int LoadModel(string file, float sz)
@@ -213,6 +215,15 @@ namespace IWin
             __target.Exec(thread);
         }
 
+        // void setup_gui() = 0
+        private static global::IWin.Delegates.Action___IntPtr _SetupGuiDelegateInstance;
+
+        private static void _SetupGuiDelegateHook(__IntPtr __instance)
+        {
+            var __target = global::IWin.IWin.__GetInstance(__instance);
+            __target.SetupGui();
+        }
+
         // IView *view(int id = 0) = 0
         private static global::IWin.Delegates.Func___IntPtr___IntPtr_int _ViewDelegateInstance;
 
@@ -227,7 +238,7 @@ namespace IWin
         {
             private static volatile bool initialized;
             private static readonly IntPtr*[] ManagedVTables = new IntPtr*[1];
-            private static readonly IntPtr[] Thunks = new IntPtr[3];
+            private static readonly IntPtr[] Thunks = new IntPtr[4];
             private static CppSharp.Runtime.VTables VTables;
             private static readonly global::System.Collections.Generic.List<CppSharp.Runtime.SafeUnmanagedMemoryHandle>
                 SafeHandles = new global::System.Collections.Generic.List<CppSharp.Runtime.SafeUnmanagedMemoryHandle>();
@@ -236,10 +247,12 @@ namespace IWin
             {
                 _HandleDelegateInstance += _HandleDelegateHook;
                 _ExecDelegateInstance += _ExecDelegateHook;
+                _SetupGuiDelegateInstance += _SetupGuiDelegateHook;
                 _ViewDelegateInstance += _ViewDelegateHook;
                 Thunks[0] = Marshal.GetFunctionPointerForDelegate(_HandleDelegateInstance);
                 Thunks[1] = Marshal.GetFunctionPointerForDelegate(_ExecDelegateInstance);
-                Thunks[2] = Marshal.GetFunctionPointerForDelegate(_ViewDelegateInstance);
+                Thunks[2] = Marshal.GetFunctionPointerForDelegate(_SetupGuiDelegateInstance);
+                Thunks[3] = Marshal.GetFunctionPointerForDelegate(_ViewDelegateInstance);
             }
 
             public static CppSharp.Runtime.VTables SetupVTables(IntPtr instance, bool destructorOnly = false)
@@ -253,11 +266,12 @@ namespace IWin
                             initialized = true;
                             VTables.Tables = new IntPtr[] { *(IntPtr*)(instance + 0) };
                             VTables.Methods = new Delegate[1][];
-                            ManagedVTables[0] = CppSharp.Runtime.VTables.CloneTable(SafeHandles, instance, 0, 3, 0);
+                            ManagedVTables[0] = CppSharp.Runtime.VTables.CloneTable(SafeHandles, instance, 0, 4, 0);
                             ManagedVTables[0][0] = Thunks[0];
                             ManagedVTables[0][1] = Thunks[1];
                             ManagedVTables[0][2] = Thunks[2];
-                            VTables.Methods[0] = new Delegate[3];
+                            ManagedVTables[0][3] = Thunks[3];
+                            VTables.Methods[0] = new Delegate[4];
                             if (destructorOnly)
                                 return VTables;
                         }
@@ -317,9 +331,15 @@ namespace IWin
             ___ExecDelegate(__Instance, thread);
         }
 
+        public override void SetupGui()
+        {
+            var ___SetupGuiDelegate = __VTables.GetMethodDelegate<global::IWin.Delegates.Action___IntPtr>(0, 2);
+            ___SetupGuiDelegate(__Instance);
+        }
+
         public override global::IWin.IView View(int id)
         {
-            var ___ViewDelegate = __VTables.GetMethodDelegate<global::IWin.Delegates.Func___IntPtr___IntPtr_int>(0, 2);
+            var ___ViewDelegate = __VTables.GetMethodDelegate<global::IWin.Delegates.Func___IntPtr___IntPtr_int>(0, 3);
             var ___ret = ___ViewDelegate(__Instance, id);
             var __result0 = global::IWin.IView.__GetOrCreateInstance(___ret, false);
             return __result0;
@@ -558,6 +578,9 @@ namespace IWin
 
         [SuppressUnmanagedCodeSecurity, UnmanagedFunctionPointer(__CallingConvention.Cdecl)]
         internal unsafe delegate void Action___IntPtr_bool(__IntPtr __instance, [MarshalAs(UnmanagedType.I1)] bool arg1);
+
+        [SuppressUnmanagedCodeSecurity, UnmanagedFunctionPointer(__CallingConvention.Cdecl)]
+        internal unsafe delegate void Action___IntPtr(__IntPtr __instance);
 
         [SuppressUnmanagedCodeSecurity, UnmanagedFunctionPointer(__CallingConvention.Cdecl)]
         internal unsafe delegate __IntPtr Func___IntPtr___IntPtr_int(__IntPtr __instance, int arg1);
