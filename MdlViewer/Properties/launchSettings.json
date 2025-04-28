@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "MdlViewer": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "PATH": "%PATH%;..\\C:\\Users\\t\\dev\\0\\FilaViewer\\bin\\Debug"
+      }
+    }
+  }
+}

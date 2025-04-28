@@ -1,0 +1,25 @@
+    material {
+        name : "legacy",
+        shadingModel : specularGlossiness,
+        parameters : [
+        {
+            type : float4,
+            name : baseColor
+        } ,
+        {
+            type : float3,
+            name : specularColor
+        },
+        {
+            type : float,
+            name : glossiness
+        }
+        ]
+    }
+
+    fragment {
+        void material(inout MaterialInputs material) {
+            prepareMaterial(material);
+            material.baseColor = materialParams.baseColor;
+        }
+    }
