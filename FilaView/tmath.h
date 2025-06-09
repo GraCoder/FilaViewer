@@ -8,6 +8,9 @@
 #include <optional>
 #endif
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 
 namespace tg {
 

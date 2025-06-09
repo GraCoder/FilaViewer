@@ -64,20 +64,21 @@ FTWin::~FTWin()
     _gui = nullptr;
   }
 
+  _engine->getDriver();
+
   if(_gui_view) {
     _engine->destroy(_gui_view);
     _gui_view = nullptr;
   }
 
-  if (_swapchain) {
-    _engine->destroy(_swapchain);
-    _swapchain = nullptr;
-  }
   if (_renderer) {
     _engine->destroy(_renderer);
     _renderer = nullptr;
   }
-
+  if (_swapchain) {
+    _engine->destroy(_swapchain);
+    _swapchain = nullptr;
+  }
   _view.reset();
 
   filament::Engine::destroy(_engine);
