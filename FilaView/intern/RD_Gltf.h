@@ -13,6 +13,7 @@ class FilamentInstance;
 } // namespace filament
 
 class RD_gltf : public RDNode {
+  using Base = RDNode;
 public:
   RD_gltf(GltfNode *node);
   ~RD_gltf();
@@ -21,7 +22,7 @@ public:
 
   void update(double timestamp) override;
 
-  void release() override;
+  void release(filament::Engine *) override;
 
   void set_fade_duration(float f) { _fade_duraion = f; }
 

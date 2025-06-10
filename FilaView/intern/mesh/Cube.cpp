@@ -70,7 +70,7 @@ Cube::Cube(CubeNode *node)
 
 Cube::~Cube()
 {
-  this->release();
+  this->release(_engine);
 }
 
 void Cube::build(filament::Engine *engine, filament::Material const *material) 
@@ -150,23 +150,25 @@ void Cube::build(filament::Engine *engine, filament::Material const *material)
   //_entities.push_back(_wire_entity.getId());
 }
 
-void Cube::release() 
+void Cube::release(filament::Engine *engine) 
 {
-  if (!_engine)
-    return;
+    if (_vert_buf) { engine->destroy(_vert_buf); _vert_buf = nullptr; }
+    if (_index_buf) { engine->destroy(_index_buf); _index_buf = nullptr; }
+    if (_solid_instance) { engine->destroy(_solid_instance); _solid_instance = nullptr; }
+    if (_wire_instance) { engine->destroy(_wire_instance); _wire_instance = nullptr; }
 
-  _engine->destroy(_vert_buf);
-  _engine->destroy(_index_buf);
-  _engine->destroy(_solid_instance);
-  _engine->destroy(_wire_instance);
-  _engine->destroy(_solid_entity);
-  _engine->destroy(_wire_entity);
+    utils::EntityManager &em = utils::EntityManager::get();
+    if (_solid_entity) {
+      engine->destroy(_solid_entity);
+      em.destroy(_solid_entity);
+      _solid_entity = {};
+    }
 
-  _engine = nullptr;
-
-  utils::EntityManager &em = utils::EntityManager::get();
-  em.destroy(_solid_entity);
-  em.destroy(_wire_entity);
+    if (_wire_entity) {
+      engine->destroy(_wire_entity);
+      em.destroy(_wire_entity);
+      _wire_entity = {};
+    }
 }
 
 void Cube::mapFrustum(filament::Engine &engine, Camera const *camera)

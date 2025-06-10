@@ -8,7 +8,7 @@ namespace filament {
 class Engine;
 }
 
-class RD_Geometry : public RDNode{
+class RD_Geometry : public RDNode {
 public:
   RD_Geometry();
 

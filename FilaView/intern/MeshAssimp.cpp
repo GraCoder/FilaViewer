@@ -62,12 +62,8 @@ using namespace utils;
 #define _AI_MATKEY_GLTF_STRENGTH_BASE "$tex.strength"
 
 std::map<aiTextureType, std::string> tex_name = {
-  {aiTextureType_BASE_COLOR, "baseColorMap"}, 
-  {aiTextureType_DIFFUSE, "baseColorMap"}, 
-  {aiTextureType_AMBIENT, "aoMap"},
-  {aiTextureType_EMISSIVE, "emissiveMap"},
-  {aiTextureType_NORMALS, "normalMap"},
-  {aiTextureType_SHININESS, "specularColorMap"},
+  {aiTextureType_BASE_COLOR, "baseColorMap"}, {aiTextureType_DIFFUSE, "baseColorMap"}, {aiTextureType_AMBIENT, "aoMap"},
+  {aiTextureType_EMISSIVE, "emissiveMap"},    {aiTextureType_NORMALS, "normalMap"},    {aiTextureType_SHININESS, "specularColorMap"},
   {aiTextureType_SPECULAR, "glossinessMap"},
 };
 
@@ -164,7 +160,8 @@ uint64_t hash_material_config(const MaterialConfig &config)
   return bitmask;
 }
 
-template <typename VECTOR, typename INDEX> Box computeTransformedAABB(VECTOR const *vertices, INDEX const *indices, size_t count, const mat4f &transform) noexcept
+template <typename VECTOR, typename INDEX>
+Box computeTransformedAABB(VECTOR const *vertices, INDEX const *indices, size_t count, const mat4f &transform) noexcept
 {
   size_t stride = sizeof(VECTOR);
   filament::math::float3 bmin(std::numeric_limits<float>::max());
@@ -325,17 +322,16 @@ bool MeshAssimp::load_assert(const utils::Path &path)
   importer.SetPropertyBool(AI_CONFIG_PP_PTV_KEEP_HIERARCHY, true);
 
   const aiScene *scene = importer.ReadFile(path,
-       // normals and tangents
-       aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_FixInfacingNormals |
-       // UV Coordinates
-       aiProcess_GenUVCoords |
-       // topology optimization
-       aiProcess_FindInstances | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices |
-       // misc optimization
-       aiProcess_ImproveCacheLocality | aiProcess_SortByPType |
-       // we only support triangles
-       aiProcess_Triangulate
-  );
+                                           // normals and tangents
+                                           aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_FixInfacingNormals |
+                                             // UV Coordinates
+                                             aiProcess_GenUVCoords |
+                                             // topology optimization
+                                             aiProcess_FindInstances | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices |
+                                             // misc optimization
+                                             aiProcess_ImproveCacheLocality | aiProcess_SortByPType |
+                                             // we only support triangles
+                                             aiProcess_Triangulate);
 
   if (!scene) {
     std::cout << "No scene" << std::endl;
@@ -350,21 +346,21 @@ bool MeshAssimp::load_assert(const utils::Path &path)
   auto asset = std::make_unique<Asset>();
   asset->file = path;
 
-  const std::function<void(aiNode const *node, size_t &totalVertexCount, size_t &totalIndexCount)> countVertices = 
+  const std::function<void(aiNode const *node, size_t &totalVertexCount, size_t &totalIndexCount)> countVertices =
     [scene, &countVertices](aiNode const *node, size_t &totalVertexCount, size_t &totalIndexCount) {
-    for (size_t i = 0; i < node->mNumMeshes; i++) {
-      aiMesh const *mesh = scene->mMeshes[node->mMeshes[i]];
-      totalVertexCount += mesh->mNumVertices;
+      for (size_t i = 0; i < node->mNumMeshes; i++) {
+        aiMesh const *mesh = scene->mMeshes[node->mMeshes[i]];
+        totalVertexCount += mesh->mNumVertices;
 
-      const aiFace *faces = mesh->mFaces;
-      const size_t numFaces = mesh->mNumFaces;
-      totalIndexCount += numFaces * faces[0].mNumIndices;
-    }
+        const aiFace *faces = mesh->mFaces;
+        const size_t numFaces = mesh->mNumFaces;
+        totalIndexCount += numFaces * faces[0].mNumIndices;
+      }
 
-    for (size_t i = 0; i < node->mNumChildren; i++) {
-      countVertices(node->mChildren[i], totalVertexCount, totalIndexCount);
-    }
-  };
+      for (size_t i = 0; i < node->mNumChildren; i++) {
+        countVertices(node->mChildren[i], totalVertexCount, totalIndexCount);
+      }
+    };
 
   size_t deep = 0;
   size_t depth = 0;
@@ -390,11 +386,11 @@ bool MeshAssimp::load_assert(const utils::Path &path)
   float2 maxUV1 = float2(std::numeric_limits<float>::lowest());
   getMinMaxUV(scene, node, minUV1, maxUV1, 1);
 
-  asset->snorm_uv0 = minUV0.x >= -1.0f && minUV0.x <= 1.0f && maxUV0.x >= -1.0f && maxUV0.x <= 1.0f 
-    && minUV0.y >= -1.0f && minUV0.y <= 1.0f && maxUV0.y >= -1.0f && maxUV0.y <= 1.0f;
+  asset->snorm_uv0 = minUV0.x >= -1.0f && minUV0.x <= 1.0f && maxUV0.x >= -1.0f && maxUV0.x <= 1.0f && minUV0.y >= -1.0f && minUV0.y <= 1.0f &&
+                     maxUV0.y >= -1.0f && maxUV0.y <= 1.0f;
 
-  asset->snorm_uv1 = minUV1.x >= -1.0f && minUV1.x <= 1.0f && maxUV1.x >= -1.0f && maxUV1.x <= 1.0f 
-    && minUV1.y >= -1.0f && minUV1.y <= 1.0f && maxUV1.y >= -1.0f && maxUV1.y <= 1.0f;
+  asset->snorm_uv1 = minUV1.x >= -1.0f && minUV1.x <= 1.0f && maxUV1.x >= -1.0f && maxUV1.x <= 1.0f && minUV1.y >= -1.0f && minUV1.y <= 1.0f &&
+                     maxUV1.y >= -1.0f && maxUV1.y <= 1.0f;
 
   if (asset->snorm_uv0) {
     if (asset->snorm_uv1) {
@@ -456,9 +452,8 @@ bool MeshAssimp::load_assert(const utils::Path &path)
   return true;
 }
 
-template <bool SNORMUV0, bool SNORMUV1> 
-void MeshAssimp::process_node(Asset &asset, const aiScene *scene, size_t deep, size_t matCount, 
-  const aiNode *node, int parentIndex, size_t &depth) const
+template <bool SNORMUV0, bool SNORMUV1>
+void MeshAssimp::process_node(Asset &asset, const aiScene *scene, size_t deep, size_t matCount, const aiNode *node, int parentIndex, size_t &depth) const
 {
   mat4f const &current = transpose(*reinterpret_cast<mat4f const *>(&node->mTransformation));
 
@@ -601,8 +596,7 @@ void MeshAssimp::process_node(Asset &asset, const aiScene *scene, size_t deep, s
   }
 }
 
-void MeshAssimp::build_assert(filament::Engine *engine, 
-  const filament::Material *basic_mtl, const filament::Material *default_mtl, bool override_mtl)
+void MeshAssimp::build_assert(filament::Engine *engine, const filament::Material *basic_mtl, const filament::Material *default_mtl, bool override_mtl)
 {
   if (!_asset)
     return;
@@ -858,7 +852,7 @@ std::unique_ptr<MaterialConfig> MeshAssimp::load_material(const aiScene *scene, 
 
   {
     std::tie(mtl_config.tex_specular_color, mtl_config.uv_specular_color, tex_name) = load_textures(scene, material, aiTextureType_SHININESS);
-    if(mtl_config.tex_specular_color)
+    if (mtl_config.tex_specular_color)
       spdlog::debug("shininess texture(specular color) : %s", tex_name);
   }
 
@@ -935,7 +929,8 @@ void MeshAssimp::build_materials(filament::Engine *engine)
         fmt = Texture::Format::RGB;
         break;
       }
-      Texture::PixelBufferDescriptor buf(tc->pixels, size_t(tc->width * tc->height * tc->channel), fmt, Texture::Type::UBYTE, (Texture::PixelBufferDescriptor::Callback)&free);
+      Texture::PixelBufferDescriptor buf(tc->pixels, size_t(tc->width * tc->height * tc->channel), fmt, Texture::Type::UBYTE,
+                                         (Texture::PixelBufferDescriptor::Callback)&free);
       texture->setImage(*engine, 0, std::move(buf));
     }
     texture->generateMipmaps(*engine);
@@ -968,8 +963,6 @@ void MeshAssimp::build_materials(filament::Engine *engine)
     auto &c = iter.second;
 
     adjust_material_config(iter.second.get());
-
-    // auto ch = hash_material_config(*c);
 
     auto material = create_material_from_config(*_engine, *c);
     auto mtl = material->createInstance(iter.first.c_str());
@@ -1039,8 +1032,8 @@ std::string MeshAssimp::shader_from_config(const MaterialConfig &config)
     )";
   }
 
-  //shader += "float2 uv_ao = getUV" + std::to_string(config.uv_ao) + "();\n";
-  //shader += "float2 uv_emissive = getUV" + std::to_string(config.uv_emissive) + "();\n";
+  // shader += "float2 uv_ao = getUV" + std::to_string(config.uv_ao) + "();\n";
+  // shader += "float2 uv_emissive = getUV" + std::to_string(config.uv_emissive) + "();\n";
 
   // shader += "float2 uv_metallic_rough = getUV" + std::to_string(config.uv_metallic_rough) + "();\n";
   shader += R"SHADER(
@@ -1127,8 +1120,8 @@ filament::Material *MeshAssimp::create_material_from_config(Engine &engine, Mate
   using namespace filament;
   // builder.shading(Shading::UNLIT);
   // builder.variantFilter((filament::UserVariantFilterMask)filament::UserVariantFilterBit::ALL);
-  builder.variantFilter(
-    (UserVariantFilterMask)(UserVariantFilterBit::FOG | UserVariantFilterBit::VSM | UserVariantFilterBit::DYNAMIC_LIGHTING | UserVariantFilterBit::STE | UserVariantFilterBit::SHADOW_RECEIVER));
+  builder.variantFilter((UserVariantFilterMask)(UserVariantFilterBit::FOG | UserVariantFilterBit::VSM | UserVariantFilterBit::DYNAMIC_LIGHTING |
+                                                UserVariantFilterBit::STE | UserVariantFilterBit::SHADOW_RECEIVER));
 
   Package pkg = builder.build(engine.getJobSystem());
   return Material::Builder().package(pkg.getData(), pkg.getSize()).build(engine);

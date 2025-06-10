@@ -1,10 +1,10 @@
 #pragma once
 
-#include <vector>
 #include <filament/Engine.h>
+#include <vector>
 
-#include "node/RDNode.h"
 #include "node/ModelNode.h"
+#include "node/RDNode.h"
 
 class MeshAssimp;
 
@@ -15,6 +15,8 @@ public:
   ~RD_Model();
 
   void build(filament::Engine *engine, const filament::Material *basicmtl, const filament::Material *defmtl);
+
+  void release(filament::Engine *engine) override;
 
 private:
 

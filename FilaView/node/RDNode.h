@@ -5,17 +5,21 @@
 
 class Node;
 
+namespace filament {
+class Engine;
+}
+
 class RDNode {
   constexpr static int entity_size = 4;
 public:
   RDNode(Node *node) : _node(node) {}
 
   using EntityVector = absl::InlinedVector<uint32_t, entity_size>;
-  const EntityVector &get_renderables() { return _entities; };
+  const EntityVector &renderables() { return _entities; };
 
   virtual void update(double timestamp) {};
 
-  virtual void release() {};
+  virtual void release(filament::Engine *engine);
 
 protected:
 

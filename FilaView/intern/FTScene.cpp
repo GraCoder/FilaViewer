@@ -88,21 +88,21 @@ FTScene::FTScene()
 FTScene::~FTScene()
 {
   for (auto &iter : _nodes) {
-    auto rd = iter.second->rdnode();
+    auto rd = iter.second->rdNode();
     if (rd == nullptr)
       continue;
-    rd->release();
+    rd->release(_engine);
   }
 
-  if (_engine) {
-    _engine->destroy(_default_material);
-    _engine->destroy(_basic_material);
-    _engine->destroy(_scene);
-    _engine->destroy(_skybox_tex);
-    _engine->destroy(_skybox);
-    _engine->destroy(_ibl_tex);
-    _engine->destroy(_ibl);
-  }
+  _engine->destroy(_default_material);
+  _engine->destroy(_basic_material);
+  _engine->destroy(_scene);
+  _engine->destroy(_skybox_tex);
+  _engine->destroy(_skybox);
+  _engine->destroy(_ibl_tex);
+  _engine->destroy(_ibl);
+
+  _engine->destroy(utils::Entity::import(_sunLight));
 }
 
 void FTScene::show_box(const tg::boundingbox &box) 
@@ -135,6 +135,7 @@ void FTScene::set_environment(const std::string &img_path, bool filter)
     .sunHaloFalloff(80.f)
     .build(*_engine, light);
   _scene->addEntity(light);
+  _sunLight = light.getId();
 
   auto create_ktx = [](const std::string &path) {
     using namespace std;
@@ -180,7 +181,7 @@ int FTScene::load_model(const std::string &file, float size)
     std::unique_lock<std::mutex> lock(_mutex);
     _tasks.push(std::bind(
       [this](const std::shared_ptr<GltfNode> &node) {
-        auto rd = static_cast<RD_gltf *>(node->rdnode(true));
+        auto rd = static_cast<RD_gltf *>(node->rdNode(true));
         rd->build(_engine);
         add_node(node);
       },
@@ -192,7 +193,7 @@ int FTScene::load_model(const std::string &file, float size)
   node->set_init_size(size);
   std::unique_lock<std::mutex> lock(_mutex);
   _tasks.push([this, node]() { 
-    auto rd = static_cast<RD_Model *>(node->rdnode(true));
+    auto rd = static_cast<RD_Model *>(node->rdNode(true));
     rd->build(_engine, _basic_material, _default_material);
     add_node(node);
   });
@@ -205,7 +206,7 @@ void FTScene::show_model(int id, bool show)
   auto iter = _nodes.find(id);
   if (iter == _nodes.end())
     return;
-  auto &rds = iter->second->rdnode()->get_renderables();
+  auto &rds = iter->second->rdNode()->renderables();
   auto &rm = _engine->getRenderableManager();
   for(auto &e : rds) {
     auto instance = rm.getInstance(utils::Entity::import(e));
@@ -228,7 +229,7 @@ int FTScene::add_shape(int pri)
 
   std::unique_lock<std::mutex> lock(_mutex);
   _tasks.push(std::bind([this, node]() {
-    auto rd = static_cast<RDShape *>(node->rdnode());
+    auto rd = static_cast<RDShape *>(node->rdNode());
     rd->build(_engine, _default_material);
     _add_node(node);
   }));
@@ -238,10 +239,10 @@ int FTScene::add_shape(int pri)
 std::shared_ptr<Node> FTScene::find_node(uint32_t rent)
 {
   for (auto &iter : _nodes) {
-    auto rd = iter.second->rdnode();
+    auto rd = iter.second->rdNode();
     if (!rd)
       continue;
-    auto rds = rd->get_renderables();
+    auto rds = rd->renderables();
     for (auto &r : rds) {
       if (r == rent)
         return iter.second;
@@ -252,12 +253,12 @@ std::shared_ptr<Node> FTScene::find_node(uint32_t rent)
 
 void FTScene::_add_node(const std::shared_ptr<Node> &node) 
 {
-  auto rd = node->rdnode();
+  auto rd = node->rdNode();
   if (!rd) return;
 
   _nodes.insert_or_assign(node->id(), node);
 
-  auto &ents = rd->get_renderables();
+  auto &ents = rd->renderables();
 
   for (auto ent : ents) {
     _scene->addEntity(utils::Entity::import(ent));
@@ -302,7 +303,7 @@ void FTScene::process(double timestamp)
 #endif
 
   for (auto &iter : _nodes) {
-    auto rd = iter.second->rdnode();
+    auto rd = iter.second->rdNode();
     if (!rd)
       continue;
     rd->update(timestamp);

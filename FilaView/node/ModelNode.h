@@ -9,7 +9,7 @@ class ModelNode : public Node {
 public:
   ModelNode(const std::string &file);
 
-  RDNode *rdnode(bool create = false) override;
+  RDNode *rdNode(bool create = false) override;
 
   const std::string &file() { return _file; }
 

@@ -19,5 +19,5 @@ const tg::Tvec3<float>& (Node::*_5)() = &Node::rotation;
 void (Node::*_6)(const tg::Tvec3<float>&) = &Node::set_rotation;
 const tg::Tvec3<float>& (Node::*_7)() = &Node::scale;
 void (Node::*_8)(const tg::Tvec3<float>&) = &Node::set_scale;
-struct RDNode* (Node::*_9)() = &Node::rdnode;
+struct RDNode* (Node::*_9)() = &Node::rdNode;
 class Node& (Node::*_10)(const class Node&) = &Node::operator=;

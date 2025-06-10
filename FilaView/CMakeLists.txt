@@ -117,6 +117,9 @@ set(node_src
   node/ModelNode.cpp
   node/Geometry.h
   node/Geometry.cpp
+
+  node/RDNode.h
+  node/RDNode.cpp
 )
 
 set(operator_src

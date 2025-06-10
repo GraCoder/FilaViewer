@@ -20,7 +20,6 @@ RD_gltf::RD_gltf(GltfNode *node)
 
 RD_gltf::~RD_gltf() 
 {
-  release();
 }
 
 namespace {
@@ -143,7 +142,7 @@ void RD_gltf::update(double timestamp)
   }
 }
 
-void RD_gltf::release() 
+void RD_gltf::release(filament::Engine *engine)
 {
   if(_loader) {
     if (_asset) {
@@ -151,4 +150,5 @@ void RD_gltf::release()
       _asset = nullptr;
     }
   }
+  Base::release(engine);
 }

@@ -678,7 +678,7 @@ namespace FilaView
             [SuppressUnmanagedCodeSecurity, DllImport("FilaView.dll", EntryPoint = "?set_scale@Node@@QEAAXPEBM@Z", CallingConvention = __CallingConvention.Cdecl)]
             internal static extern void SetScale(__IntPtr __instance, float* _0);
 
-            [SuppressUnmanagedCodeSecurity, DllImport("FilaView.dll", EntryPoint = "?rdnode@Node@@QEAAPEAVRDNode@@XZ", CallingConvention = __CallingConvention.Cdecl)]
+            [SuppressUnmanagedCodeSecurity, DllImport("FilaView.dll", EntryPoint = "?rdNode@Node@@QEAAPEAVRDNode@@XZ", CallingConvention = __CallingConvention.Cdecl)]
             internal static extern __IntPtr GetRd(__IntPtr __instance);
 
             [SuppressUnmanagedCodeSecurity, DllImport("FilaView.dll", EntryPoint = "?id@Node@@QEAAIXZ", CallingConvention = __CallingConvention.Cdecl)]
@@ -891,7 +891,7 @@ namespace FilaView
 
         #region Virtual table interop
 
-        // RDNode *rdnode(bool create)
+        // RDNode *rdNode(bool create)
         private static global::FilaView.Delegates.Func___IntPtr___IntPtr_bool _GetRd_1DelegateInstance;
 
         private static __IntPtr _GetRd_1DelegateHook(__IntPtr __instance, bool create)

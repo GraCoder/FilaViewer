@@ -8,7 +8,7 @@ GltfNode::GltfNode(const std::string &file)
 {
 }
 
-RDNode * GltfNode::rdnode(bool create)
+RDNode * GltfNode::rdNode(bool create)
 {
   if (_rdnode == nullptr && create) {
     //auto ptr = std::static_pointer_cast<GltfNode>(shared_from_this());

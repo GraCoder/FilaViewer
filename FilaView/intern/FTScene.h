@@ -77,6 +77,8 @@ private:
   filament::Material const *_legacy_material = nullptr;
   filament::Material const *_depth_material = nullptr;
 
+  uint32_t _sunLight;
+
   uint32_t _point_count = 0;
 
   std::mutex _mutex;

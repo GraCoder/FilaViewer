@@ -7,5 +7,4 @@ RD_Geometry::RD_Geometry()
 {
 }
 
-void RD_Geometry::build(filament::Engine *engine) {
-}
+void RD_Geometry::build(filament::Engine *engine) {}

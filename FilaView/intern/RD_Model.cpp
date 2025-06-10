@@ -1,5 +1,4 @@
 #include "RD_Model.h"
-
 #include "MeshAssimp.h"
 
 RD_Model::RD_Model(ModelNode *node)
@@ -9,12 +8,12 @@ RD_Model::RD_Model(ModelNode *node)
 
 RD_Model::~RD_Model() {}
 
-void RD_Model::build(filament::Engine *engine, const filament::Material *basicmtl, const filament::Material *defmtl) 
+void RD_Model::build(filament::Engine *engine, const filament::Material *basicmtl, const filament::Material *defmtl)
 {
   if (!_assimp)
     _assimp = std::make_unique<MeshAssimp>();
 
-  auto node = static_cast<ModelNode*>(_node);
+  auto node = static_cast<ModelNode *>(_node);
   if (!_assimp->load_assert(node->file().c_str()))
     return;
 
@@ -34,4 +33,11 @@ void RD_Model::build(filament::Engine *engine, const filament::Material *basicmt
   //  auto f = std::max({m.x, m.y, m.z});
   //  tcm.setTransform(ti, mat4::scaling(sz / f) * mat4::translation((mi + ma) / 2.0));
   //}
+}
+
+void RD_Model::release(filament::Engine *engine) 
+{
+  RDNode::release(engine);
+
+  _assimp.reset();
 }

@@ -31,7 +31,7 @@ public:
   ~Cube();
 
   void build(filament::Engine *engine, filament::Material const *material) override;
-  void release() override;
+  void release(filament::Engine *engine) override;
 
   utils::Entity solid_entity() { return _solid_entity; }
   utils::Entity wire_entity() { return _wire_entity; }

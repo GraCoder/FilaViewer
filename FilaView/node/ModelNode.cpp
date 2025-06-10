@@ -8,7 +8,7 @@ ModelNode::ModelNode(const std::string &file)
 {
 }
 
-RDNode * ModelNode::rdnode(bool create)
+RDNode * ModelNode::rdNode(bool create)
 {
   if (_rdnode == nullptr && create) {
     //auto ptr = std::static_pointer_cast<ModelNode>(shared_from_this());

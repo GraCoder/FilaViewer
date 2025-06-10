@@ -35,8 +35,8 @@ public:
 
 public:
 
-  RDNode *rdnode() { return _rdnode; }
-  virtual RDNode *rdnode(bool create) { return nullptr; }
+  RDNode *rdNode() { return _rdnode; }
+  virtual RDNode *rdNode(bool create) { return nullptr; }
 
 protected:
   uint32_t _id = 0;
