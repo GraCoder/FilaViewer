@@ -59,29 +59,16 @@ FTWin::FTWin(FTWin *win)
 
 FTWin::~FTWin()
 {
+  _close = true;
+  if (_thread)
+    _thread->join();
+
   if (_gui) {
     delete _gui;
     _gui = nullptr;
   }
 
-  _engine->getDriver();
-
-  if(_gui_view) {
-    _engine->destroy(_gui_view);
-    _gui_view = nullptr;
-  }
-
-  if (_renderer) {
-    _engine->destroy(_renderer);
-    _renderer = nullptr;
-  }
-  if (_swapchain) {
-    _engine->destroy(_swapchain);
-    _swapchain = nullptr;
-  }
-  _view.reset();
-
-  filament::Engine::destroy(_engine);
+  clean();
 }
 
 uint64_t FTWin::handle() 
@@ -99,7 +86,7 @@ void FTWin::exec(bool thread)
     create_window();
 
   if(thread) {
-    _thread = std::thread(std::bind(&FTWin::poll_events, this));
+    _thread = std::make_unique<std::thread>(std::bind(&FTWin::poll_events, this));
   }
   else
     poll_events();
@@ -120,6 +107,31 @@ void FTWin::configure_cameras()
 
   _view->manip()->set_pivot({0, 0, 0}, 15);
   _view->set_viewport(0, 0, width, height);
+}
+
+void FTWin::clean() 
+{
+  if (_gui_view) {
+    _engine->destroy(_gui_view);
+    _gui_view = nullptr;
+  }
+
+  if (_renderer) {
+    _engine->destroy(_renderer);
+    _renderer = nullptr;
+  }
+
+  if (_swapchain) {
+    _engine->destroy(_swapchain);
+    _swapchain = nullptr;
+  }
+
+  if (_view) _view.reset();
+
+  if (_engine) {
+    filament::Engine::destroy(_engine);
+    _engine = nullptr;
+  }
 }
 
 void FTWin::setup_gui() 
@@ -183,6 +195,21 @@ void FTWin::create_window()
   _window = win;
 }
 
+void FTWin::create_engine()
+{
+  using namespace filament;
+
+  backend::Backend backend = Engine::Backend::VULKAN;
+  //Engine::Config engineConfig = {};
+
+  _engine = Engine::Builder().backend(backend) /*.config(&engineConfig)*/.build();
+  if (_engine)
+    return;
+
+  backend = Engine::Backend::OPENGL;
+  _engine = Engine::Builder().backend(backend) /*.config(&engineConfig)*/.build();
+}
+
 void FTWin::realize_context() 
 {
   if (_realized)
@@ -212,21 +239,6 @@ void FTWin::realize_context()
     setup_gui(); 
 }
 
-void FTWin::create_engine()
-{
-  using namespace filament;
-
-  backend::Backend backend = Engine::Backend::VULKAN;
-  //Engine::Config engineConfig = {};
-
-  _engine = Engine::Builder().backend(backend) /*.config(&engineConfig)*/.build();
-  if (_engine)
-    return;
-
-  backend = Engine::Backend::OPENGL;
-  _engine = Engine::Builder().backend(backend) /*.config(&engineConfig)*/.build();
-}
-
 #define OperIter for(auto iter = _operators.rbegin(); iter != _operators.rend(); iter++)(*iter) 
 void FTWin::poll_events() 
 {
@@ -244,7 +256,8 @@ void FTWin::poll_events()
     int ev_count = 0;
     bool immediate = false;
 
-    while (ev_count < max_event && SDL_PollEvent(&events[ev_count++]) != 0) {}
+    while (ev_count < max_event && SDL_PollEvent(&events[ev_count++]) != 0) {
+    }
     for (int i = 0; i < ev_count; i++) {
       const SDL_Event &event = events[i];
       switch (event.type) {
@@ -301,20 +314,20 @@ void FTWin::poll_events()
       case SDL_WINDOWEVENT:
         switch (event.window.event) {
         case SDL_WINDOWEVENT_SIZE_CHANGED:
-        //case SDL_WINDOWEVENT_RESIZED: 
-        {
-          immediate = true;
-          uint32_t w = event.window.data1;
-          uint32_t h = event.window.data2;
-          resize(w, h);
-          if (_gui) {
-            _gui->setDisplaySize(w, h);
+          // case SDL_WINDOWEVENT_RESIZED:
+          {
+            immediate = true;
+            uint32_t w = event.window.data1;
+            uint32_t h = event.window.data2;
+            resize(w, h);
+            if (_gui) {
+              _gui->setDisplaySize(w, h);
+            }
+            if (_gui_view) {
+              _gui_view->setViewport({0, 0, w, h});
+            }
+            break;
           }
-          if (_gui_view) {
-            _gui_view->setViewport({0, 0, w, h});
-          }
-          break;
-        }
         case SDL_WINDOWEVENT_EXPOSED:
         case SDL_WINDOWEVENT_SHOWN: {
           if (!_realized)
@@ -357,7 +370,7 @@ void FTWin::poll_events()
     prev_time = SDL_GetPerformanceCounter();
     if (_renderer->beginFrame(swapchain())) {
       _renderer->render(*_view);
-      
+
       if (_gui_view) {
         _renderer->render(_gui_view);
       }
@@ -366,6 +379,8 @@ void FTWin::poll_events()
       //_renderer->readPixels();
     }
   }
+
+  clean();
 }
 
 void FTWin::gui(filament::Engine *, filament::View *)

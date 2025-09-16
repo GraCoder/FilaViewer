@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 3.26)
 
-set(CMAKE_CXX_STANDARD 20)
-
 set(target_name FilaView)
-
-add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
-add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
-add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus>")
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDLL)
 
@@ -55,6 +49,19 @@ add_custom_command(
   DEPENDS ${resource_bins}
   COMMENT "Aggregating resources"
 )
+####################################################################################
+
+set(env_output)
+set(bin2c CACHE FILEPATH "")
+set(ibl_tex CACHE FILEPATH "")
+set(skybox_tex CACHE FILEPATH "")
+if(EXISTS "${ibl_tex}" AND EXISTS "${skybox_tex}")
+add_custom_command(OUTPUT ${resource_dir}/ibl.h COMMAND ${bin2c} ${ibl_tex} ${resource_dir}/ibl.h ibl DEPENDS ${ibl_tex})
+add_custom_command(OUTPUT ${resource_dir}/skybox.h COMMAND ${bin2c} ${skybox_tex} ${resource_dir}/skybox.h skybox DEPENDS ${skybox_tex})
+list(APPEND env_output ${resource_dir}/ibl.h ${resource_dir}/skybox.h)
+add_definitions(-DHAVE_ENVIRONMENT)
+endif()
+
 ####################################################################################
 
 set(mesh_src
@@ -148,14 +155,13 @@ list(APPEND source_files
   TOperator.cpp
 )
 
-add_library(${target_name} SHARED ${source_files} ${resgen_output})
+add_library(${target_name} SHARED ${source_files} ${resgen_output} ${env_output})
 
 if(filament_single_thread)
 target_compile_definitions(${target_name} PRIVATE FILAMENT_SINGLE_THREADED)
 endif()
 
 target_compile_definitions(${target_name} PRIVATE NOGDI)
-target_compile_definitions(${target_name} PRIVATE PC_DEBUG)
 
 target_include_directories(${target_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(${target_name} PRIVATE ${filament_dir}/include)

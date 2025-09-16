@@ -44,11 +44,13 @@ private:
 
   void create_window();
 
-  void realize_context();
-
   void create_engine();
 
+  void realize_context();
+
   void configure_cameras();
+
+  void clean();
 
   void setup_gui();
 
@@ -76,5 +78,5 @@ private:
 
   std::vector<std::shared_ptr<TOperator>> _operators;
 
-  std::thread _thread;
+  std::unique_ptr<std::thread> _thread;
 };

@@ -1,6 +1,7 @@
 #include "FTScene.h"
 
 #include <fstream>
+#include <filesystem>
 
 #include <filament/Engine.h>
 #include <filament/View.h>
@@ -20,8 +21,10 @@
 #include "FTView.h"
 
 #include "pcv_mat.h"
-//#include "res/ibl.h"
-//#include "res/skybox.h"
+#ifdef HAVE_ENVIRONMENT
+#include "ibl.h"
+#include "skybox.h"
+#endif
 
 #include "mesh/Cube.h"
 #include "mesh/Sphere.h"
@@ -127,8 +130,8 @@ void FTScene::set_environment(const std::string &img_path, bool filter)
   auto light = utils::EntityManager::get().create();
   LightManager::Builder(LightManager::Type::SUN)
     .color(Color::toLinear<ACCURATE>(sRGBColor(0.98f, 0.92f, 0.89f)))
-    .intensity(110000)
-    .direction({-1.0, -1.0, 0})
+    .intensity(100000)
+    .direction({1.0, -1.0, 0})
     .sunAngularRadius(1.9f)
     .castShadows(false)
     .sunHaloSize(10.0f)
@@ -144,33 +147,28 @@ void FTScene::set_environment(const std::string &img_path, bool filter)
     return new image::Ktx1Bundle(contents.data(), contents.size());
   };
 
-  //image::Ktx1Bundle *skybox_ktx = nullptr;
-  //if(img_path.empty())
-  //  skybox_ktx = new image::Ktx1Bundle(skybox, skybox_length);
-  //else {
-  //  auto sky_path = img_path + "_skybox.ktx";
-  //  skybox_ktx = create_ktx(sky_path);
-  //}
-  //_skybox_tex = ktxreader::Ktx1Reader::createTexture(_engine, skybox_ktx, true);
-  //_skybox_tex->generateMipmaps(*_engine);
-  _skybox = Skybox::Builder()
-    .environment(_skybox_tex)
-    .showSun(true)
-    .build(*_engine);
-  _scene->setSkybox(_skybox);
+  image::Ktx1Bundle *ibl_ktx = nullptr;
+  image::Ktx1Bundle *skybox_ktx = nullptr;
 
-  //image::Ktx1Bundle *ibl_ktx = nullptr;
-  //if(img_path.empty())
-  //  ibl_ktx = new image::Ktx1Bundle(::ibl, ibl_length);
-  //else
-  //  ibl_ktx = create_ktx(img_path + "_ibl.ktx");
-  //_ibl_tex = ktxreader::Ktx1Reader::createTexture(_engine, ibl_ktx, true);
-  _ibl = IndirectLight::Builder()
-    .irradiance(3, irr_sh)
-    .reflections(_ibl_tex)
-    .intensity(30000)
-    .build(*_engine);
-  _scene->setIndirectLight(_ibl);
+  if (std::filesystem::exists(img_path)) {
+    ibl_ktx = create_ktx(img_path + "_ibl.ktx");
+    skybox_ktx = create_ktx(img_path + "_skybox.ktx");
+  }
+  else {
+    ibl_ktx = new image::Ktx1Bundle(::ibl, ibl_length);
+    skybox_ktx = new image::Ktx1Bundle(skybox, skybox_length);
+  }
+  
+  if (ibl_ktx && skybox_ktx) {
+    _ibl_tex = ktxreader::Ktx1Reader::createTexture(_engine, ibl_ktx, true);
+    _ibl = IndirectLight::Builder().irradiance(3, irr_sh).reflections(_ibl_tex).intensity(30000).build(*_engine);
+    _scene->setIndirectLight(_ibl);
+
+    _skybox_tex = ktxreader::Ktx1Reader::createTexture(_engine, skybox_ktx, true);
+    //_skybox_tex->generateMipmaps(*_engine);
+    _skybox = Skybox::Builder().environment(_skybox_tex).showSun(true).build(*_engine);
+    _scene->setSkybox(_skybox);
+  }
 }
 
 int FTScene::load_model(const std::string &file, float size)
