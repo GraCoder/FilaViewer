@@ -33,14 +33,22 @@ void FTView::realize(filament::Engine *engine)
 
   _view = engine->createView();
 
-  _view->setDithering(filament::Dithering::NONE);
-  //_view->setAntiAliasing(filament::AntiAliasing::NONE);
-  //{
-  //  auto opts = _view->getTemporalAntiAliasingOptions(); 
-  //  opts.enabled = false;
-  //  _view->setTemporalAntiAliasingOptions(opts);
-  //}
-  _view->setPostProcessingEnabled(false);
+  {
+    _view->setBloomOptions(filament::BloomOptions{.enabled = false});
+    _view->setAmbientOcclusionOptions(filament::AmbientOcclusionOptions{.enabled = false});
+
+    _view->setDithering(filament::Dithering::NONE);
+    _view->setTemporalAntiAliasingOptions(filament::TemporalAntiAliasingOptions{.enabled = false});
+
+    _view->setMultiSampleAntiAliasingOptions(filament::MultiSampleAntiAliasingOptions{.enabled = false});
+
+    _view->setAntiAliasing(filament::AntiAliasing::NONE);
+
+    _view->setPostProcessingEnabled(true);
+  }
+
+  _view->setShadowingEnabled(false);
+
 
   utils::Entity cam_ent;
   utils::EntityManager &em = utils::EntityManager::get();

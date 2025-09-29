@@ -39,7 +39,7 @@ public:
 
   void show_box(const tg::boundingbox &box);
 
-  void set_environment(const std::string &img = "", bool filter = false);
+  void set_environment(const std::string_view &prefix = "", bool filter = false);
 
 public:
 

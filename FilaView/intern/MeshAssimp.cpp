@@ -896,6 +896,8 @@ void MeshAssimp::build_materials(filament::Engine *engine)
 
     auto &tc = _texture_config[tex_id];
     filament::Texture::Builder builder;
+    builder.usage(Texture::Usage::DEFAULT | Texture::Usage::GEN_MIPMAPPABLE);
+
     Texture::Format fmt = Texture::Format::RGB;
     if (tc->height == 0) {
       int width, height, channel;

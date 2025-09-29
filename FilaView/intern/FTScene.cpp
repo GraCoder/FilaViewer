@@ -70,16 +70,16 @@ std::vector<uint8_t> readfile(const std::string &path)
 }
 
 constexpr float3 irr_sh[] = {
-  (0.709325432777405, 0.658747255802155, 0.610359013080597),    // L00, irradiance, pre-scaled base
-  (0.417028665542603, 0.403681904077530, 0.398497104644775),    // L1-1, irradiance, pre-scaled base
-  (0.894471466541290, 0.753924071788788, 0.592269182205200),    // L10, irradiance, pre-scaled base
-  (-0.665116548538208, -0.563856363296509, -0.437892466783524), // L11, irradiance, pre-scaled base
-  (-0.343768268823624, -0.292864233255386, -0.232038006186485), // L2-2, irradiance, pre-scaled base
-  (0.473459452390671, 0.403695404529572, 0.323223799467087),    // L2-1, irradiance, pre-scaled base
-  (0.110022500157356, 0.091711401939392, 0.070404306054115),    // L20, irradiance, pre-scaled base
-  (-0.770592808723450, -0.657294690608978, -0.521079838275909), // L21, irradiance, pre-scaled base
-  (0.096141062676907, 0.084442004561424, 0.068696990609169)     // L22, irradiance, pre-scaled base
-};
+(0.716741859912872, 0.667163610458374, 0.617367982864380),                              // L00, irradiance, pre-scaled base
+(0.416345566511154, 0.402111917734146, 0.396503597497940),                              // L1-1, irradiance, pre-scaled base
+(0.913356125354767, 0.771790504455566, 0.604631900787354),                              // L10, irradiance, pre-scaled base
+(-0.672907054424286, -0.567880451679230, -0.443705767393112),                           // L11, irradiance, pre-scaled base
+(-0.350750058889389, -0.298378944396973, -0.236268237233162),                           // L2-2, irradiance, pre-scaled base
+(0.482089698314667, 0.409613221883774, 0.325085431337357),                              // L2-1, irradiance, pre-scaled base
+(0.114844463765621, 0.095943816006184, 0.073779888451099),                              // L20, irradiance, pre-scaled base
+(-0.794750630855560, -0.675792217254639, -0.537204325199127),                           // L21, irradiance, pre-scaled base
+(0.099179431796074, 0.087250791490078, 0.070927888154984)                               // L22, irradiance, pre-scaled base
+}; // namespace
 
 } // namespace
 
@@ -123,7 +123,7 @@ void FTScene::show_box(const tg::boundingbox &box)
 #endif
 }
 
-void FTScene::set_environment(const std::string &img_path, bool filter)
+void FTScene::set_environment(const std::string_view &prefix, bool filter)
 {
   using namespace filament;
 
@@ -150,23 +150,29 @@ void FTScene::set_environment(const std::string &img_path, bool filter)
   image::Ktx1Bundle *ibl_ktx = nullptr;
   image::Ktx1Bundle *skybox_ktx = nullptr;
 
-  if (std::filesystem::exists(img_path)) {
-    ibl_ktx = create_ktx(img_path + "_ibl.ktx");
-    skybox_ktx = create_ktx(img_path + "_skybox.ktx");
-  }
-  else {
+  std::string ibl_path = std::string(prefix) + "_ibl.ktx";
+  std::string skybox_path = std::string(prefix) + "_skybox.ktx";
+  if (std::filesystem::exists(ibl_path) && std::filesystem::exists(skybox_path)) {
+    ibl_ktx = create_ktx(ibl_path);
+    skybox_ktx = create_ktx(skybox_path);
+  } else {
     ibl_ktx = new image::Ktx1Bundle(::ibl, ibl_length);
     skybox_ktx = new image::Ktx1Bundle(skybox, skybox_length);
   }
-  
+
   if (ibl_ktx && skybox_ktx) {
     _ibl_tex = ktxreader::Ktx1Reader::createTexture(_engine, ibl_ktx, true);
-    _ibl = IndirectLight::Builder().irradiance(3, irr_sh).reflections(_ibl_tex).intensity(30000).build(*_engine);
+    _ibl = IndirectLight::Builder()
+      .irradiance(3, irr_sh)
+      .reflections(_ibl_tex)
+      .intensity(30000)
+      .build(*_engine);
     _scene->setIndirectLight(_ibl);
 
     _skybox_tex = ktxreader::Ktx1Reader::createTexture(_engine, skybox_ktx, true);
     //_skybox_tex->generateMipmaps(*_engine);
     _skybox = Skybox::Builder().environment(_skybox_tex).showSun(true).build(*_engine);
+    //_skybox->setLayerMask(0x7, 0x4);
     _scene->setSkybox(_skybox);
   }
 }
@@ -290,7 +296,7 @@ void FTScene::initialize(filament::Engine *engine)
   }
 
   set_environment();
-  //set_environment("C:\\Users\\t\\dev\\0\\FilaViewer/FilaViewer");
+  //set_environment("C:\\Users\\t\\dev\\0\\filament\\samples\\assets\\ibl\\lightroom_14b\\lightroom_14b");
 }
 void FTScene::process(double timestamp)
 {
