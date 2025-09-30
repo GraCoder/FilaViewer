@@ -4,8 +4,9 @@
 #include "TView.h"
 #include "tvec.h"
 
-class PickOperator : public TOperator
-{
+namespace fv {
+
+class PickOperator : public TOperator {
 public:
   PickOperator(TView *view);
   ~PickOperator();
@@ -21,3 +22,5 @@ private:
 
   std::function<void(unsigned int)> _fun;
 };
+
+} // namespace fv

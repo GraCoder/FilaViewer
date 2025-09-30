@@ -64,15 +64,6 @@ endif()
 
 ####################################################################################
 
-set(mesh_src
-  intern/mesh/RDShape.h
-  intern/mesh/RDShape.cpp
-  intern/mesh/Cube.h
-  intern/mesh/Cube.cpp
-  intern/mesh/Sphere.h
-  intern/mesh/Sphere.cpp
-)
-
 set(intern_src
   intern/IWin.cpp
   intern/FTWin.h
@@ -84,23 +75,9 @@ set(intern_src
   intern/ManipOperator.h
   intern/ManipOperator.cpp
 
-  intern/RD_gltf.h
-  intern/RD_gltf.cpp
-  intern/RD_Model.h
-  intern/RD_Model.cpp
-  intern/RD_Geometry.h
-  intern/RD_Geometry.cpp
-
   #intern/PCCDispatch.h
   #intern/PCCDispatch.cpp
 )
-
-if(Assimp_FOUND)
-list(APPEND intern_src
-  intern/MeshAssimp.h
-  intern/MeshAssimp.cpp
-)
-endif()
 
 set(imgui_src
   imgui/ImGuiHelper.cpp
@@ -113,6 +90,15 @@ set(imgui_src
   imgui/imgui_tables.cpp
 )
 
+set(mesh_src
+  node/mesh/Shape.h
+  node/mesh/Shape.cpp
+  node/mesh/Cube.h
+  node/mesh/Cube.cpp
+  node/mesh/Sphere.h
+  node/mesh/Sphere.cpp
+)
+
 set(node_src
   node/Node.h
   node/Node.cpp
@@ -120,14 +106,19 @@ set(node_src
   node/ShapeNode.cpp
   node/GltfNode.h
   node/GltfNode.cpp
-  node/ModelNode.h
-  node/ModelNode.cpp
   node/Geometry.h
   node/Geometry.cpp
-
-  node/RDNode.h
-  node/RDNode.cpp
+  node/MeshNode.h
+  node/MeshNode.cpp
 )
+
+if(Assimp_FOUND)
+list(APPEND node_src
+  node/MeshAssimp.h
+  node/MeshAssimp.cpp
+)
+endif()
+
 
 set(operator_src
   operator/PickOperator.h

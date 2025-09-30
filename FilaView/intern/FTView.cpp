@@ -13,6 +13,8 @@
 
 using namespace filament;
 
+namespace fv {
+
 FTView::FTView()
   : TView()
 {
@@ -27,7 +29,7 @@ FTView::~FTView()
     _engine->destroy(_view);
 }
 
-void FTView::realize(filament::Engine *engine) 
+void FTView::realize(filament::Engine *engine)
 {
   _engine = engine;
 
@@ -49,7 +51,6 @@ void FTView::realize(filament::Engine *engine)
 
   _view->setShadowingEnabled(false);
 
-
   utils::Entity cam_ent;
   utils::EntityManager &em = utils::EntityManager::get();
   em.create(1, &cam_ent);
@@ -67,7 +68,7 @@ void FTView::realize(filament::Engine *engine)
   _manip = std::make_shared<ManipOperator>(this);
 }
 
-void FTView::set_scene(const std::shared_ptr<FTScene> &scene) 
+void FTView::set_scene(const std::shared_ptr<FTScene> &scene)
 {
   _scene = scene;
   if (_view && scene->fila_scene())
@@ -75,10 +76,10 @@ void FTView::set_scene(const std::shared_ptr<FTScene> &scene)
 }
 
 void FTView::process(double delta)
-{ 
+{
   update_camera();
 
-  scene()->process(delta); 
+  scene()->process(delta);
 }
 
 void FTView::reset_projection()
@@ -100,17 +101,19 @@ void FTView::reset_projection()
   _camera->setCustomProjection(fmat, _near, _far);
 }
 
-void FTView::release() { _scene->release(); }
+void FTView::release()
+{
+}
 
 void FTView::set_viewport(int x, int y, uint32_t width, uint32_t height)
 {
-  //auto aspectRatio = double(width) / height;
+  // auto aspectRatio = double(width) / height;
   //_camera->setScaling({1.0 / aspectRatio, 1.0});
 
-  if(_view)
+  if (_view)
     _view->setViewport({x, y, width, height});
 
-  if(_manip)
+  if (_manip)
     _manip->set_viewport(width, height);
 
   reset_projection();
@@ -129,7 +132,6 @@ void FTView::update_camera()
   math::float3 eye, center, up;
   _manip->get_lookat(eye, center, up);
   _camera->lookAt(eye, center, up);
-
-  if (scene())
-    scene()->dispatch();
 }
+
+} // namespace fv

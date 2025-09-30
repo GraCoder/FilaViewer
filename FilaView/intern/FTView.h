@@ -10,6 +10,8 @@ class Camera;
 class Engine;
 } // namespace filament
 
+namespace fv {
+
 class FTScene;
 class ManipOperator;
 
@@ -30,7 +32,7 @@ public:
 
   void realize(filament::Engine *engine);
 
-  const std::shared_ptr<ManipOperator>& manip() { return _manip; }
+  const std::shared_ptr<ManipOperator> &manip() { return _manip; }
 
   const std::shared_ptr<FTScene> &scene() { return _scene; }
   void set_scene(const std::shared_ptr<FTScene> &scene);
@@ -57,3 +59,5 @@ private:
   std::shared_ptr<FTScene> _scene = nullptr;
   std::shared_ptr<ManipOperator> _manip = nullptr;
 };
+
+} // namespace fv

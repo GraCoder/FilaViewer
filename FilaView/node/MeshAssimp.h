@@ -1,5 +1,4 @@
-#ifndef TNT_FILAMENT_SAMPLE_MESH_ASSIMP_H
-#define TNT_FILAMENT_SAMPLE_MESH_ASSIMP_H
+#pragma once
 
 namespace filament {
 class Engine;
@@ -12,8 +11,8 @@ class Renderable;
 
 #include <map>
 #include <tuple>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 #include <math/mat3.h>
 #include <math/mat4.h>
@@ -29,7 +28,6 @@ class Renderable;
 #include <filament/Texture.h>
 #include <filament/TextureSampler.h>
 #include <filament/TransformManager.h>
-
 
 struct aiNode;
 struct aiScene;
@@ -51,15 +49,14 @@ public:
 
   bool load_assert(const utils::Path &path);
 
-  void build_assert(filament::Engine *engine, const filament::Material *basic_mtl,
-                    const filament::Material *default_mtl, bool override_mtl = false);
+  void build_assert(filament::Engine *engine, const filament::Material *basic_mtl, const filament::Material *default_mtl, bool override_mtl = false);
 
   utils::Entity root() { return _root_entity; }
 
-  const std::vector<utils::Entity>& renderables() const noexcept { return _renderables; }
+  const std::vector<utils::Entity> &renderables() const noexcept { return _renderables; }
 
-  const float3& min_bound() { return _min_bound; }
-  const float3& max_bound() { return _max_bound; }
+  const float3 &min_bound() { return _min_bound; }
+  const float3 &max_bound() { return _max_bound; }
 
 private:
   struct Part {
@@ -96,8 +93,7 @@ private:
   };
 
   template <bool SNORMUV0S, bool SNORMUV1S>
-  void process_node(Asset &asset, const aiScene *scene, size_t deep, size_t matCount,
-                    const aiNode *node, int parentIndex, size_t &depth) const;
+  void process_node(Asset &asset, const aiScene *scene, size_t deep, size_t matCount, const aiNode *node, int parentIndex, size_t &depth) const;
 
   void process_materials(const aiScene *scene);
 
@@ -124,8 +120,8 @@ private:
   filament::math::float3 _min_bound = filament::math::float3(1.0f);
   filament::math::float3 _max_bound = filament::math::float3(-1.0f);
 
-  filament::VertexBuffer  *_vertex_buffer = nullptr;
-  filament::IndexBuffer   *_index_buffer = nullptr;
+  filament::VertexBuffer *_vertex_buffer = nullptr;
+  filament::IndexBuffer *_index_buffer = nullptr;
 
   float _def_metallic = 0.0f;
   float _def_roughness = 0.4f;
@@ -142,5 +138,3 @@ private:
   utils::Entity _root_entity;
   std::vector<utils::Entity> _renderables;
 };
-
-#endif // TNT_FILAMENT_SAMPLE_MESH_ASSIMP_H

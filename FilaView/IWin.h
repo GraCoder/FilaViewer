@@ -15,7 +15,7 @@ public:
   virtual void setup_gui() = 0;
   virtual IView *view(int id = 0) = 0;
 
-  int  load_model(const char *file, float sz = 1);
+  int loadModel(const char *file, float sz = 1);
   int  operator_s(const char *ops, int len);
   void create_operators();
   void regist_select(void(*fun)(unsigned int)); 

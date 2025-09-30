@@ -26,24 +26,18 @@
 #include "skybox.h"
 #endif
 
-#include "mesh/Cube.h"
-#include "mesh/Sphere.h"
-
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_WINDOWS_UTF8
 #include "stb_image.h"
 
 #include "imgui/imgui.h"
 
-#ifdef POINT_CLOUD_SUPPORT
-#include "PCDispatch.h"
-#include "PCNode.h"
-#endif
-
-#include "intern/mesh/RDShape.h"
-#include "intern/RD_gltf.h"
-#include "intern/RD_Model.h"
-#include "intern/RD_Geometry.h"
+#include "node/mesh/Cube.h"
+#include "node/mesh/Sphere.h"
+#include "node/GltfNode.h"
+#include "node/MeshNode.h"
+#include "node/Geometry.h"
+#include "node/ShapeNode.h"
 
 using namespace filament;
 using namespace filament::math;
@@ -83,6 +77,8 @@ constexpr float3 irr_sh[] = {
 
 } // namespace
 
+namespace fv {
+
 FTScene::FTScene()
   : TScene()
 {
@@ -91,10 +87,7 @@ FTScene::FTScene()
 FTScene::~FTScene()
 {
   for (auto &iter : _nodes) {
-    auto rd = iter.second->rdNode();
-    if (rd == nullptr)
-      continue;
-    rd->release(_engine);
+    iter.second->release(_engine);
   }
 
   _engine->destroy(_default_material);
@@ -108,7 +101,7 @@ FTScene::~FTScene()
   _engine->destroy(utils::Entity::import(_sunLight));
 }
 
-void FTScene::show_box(const tg::boundingbox &box) 
+void FTScene::show_box(const tg::boundingbox &box)
 {
 #if 0
   if (!_cube)
@@ -162,11 +155,7 @@ void FTScene::set_environment(const std::string_view &prefix, bool filter)
 
   if (ibl_ktx && skybox_ktx) {
     _ibl_tex = ktxreader::Ktx1Reader::createTexture(_engine, ibl_ktx, true);
-    _ibl = IndirectLight::Builder()
-      .irradiance(3, irr_sh)
-      .reflections(_ibl_tex)
-      .intensity(30000)
-      .build(*_engine);
+    _ibl = IndirectLight::Builder().irradiance(3, irr_sh).reflections(_ibl_tex).intensity(30000).build(*_engine);
     _scene->setIndirectLight(_ibl);
 
     _skybox_tex = ktxreader::Ktx1Reader::createTexture(_engine, skybox_ktx, true);
@@ -177,55 +166,52 @@ void FTScene::set_environment(const std::string_view &prefix, bool filter)
   }
 }
 
-int FTScene::load_model(const std::string &file, float size)
+int FTScene::loadModel(const std::string &file, float size)
 {
   if (file.ends_with("gltf") || file.ends_with("glb")) {
-    auto node = std::make_shared<GltfNode>(file);
-    node->set_init_size(size);
+    auto node = std::make_shared<GltfNode>();
     std::unique_lock<std::mutex> lock(_mutex);
     _tasks.push(std::bind(
-      [this](const std::shared_ptr<GltfNode> &node) {
-        auto rd = static_cast<RD_gltf *>(node->rdNode(true));
-        rd->build(_engine);
-        add_node(node);
+      [this, file](const std::shared_ptr<GltfNode> &node) {
+        node->build(file, _engine);
+        addNode(node);
       },
       node));
     return node->id();
   }
 
-  auto node = std::make_shared<ModelNode>(file);
-  node->set_init_size(size);
+  auto node = std::make_shared<MeshNode>();
   std::unique_lock<std::mutex> lock(_mutex);
-  _tasks.push([this, node]() { 
-    auto rd = static_cast<RD_Model *>(node->rdNode(true));
-    rd->build(_engine, _basic_material, _default_material);
-    add_node(node);
-  });
+  _tasks.push(std::bind([this, file](const std::shared_ptr<MeshNode> &node) {
+    node->build(file, _engine, _basic_material, _default_material);
+    addNode(node);
+    },
+    node));
 
   return node->id();
 }
 
-void FTScene::show_model(int id, bool show) 
+void FTScene::showModel(int id, bool show)
 {
   auto iter = _nodes.find(id);
   if (iter == _nodes.end())
     return;
-  auto &rds = iter->second->rdNode()->renderables();
+  auto &rds = iter->second->entities();
   auto &rm = _engine->getRenderableManager();
-  for(auto &e : rds) {
+  for (auto &e : rds) {
     auto instance = rm.getInstance(utils::Entity::import(e));
     auto mask = rm.getLayerMask(instance);
     rm.setLayerMask(instance, 0x255, show ? 1 : 0);
   }
 }
 
-int FTScene::add_shape(int pri)
+int FTScene::addShape(int pri)
 {
   std::shared_ptr<ShapeNode> node;
   if (pri == 0) {
-    node = std::make_shared<CubeNode>();
-  } else if(pri == 1) {
-    node = std::make_shared<SphereNode>();
+    node = std::make_shared<ShapeNode>(new Cube);
+  } else if (pri == 1) {
+    node = std::make_shared<ShapeNode>(new Sphere);
   }
 
   if (!node)
@@ -233,8 +219,7 @@ int FTScene::add_shape(int pri)
 
   std::unique_lock<std::mutex> lock(_mutex);
   _tasks.push(std::bind([this, node]() {
-    auto rd = static_cast<RDShape *>(node->rdNode());
-    rd->build(_engine, _default_material);
+    node->build(_engine, _default_material);
     _add_node(node);
   }));
   return node->id();
@@ -243,10 +228,7 @@ int FTScene::add_shape(int pri)
 std::shared_ptr<Node> FTScene::find_node(uint32_t rent)
 {
   for (auto &iter : _nodes) {
-    auto rd = iter.second->rdNode();
-    if (!rd)
-      continue;
-    auto rds = rd->renderables();
+    auto rds = iter.second->entities();
     for (auto &r : rds) {
       if (r == rent)
         return iter.second;
@@ -255,14 +237,11 @@ std::shared_ptr<Node> FTScene::find_node(uint32_t rent)
   return nullptr;
 }
 
-void FTScene::_add_node(const std::shared_ptr<Node> &node) 
+void FTScene::_add_node(const std::shared_ptr<Node> &node)
 {
-  auto rd = node->rdNode();
-  if (!rd) return;
-
   _nodes.insert_or_assign(node->id(), node);
 
-  auto &ents = rd->renderables();
+  auto &ents = node->entities();
 
   for (auto ent : ents) {
     _scene->addEntity(utils::Entity::import(ent));
@@ -296,21 +275,12 @@ void FTScene::initialize(filament::Engine *engine)
   }
 
   set_environment();
-  //set_environment("C:\\Users\\t\\dev\\0\\filament\\samples\\assets\\ibl\\lightroom_14b\\lightroom_14b");
+  // set_environment("C:\\Users\\t\\dev\\0\\filament\\samples\\assets\\ibl\\lightroom_14b\\lightroom_14b");
 }
 void FTScene::process(double timestamp)
 {
-#ifdef POINT_CLOUD_SUPPORT
-  for (auto &iter : _pcs) {
-    iter.second->_process(delta);
-  }
-#endif
-
   for (auto &iter : _nodes) {
-    auto rd = iter.second->rdNode();
-    if (!rd)
-      continue;
-    rd->update(timestamp);
+    iter.second->update(timestamp);
   }
 
   if (_tasks.empty())
@@ -326,3 +296,5 @@ void FTScene::process(double timestamp)
     _tasks.pop();
   }
 }
+
+} // namespace fv

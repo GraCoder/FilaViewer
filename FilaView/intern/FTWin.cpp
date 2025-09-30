@@ -33,17 +33,19 @@ HWND native_window(SDL_Window *win)
 
 IWin *IWin::create(IWin *s, bool with_border)
 {
-  FTWin* win = new FTWin(static_cast<FTWin *>(s));
+  fv::FTWin *win = new fv::FTWin(static_cast<fv::FTWin *>(s));
   if(!with_border)
-    win->set_flags((uint32_t)TWin::en_Frameless);
+    win->set_flags((uint32_t)fv::TWin::en_Frameless);
   return win;
 }
 
 void IWin::destroy(IWin *win) 
 {
-  FTWin *w = static_cast<FTWin *>(win);
+  fv::FTWin *w = static_cast<fv::FTWin *>(win);
   delete w;
 }
+
+namespace fv {
 
 FTWin::FTWin(FTWin *win)
   : TWin()
@@ -71,7 +73,7 @@ FTWin::~FTWin()
   clean();
 }
 
-uint64_t FTWin::handle() 
+uint64_t FTWin::handle()
 {
   if (!_window)
     create_window();
@@ -80,15 +82,14 @@ uint64_t FTWin::handle()
   return (uint64_t)hwnd;
 }
 
-void FTWin::exec(bool thread) 
+void FTWin::exec(bool thread)
 {
   if (!_window)
     create_window();
 
-  if(thread) {
+  if (thread) {
     _thread = std::make_unique<std::thread>(std::bind(&FTWin::poll_events, this));
-  }
-  else
+  } else
     poll_events();
 }
 
@@ -109,7 +110,7 @@ void FTWin::configure_cameras()
   _view->set_viewport(0, 0, width, height);
 }
 
-void FTWin::clean() 
+void FTWin::clean()
 {
   if (_gui_view) {
     _engine->destroy(_gui_view);
@@ -126,7 +127,8 @@ void FTWin::clean()
     _swapchain = nullptr;
   }
 
-  if (_view) _view.reset();
+  if (_view)
+    _view.reset();
 
   if (_engine) {
     filament::Engine::destroy(_engine);
@@ -134,7 +136,7 @@ void FTWin::clean()
   }
 }
 
-void FTWin::setup_gui() 
+void FTWin::setup_gui()
 {
   if (_gui)
     return;
@@ -152,7 +154,7 @@ void FTWin::setup_gui()
   SDL_SysWMinfo wmInfo;
   SDL_VERSION(&wmInfo.version);
   SDL_GetWindowWMInfo(_window, &wmInfo);
-  //io.ImeWindowHandle = wmInfo.info.win.window;
+  // io.ImeWindowHandle = wmInfo.info.win.window;
 #endif
   io.KeyMap[ImGuiKey_Tab] = SDL_SCANCODE_TAB;
   io.KeyMap[ImGuiKey_LeftArrow] = SDL_SCANCODE_LEFT;
@@ -180,13 +182,13 @@ void FTWin::setup_gui()
   io.ClipboardUserData = nullptr;
 }
 
-void FTWin::create_window() 
+void FTWin::create_window()
 {
   const int x = SDL_WINDOWPOS_CENTERED;
   const int y = SDL_WINDOWPOS_CENTERED;
 
   uint32_t flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
-  if(_flags & en_Frameless)
+  if (_flags & en_Frameless)
     flags |= SDL_WINDOW_BORDERLESS;
   auto win = SDL_CreateWindow("", x, y, _width, _height, flags);
   SDL_SetWindowResizable(win, SDL_TRUE);
@@ -200,7 +202,7 @@ void FTWin::create_engine()
   using namespace filament;
 
   backend::Backend backend = Engine::Backend::VULKAN;
-  //Engine::Config engineConfig = {};
+  // Engine::Config engineConfig = {};
 
   _engine = Engine::Builder().backend(backend) /*.config(&engineConfig)*/.build();
   if (_engine)
@@ -210,14 +212,14 @@ void FTWin::create_engine()
   _engine = Engine::Builder().backend(backend) /*.config(&engineConfig)*/.build();
 }
 
-void FTWin::realize_context() 
+void FTWin::realize_context()
 {
   if (_realized)
     return;
 
   _realized = true;
 
-  create_engine(); 
+  create_engine();
 
   _view->realize(_engine);
 
@@ -236,11 +238,13 @@ void FTWin::realize_context()
   _operators.emplace_back(_view->manip());
 
   if (_flags & en_SetupGui)
-    setup_gui(); 
+    setup_gui();
 }
 
-#define OperIter for(auto iter = _operators.rbegin(); iter != _operators.rend(); iter++)(*iter) 
-void FTWin::poll_events() 
+#define OperIter                                                                                                                                               \
+  for (auto iter = _operators.rbegin(); iter != _operators.rend(); iter++)                                                                                     \
+  (*iter)
+void FTWin::poll_events()
 {
   uint32_t freq = SDL_GetPerformanceFrequency() / 1000;
   uint64_t stamp = SDL_GetPerformanceCounter(), prev_time = stamp;
@@ -388,27 +392,11 @@ void FTWin::gui(filament::Engine *, filament::View *)
   ImGui::SetNextWindowSize(ImVec2(400, 200), ImGuiCond_Once);
   ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_Once);
   ImGui::Begin("Panel");
-  if(ImGui::Button("Add Cube")) 
-    _view->scene()->add_shape(0);
-  if(ImGui::Button("Add Sphere"))
-    _view->scene()->add_shape(1);
-#ifdef POINT_CLOUD_SUPPORT
-
-  if (ImGui::Button("Add PC")) {
-    auto pc = std::make_shared<fpc::PCNode>();
-    if (pc->load_file("D:\\07_Temp\\tiny\\test.tpcd")) {
-      add_pc(pc);
-      auto ab = pc->get_aabb();
-      view()->set_pivot(ab.center(), 200);
-    }
-  }
-  if (ImGui::Button("Calculate Point")) {
-    _point_count = 0;
-    for (auto iter : _pcs)
-      _point_count += iter.second->point_count();
-  }
-  ImGui::Text("Point Count: %d", _point_count);
-#endif
+  if (ImGui::Button("Add Cube"))
+    _view->scene()->addShape(0);
+  if (ImGui::Button("Add Sphere"))
+    _view->scene()->addShape(1);
   ImGui::End();
 }
 
+} // namespace fv

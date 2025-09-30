@@ -1,39 +1,44 @@
 #pragma once
 
+#include <vector>
+#include <filament/Box.h>
+#include <filament/Camera.h>
+#include <filament/MaterialInstance.h>
+#include <utils/Entity.h>
+
 #include "node/Node.h"
 #include "tvec.h"
 
-class RDShape;
+namespace fv {
 
-class ShapeNode : public Node 
-{
+class Shape;
+
+class ShapeNode : public Node {
 public:
-  ShapeNode();
-};
+  ShapeNode(Shape *shape);
 
-class CubeNode : public ShapeNode {
-public:
-  CubeNode();
+  void build(filament::Engine *engine, filament::Material const *material);
+  void release(filament::Engine *engine) override;
 
-  const tg::vec3 &pos() { return _pos; }
-  const tg::vec3 &size() { return _size; }
-  void set_pos(const tg::vec3 &pos) { _pos = pos; }
-  void set_size(const tg::vec3 &size) { _size = size; }
+  utils::Entity solidEntity() { return _solid_entity; }
+  utils::Entity wire_entity() { return _wire_entity; }
+
+  void mapFrustum(filament::Engine &engine, filament::Camera const *camera);
+  void mapFrustum(filament::Engine &engine, filament::math::mat4 const &transform);
+  void mapAabb(filament::Engine &engine, filament::Box const &box);
 
 private:
-  tg::vec3 _pos, _size;
+  filament::Engine *_engine = nullptr;
+  filament::VertexBuffer *_vert_buf = nullptr;
+  filament::IndexBuffer *_index_buf = nullptr;
+  filament::MaterialInstance *_solid_instance = nullptr;
+  filament::MaterialInstance *_wire_instance = nullptr;
+  utils::Entity _solid_entity;
+  utils::Entity _wire_entity;
+
+  std::vector<filament::math::float3>   _vertexs;
+  std::vector<filament::math::short4>   _tangents;
+  std::vector<uint16_t>                 _indices;
 };
 
-class SphereNode : public ShapeNode{
-public:
-  SphereNode();
-
-  const tg::vec3 &pos() { return _pos; }
-  float radius() { return _radius; }
-  void set_pos(const tg::vec3 &pos) { _pos = pos; }
-  void set_radius(const float &radius) { _radius = radius; }
-
-private:
-  tg::vec3 _pos;
-  float _radius;
-};
+} // namespace fv

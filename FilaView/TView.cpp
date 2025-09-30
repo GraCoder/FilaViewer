@@ -12,6 +12,8 @@
 
 using namespace filament;
 
+namespace fv {
+
 FT_DOWNCAST(TView)
 
 TView::TView() {}
@@ -21,14 +23,12 @@ std::shared_ptr<TView> TView::create(TWin *win)
   return std::make_shared<FTView>();
 }
 
-TView::~TView() {
-}
+TView::~TView() {}
 
-
-//TView::Manipulator *TView::manip()
+// TView::Manipulator *TView::manip()
 //{
-//  return downcast(this)->_manip;
-//}
+//   return downcast(this)->_manip;
+// }
 
 void TView::zoom_box(const tg::boundingbox &box)
 {
@@ -36,7 +36,7 @@ void TView::zoom_box(const tg::boundingbox &box)
   float l = m[1][1] * box.radius();
 }
 
-std::optional<tg::vec3d> TView::get_pos(int x, int y)
+std::optional<tg::vec3d> TView::getPosition(int x, int y)
 {
   auto fm = downcast(this)->_camera->getProjectionMatrix();
   fm = fm * downcast(this)->_camera->getViewMatrix();
@@ -65,8 +65,9 @@ std::optional<tg::vec3d> TView::get_pos(int x, int y)
   return std::optional<tg::vec3d>();
 }
 
-void TView::show_model(int id, bool show) 
+void TView::showModel(int id, bool show)
 {
-  downcast(this)->scene()->show_model(id, show);
+  downcast(this)->scene()->showModel(id, show);
 }
 
+} // namespace fv

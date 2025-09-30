@@ -5,6 +5,8 @@
 #include "tmath.h"
 #include "IView.h"
 
+namespace fv {
+
 class TWin;
 class TScene;
 
@@ -17,11 +19,11 @@ public:
 
   void zoom_box(const tg::boundingbox &box);
 
-  std::optional<tg::vec3d> get_pos(int x, int y);
+  std::optional<tg::vec3d> getPosition(int x, int y);
 
 public:
-  
-  void show_model(int id, bool show) override;
+
+  void showModel(int id, bool show) override;
 
 protected:
 
@@ -31,3 +33,5 @@ protected:
   bool _camera_dirty = true;
   float _near = 0.4, _far = 2000;
 };
+
+} // namespace fv

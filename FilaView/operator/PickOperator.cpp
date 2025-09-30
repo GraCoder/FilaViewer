@@ -4,15 +4,15 @@
 #include "node/Node.h"
 #include "PickOperator.h"
 
+namespace fv {
+
 PickOperator::PickOperator(TView *view)
   : TOperator()
   , _view(view)
 {
 }
 
-PickOperator::~PickOperator() 
-{
-}
+PickOperator::~PickOperator() {}
 
 bool PickOperator::mouse_press(const SDL_MouseButtonEvent &btn)
 {
@@ -26,8 +26,8 @@ bool PickOperator::mouse_release(const SDL_MouseButtonEvent &btn)
     return false;
 
   auto v = static_cast<FTView *>(_view)->fila_view();
-  v->pick(btn.x, btn.y, [this](filament::View::PickingQueryResult const &result){ 
-    auto s = static_cast<FTView *>(_view)->scene(); 
+  v->pick(btn.x, btn.y, [this](filament::View::PickingQueryResult const &result) {
+    auto s = static_cast<FTView *>(_view)->scene();
     auto node = s->find_node(result.renderable.getId());
     if (_fun) {
       if (node)
@@ -38,3 +38,5 @@ bool PickOperator::mouse_release(const SDL_MouseButtonEvent &btn)
   });
   return false;
 }
+
+} // namespace fv

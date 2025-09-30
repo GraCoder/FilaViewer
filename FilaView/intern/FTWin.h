@@ -4,8 +4,6 @@
 
 #include <thread>
 
-class FTView;
-class TOperator;
 class SDL_Window;
 
 namespace filament {
@@ -19,8 +17,14 @@ namespace filagui {
 class ImGuiHelper;
 }
 
+namespace fv {
+
+class FTView;
+class TOperator;
+
 class FTWin : public TWin {
   friend class TWin;
+
 public:
 
   FTWin(FTWin *);
@@ -80,3 +84,5 @@ private:
 
   std::unique_ptr<std::thread> _thread;
 };
+
+} // namespace fv

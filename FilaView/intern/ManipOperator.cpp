@@ -5,6 +5,8 @@
 
 using namespace filament::camutils;
 
+namespace fv {
+
 ManipOperator::ManipOperator(FTView *view)
   : _view(view)
 {
@@ -43,7 +45,7 @@ void ManipOperator::set_pivot(const tg::vec3d &pos, double dis)
              .build(filament::camutils::Mode::ORBIT);
 }
 
-void ManipOperator::set_viewport(int w, int h) 
+void ManipOperator::set_viewport(int w, int h)
 {
   _width = w;
   _height = h;
@@ -56,10 +58,9 @@ bool ManipOperator::mouse_press(const SDL_MouseButtonEvent &btn)
   _manip->grabBegin(btn.x, _height - btn.y, btn.button == SDL_BUTTON_RIGHT);
 
   if (btn.button == SDL_BUTTON_LEFT)
-    _view->get_pos(btn.x, btn.y);
+    _view->getPosition(btn.x, btn.y);
 
   return true;
-
 }
 
 bool ManipOperator::mouse_release(const SDL_MouseButtonEvent &btn)
@@ -98,7 +99,7 @@ bool ManipOperator::key_press(const SDL_KeyboardEvent &key)
   } else if (key.keysym.scancode == SDL_SCANCODE_LCTRL) {
     //_view->fila_view()->set_manip_factor(10.0);
   } else if (key.keysym.scancode == SDL_SCANCODE_LSHIFT) {
-    //view()->set_manip_factor(5.0);
+    // view()->set_manip_factor(5.0);
   }
   _view->dirty_camera();
   return true;
@@ -113,7 +114,9 @@ bool ManipOperator::key_release(const SDL_KeyboardEvent &key)
   return true;
 }
 
-void ManipOperator::get_lookat(filament::math::float3 &eye, filament::math::float3 &target, filament::math::float3 &up) 
+void ManipOperator::get_lookat(filament::math::float3 &eye, filament::math::float3 &target, filament::math::float3 &up)
 {
   _manip->getLookAt(&eye, &target, &up);
 }
+
+} // namespace fv

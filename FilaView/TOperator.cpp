@@ -1,9 +1,9 @@
 #include "TOperator.h"
 
-TOperator::TOperator() 
-{
+namespace fv {
 
-}
+TOperator::TOperator() {}
 
 TOperator::~TOperator() {}
 
+} // namespace fv

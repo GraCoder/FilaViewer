@@ -6,8 +6,11 @@
 #include "tvec.h"
 #include "TOperator.h"
 
+namespace fv {
+
 class ManipOperator : public TOperator {
   friend class FTView;
+
 public:
   ManipOperator(FTView *);
   ~ManipOperator();
@@ -33,3 +36,5 @@ private:
   using Manipulator = filament::camutils::Manipulator<float>;
   Manipulator *_manip = nullptr;
 };
+
+} // namespace fv

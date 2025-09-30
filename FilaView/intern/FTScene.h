@@ -18,10 +18,13 @@ class Material;
 class IndirectLight;
 } // namespace filament
 
-namespace fpc{
+namespace fpc {
 class PCDispatch;
 }
 
+namespace fv {
+
+class Node;
 class FTView;
 
 class FTScene : public TScene {
@@ -29,10 +32,10 @@ public:
   FTScene();
   ~FTScene();
 
-  filament::Engine* engine() { return _engine; }
+  filament::Engine *engine() { return _engine; }
 
-  operator filament::Scene*() { return _scene; }
-  filament::Scene* fila_scene() { return _scene; }
+  operator filament::Scene *() { return _scene; }
+  filament::Scene *fila_scene() { return _scene; }
 
   const filament::Material *basic_material() { return _basic_material; }
   const filament::Material *default_material() { return _default_material; }
@@ -43,11 +46,11 @@ public:
 
 public:
 
-  void show_model(int id, bool show);
+  void  showModel(int id, bool show);
 
-  int load_model(const std::string &file, float sz);
+  int   loadModel(const std::string &file, float sz);
 
-  int add_shape(int);
+  int   addShape(int);
 
   std::shared_ptr<Node> find_node(uint32_t rent);
 
@@ -64,11 +67,11 @@ public:
 private:
   bool _initialized = false;
 
-  filament::Engine  *_engine = nullptr;
-  filament::Scene   *_scene = nullptr;
+  filament::Engine *_engine = nullptr;
+  filament::Scene *_scene = nullptr;
 
   filament::Texture *_skybox_tex = nullptr;
-  filament::Skybox  *_skybox = nullptr;
+  filament::Skybox *_skybox = nullptr;
   filament::Texture *_ibl_tex = nullptr;
   filament::IndirectLight *_ibl = nullptr;
 
@@ -87,3 +90,4 @@ private:
   tsl::robin_map<uint32_t, std::shared_ptr<Node>> _nodes;
 };
 
+} // namespace fv
