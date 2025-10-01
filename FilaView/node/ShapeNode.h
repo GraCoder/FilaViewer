@@ -1,13 +1,19 @@
 #pragma once
 
 #include <vector>
-#include <filament/Box.h>
-#include <filament/Camera.h>
-#include <filament/MaterialInstance.h>
+#include <math/mat4.h>
 #include <utils/Entity.h>
 
 #include "node/Node.h"
 #include "tvec.h"
+
+namespace filament{
+class Camera;
+class VertexBuffer;
+class IndexBuffer;
+class Material;
+class MaterialInstance;
+}
 
 namespace fv {
 

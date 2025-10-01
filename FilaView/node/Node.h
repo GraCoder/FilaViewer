@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <absl/container/inlined_vector.h>
+#include <filament/Box.h>
 
 class Node;
 

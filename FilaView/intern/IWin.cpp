@@ -13,7 +13,7 @@ int IWin::loadModel(const char *file, float sz)
   return scene->loadModel(file, sz);
 }
 
-int IWin::operator_s(const char *ops, int len)
+int IWin::exeOperator(const char *ops, int len)
 {
   auto js = nlohmann::json::parse(std::string(ops, len));
   auto iter = js.find("OperType");
@@ -27,7 +27,7 @@ int IWin::operator_s(const char *ops, int len)
   return 0;
 }
 
-void IWin::create_operators()
+void IWin::createOperators()
 {
   using fv::FTWin;
   auto view = static_cast<FTWin *>(this)->view(0);
@@ -35,7 +35,7 @@ void IWin::create_operators()
   ops.emplace_back(std::make_shared<fv::PickOperator>(view));
 }
 
-void IWin::regist_select(void (*fun)(unsigned int))
+void IWin::registPick(void (*fun)(unsigned int))
 {
   auto ops = static_cast<fv::FTWin *>(this)->operators();
   for (auto &op : ops) {

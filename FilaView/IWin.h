@@ -12,12 +12,12 @@ public:
 
   virtual void exec(bool thread) = 0;
 
-  virtual void setup_gui() = 0;
+  virtual void setupGui() = 0;
   virtual IView *view(int id = 0) = 0;
 
   int loadModel(const char *file, float sz = 1);
-  int  operator_s(const char *ops, int len);
-  void create_operators();
-  void regist_select(void(*fun)(unsigned int)); 
+  int  exeOperator(const char *ops, int len);
+  void createOperators();
+  void registPick(void(*fun)(unsigned int)); 
 
 };

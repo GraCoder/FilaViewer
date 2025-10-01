@@ -1,8 +1,10 @@
 #include "node/ShapeNode.h"
 
+#include <filament/Camera.h>
 #include <filament/VertexBuffer.h>
 #include <filament/IndexBuffer.h>
 #include <filament/Material.h>
+#include <filament/MaterialInstance.h>
 #include <filament/RenderableManager.h>
 #include <filament/TransformManager.h>
 #include <utils/EntityManager.h>

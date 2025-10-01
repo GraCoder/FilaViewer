@@ -136,7 +136,7 @@ void FTWin::clean()
   }
 }
 
-void FTWin::setup_gui()
+void FTWin::setupGui()
 {
   if (_gui)
     return;
@@ -238,7 +238,7 @@ void FTWin::realize_context()
   _operators.emplace_back(_view->manip());
 
   if (_flags & en_SetupGui)
-    setup_gui();
+    setupGui();
 }
 
 #define OperIter                                                                                                                                               \

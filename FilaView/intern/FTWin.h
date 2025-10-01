@@ -56,7 +56,7 @@ private:
 
   void clean();
 
-  void setup_gui();
+  void setupGui();
 
   void poll_events();
 

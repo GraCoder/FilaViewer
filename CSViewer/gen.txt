@@ -1,4 +1,4 @@
-D:\06_Test\CppSharp\bin\Release_x64\CppSharp.CLI.exe -a x64 -o C:\Users\t\dev\FilaViewer\MdlViewer\FilaView  -m FilaView.dll C:\Users\t\dev\FilaViewer\FilaView\IWin.h C:\Users\t\dev\FilaViewer\FilaView\node\Node.h
+D:\06_Test\CppSharp\bin\Release_x64\CppSharp.CLI.exe -a x64  -m FilaView.dll -o C:\Users\t\dev\FilaViewer\MdlViewer\FilaView C:\Users\t\dev\FilaViewer\FilaView\IWin.h C:\Users\t\dev\FilaViewer\FilaView\node\Node.h
 
 
 

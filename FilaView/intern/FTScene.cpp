@@ -21,7 +21,7 @@
 #include "FTView.h"
 
 #include "pcv_mat.h"
-#ifdef HAVE_ENVIRONMENT
+#ifdef HAS_ENVIRONMENT
 #include "ibl.h"
 #include "skybox.h"
 #endif
@@ -149,9 +149,14 @@ void FTScene::set_environment(const std::string_view &prefix, bool filter)
     ibl_ktx = create_ktx(ibl_path);
     skybox_ktx = create_ktx(skybox_path);
   } else {
+#ifdef HAS_ENVIRONMENT
     ibl_ktx = new image::Ktx1Bundle(::ibl, ibl_length);
     skybox_ktx = new image::Ktx1Bundle(skybox, skybox_length);
+#endif
   }
+
+  Skybox::Builder skyBuilder;
+  skyBuilder.showSun(true);
 
   if (ibl_ktx && skybox_ktx) {
     _ibl_tex = ktxreader::Ktx1Reader::createTexture(_engine, ibl_ktx, true);
@@ -160,10 +165,11 @@ void FTScene::set_environment(const std::string_view &prefix, bool filter)
 
     _skybox_tex = ktxreader::Ktx1Reader::createTexture(_engine, skybox_ktx, true);
     //_skybox_tex->generateMipmaps(*_engine);
-    _skybox = Skybox::Builder().environment(_skybox_tex).showSun(true).build(*_engine);
     //_skybox->setLayerMask(0x7, 0x4);
-    _scene->setSkybox(_skybox);
+    skyBuilder.environment(_skybox_tex);
   }
+  _skybox = skyBuilder.build(*_engine);
+  _scene->setSkybox(_skybox);
 }
 
 int FTScene::loadModel(const std::string &file, float size)
