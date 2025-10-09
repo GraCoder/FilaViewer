@@ -21,7 +21,10 @@ class Shape;
 
 class ShapeNode : public Node {
 public:
-  ShapeNode(Shape *shape);
+  ShapeNode(std::unique_ptr<Shape> &&shape)
+    : _shape(std::move(shape))
+  {
+  }
 
   void build(filament::Engine *engine, filament::Material const *material);
   void release(filament::Engine *engine) override;
@@ -34,6 +37,8 @@ public:
   void mapAabb(filament::Engine &engine, filament::Box const &box);
 
 private:
+  std::unique_ptr<Shape> _shape;
+
   filament::Engine *_engine = nullptr;
   filament::VertexBuffer *_vert_buf = nullptr;
   filament::IndexBuffer *_index_buf = nullptr;

@@ -24,7 +24,7 @@ int main(int argc, char **argv)
     win->loadModel(argv[1], 10);
   }
 
-  win->create_operators();
+  win->createOperators();
   //win->set_flags(win->flags() | win->en_SetupGui);
   win->exec(false);
   fv::TWin::destroy(win);

@@ -8,13 +8,14 @@
 #include <filament/RenderableManager.h>
 #include <filament/TransformManager.h>
 #include <utils/EntityManager.h>
+#include <geometry/SurfaceOrientation.h>
 
-namespace fv {
+#include "mesh/Shape.h"
 
 using namespace filament;
 using namespace filament::math;
 
-ShapeNode::ShapeNode(Shape *shape) {}
+namespace fv {
 
 void ShapeNode::build(filament::Engine *engine, filament::Material const *material)
 {
@@ -28,73 +29,51 @@ void ShapeNode::build(filament::Engine *engine, filament::Material const *materi
 
   _index_buf = IndexBuffer::Builder().bufferType(IndexBuffer::IndexType::USHORT).indexCount(12 * 2 + 3 * 2 * 6).build(*engine);
 
-  //////////if (material) {
-  //////////  _solid_instance = material->createInstance();
-  //////////  _wire_instance = material->createInstance();
-  //////////  _solid_instance->setParameter("baseColor", RgbaType::LINEAR, LinearColorA(0.4, 0.41, 0.4, 1.0));
-  //////////  _wire_instance->setParameter("baseColor", RgbaType::LINEAR, LinearColorA{0.0, 0.6, 0.0, 0.5});
-  //////////}
+  if (material) {
+    _solid_instance = material->createInstance();
+    _wire_instance = material->createInstance();
+    _solid_instance->setParameter("baseColor", RgbaType::LINEAR, LinearColorA(0.4, 0.41, 0.4, 1.0));
+    _wire_instance->setParameter("baseColor", RgbaType::LINEAR, LinearColorA{0.0, 0.6, 0.0, 0.5});
+  }
 
-  //////////auto cube = static_cast<ShapeNode*>(_node);
-  //////////auto pos = *(float3 *)&cube->pos();
-  //////////auto size = *(float3 *)&cube->size();
-  //////////_vertexs.clear();
-  //////////_vertexs.reserve(24);
-  //////////for (int i = 0; i < sizeof(mIndices2) / sizeof(uint32_t); i++) {
-  //////////  auto vert = mVertices[mIndices2[i]] * (size / 2.0) + pos;
-  //////////  _vertexs.emplace_back(vert);
-  //////////}
+  _vertexs = std::move(_shape->vertexs()); 
+  _indices = std::move(_shape->indices());
+  
+  auto *quats = geometry::SurfaceOrientation::Builder()
+                  .vertexCount(_vertexs.size())
+                  .positions(_vertexs.data(), sizeof(float3))
+                  .triangleCount(12)
+                  .triangles((ushort3 *)_indices.data())
+                  .build();
+  _tangents.resize(24);
+  quats->getQuats((short4 *)_tangents.data(), 24);
+  delete quats;
 
-  //////////_indices.clear();
-  //////////_indices.reserve(36 + 24);
-  //////////for (int i = 0; i < sizeof(mIndices2) / sizeof(uint32_t); i += 4) {
-  //////////  _indices.push_back(i);
-  //////////  _indices.push_back(i + 3);
-  //////////  _indices.push_back(i + 2);
-  //////////  _indices.push_back(i);
-  //////////  _indices.push_back(i + 1);
-  //////////  _indices.push_back(i + 3);
-  //////////}
-  //////////{
-  //////////  constexpr uint16_t lines[] = {0, 1, 1, 3, 3, 2, 2, 0, 4, 5, 5, 7, 6, 7, 6, 4, 2, 4, 3, 5, 1, 7, 0, 6};
-  //////////  _indices.insert(_indices.end(), lines, lines + 24);
-  //////////}
+  _vert_buf->setBufferAt(*engine, 0, VertexBuffer::BufferDescriptor(_vertexs.data(), _vertexs.size() * sizeof(float3)));
+  _vert_buf->setBufferAt(*engine, 1, VertexBuffer::BufferDescriptor(_tangents.data(), _tangents.size() * sizeof(short4)));
+  _index_buf->setBuffer(*engine, IndexBuffer::BufferDescriptor(_indices.data(), _indices.size() * sizeof(uint16_t)));
 
-  //////////auto *quats = geometry::SurfaceOrientation::Builder()
-  //////////                .vertexCount(_vertexs.size())
-  //////////                .positions(_vertexs.data(), sizeof(float3))
-  //////////                .triangleCount(12)
-  //////////                .triangles((ushort3 *)_indices.data())
-  //////////                .build();
-  //////////_tangents.resize(24);
-  //////////quats->getQuats((short4 *)_tangents.data(), 24);
-  //////////delete quats;
+  utils::EntityManager &em = utils::EntityManager::get();
+  _solid_entity = em.create();
+  RenderableManager::Builder(1)
+    .boundingBox(_shape->box())
+    .material(0, _solid_instance)
+    .geometry(0, RenderableManager::PrimitiveType::TRIANGLES, _vert_buf, _index_buf, 0, 3 * 2 * 6)
+    .priority(7)
+    .culling(true)
+    .build(*engine, _solid_entity);
 
-  //////////_vert_buf->setBufferAt(*engine, 0, VertexBuffer::BufferDescriptor(_vertexs.data(), _vertexs.size() * sizeof(float3)));
-  //////////_vert_buf->setBufferAt(*engine, 1, VertexBuffer::BufferDescriptor(_tangents.data(), _tangents.size() * sizeof(short4)));
-  //////////_index_buf->setBuffer(*engine, IndexBuffer::BufferDescriptor(_indices.data(), _indices.size() * sizeof(uint16_t)));
+  //_wire_entity = em.create();
+  //RenderableManager::Builder(1)
+  //  .boundingBox(_shape->box())
+  //  .material(0, _wire_instance)
+  //  .geometry(0, RenderableManager::PrimitiveType::LINES, _vert_buf, _index_buf, WIREFRAME_OFFSET, 24)
+  //  .priority(6)
+  //  .culling(false)
+  //  .build(*engine, _wire_entity);
 
-  //////////utils::EntityManager &em = utils::EntityManager::get();
-  //////////_solid_entity = em.create();
-  //////////RenderableManager::Builder(1)
-  //////////  .boundingBox({pos - size / 2.0, pos + size / 2.0})
-  //////////  .material(0, _solid_instance)
-  //////////  .geometry(0, RenderableManager::PrimitiveType::TRIANGLES, _vert_buf, _index_buf, 0, 3 * 2 * 6)
-  //////////  .priority(7)
-  //////////  .culling(true)
-  //////////  .build(*engine, _solid_entity);
-
-  //////////_wire_entity = em.create();
-  //////////RenderableManager::Builder(1)
-  //////////  .boundingBox({pos - size / 2.0, pos + size / 2.0})
-  //////////  .material(0, _wire_instance)
-  //////////  .geometry(0, RenderableManager::PrimitiveType::LINES, _vert_buf, _index_buf, WIREFRAME_OFFSET, 24)
-  //////////  .priority(6)
-  //////////  .culling(false)
-  //////////  .build(*engine, _wire_entity);
-
-  //////////_entities.push_back(_solid_entity.getId());
-  ////////////_entities.push_back(_wire_entity.getId());
+  _entities.push_back(_solid_entity.getId());
+  //_entities.push_back(_wire_entity.getId());
 }
 
 void ShapeNode::release(filament::Engine *engine)
