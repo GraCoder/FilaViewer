@@ -83,97 +83,27 @@ auto create_sphere(const float3 &pos, float sz, int subdiv = 5)
 
 namespace fv {
 
-Sphere::Sphere()
-  : Shape()
+Sphere::Sphere(const filament::math::float3 &center, float radius)
+  : _center(center)
+  , _radius(radius)
 {
 }
 
-Sphere::~Sphere()
+Sphere::~Sphere() {}
+
+filament::Box Sphere::box() const
 {
+  return filament::Box();
 }
 
-//void Sphere::build(filament::Engine *engine, filament::Material const *material)
-//{
-//  _engine = engine;
-//  auto sph = static_cast<SphereNode *>(_node);
-//  auto [vertices, indices] = create_sphere(*(float3 *)&sph->pos(), sph->radius());
-//
-//  _tangents.resize(vertices.size());
-//  auto *quats = geometry::SurfaceOrientation::Builder().vertexCount(vertices.size()).normals(vertices.data(), sizeof(float3)).build();
-//  quats->getQuats((short4 *)_tangents.data(), vertices.size(), sizeof(filament::math::short4));
-//  delete quats;
-//
-//  _vert_buf = VertexBuffer::Builder()
-//                .vertexCount((uint32_t)vertices.size())
-//                .bufferCount(2)
-//                .attribute(VertexAttribute::POSITION, 0, VertexBuffer::AttributeType::FLOAT3)
-//                .attribute(VertexAttribute::TANGENTS, 1, VertexBuffer::AttributeType::SHORT4)
-//                .normalized(VertexAttribute::TANGENTS)
-//                .build(*engine);
-//
-//  _vertexs = std::move(vertices);
-//  _indices = std::move(indices);
-//  _vert_buf->setBufferAt(*engine, 0, VertexBuffer::BufferDescriptor(_vertexs.data(), _vertexs.size() * sizeof(float3)));
-//  _vert_buf->setBufferAt(*engine, 1, VertexBuffer::BufferDescriptor(_tangents.data(), _tangents.size() * sizeof(filament::math::short4)));
-//
-//  uint32_t indexCount = (uint32_t)(_indices.size() * 3);
-//  _index_buf = IndexBuffer::Builder().bufferType(IndexBuffer::IndexType::USHORT).indexCount(indexCount).build(*engine);
-//  _index_buf->setBuffer(*engine, IndexBuffer::BufferDescriptor(_indices.data(), indexCount * sizeof(uint16_t)));
-//
-//  if (material) {
-//    _mtl_instance = material->createInstance();
-//    _mtl_instance->setParameter("baseColor", RgbaType::LINEAR, LinearColorA(0.8, 0, 0, 1.0));
-//  }
-//
-//  utils::EntityManager &em = utils::EntityManager::get();
-//  _entity = em.create();
-//  RenderableManager::Builder(1)
-//    .boundingBox({{0}, {1}})
-//    .material(0, _mtl_instance)
-//    .geometry(0, RenderableManager::PrimitiveType::TRIANGLES, _vert_buf, _index_buf)
-//    .culling(true)
-//    .build(*engine, _entity);
-//
-//  _entities.clear();
-//  _entities.push_back(_entity.getId());
-//}
-//
-//void Sphere::release()
-//{
-//  if (_engine == nullptr)
-//    return;
-//
-//  _engine->destroy(_vert_buf);
-//  _engine->destroy(_index_buf);
-//  _engine->destroy(_mtl_instance);
-//  _engine->destroy(_entity);
-//
-//  _engine = nullptr;
-//
-//  utils::EntityManager &em = utils::EntityManager::get();
-//  em.destroy(_entity);
-//}
-//
-//Sphere &Sphere::setPosition(filament::math::float3 const &position) noexcept
-//{
-//  auto &tcm = _engine->getTransformManager();
-//  auto ci = tcm.getInstance(_entity);
-//  mat4f model = tcm.getTransform(ci);
-//  model[3].xyz = position;
-//  tcm.setTransform(ci, model);
-//  return *this;
-//}
-//
-//Sphere &Sphere::setRadius(float radius) noexcept
-//{
-//  auto &tcm = _engine->getTransformManager();
-//  auto ci = tcm.getInstance(_entity);
-//  mat4f model = tcm.getTransform(ci);
-//  model[0].x = radius;
-//  model[1].y = radius;
-//  model[2].z = radius;
-//  tcm.setTransform(ci, model);
-//  return *this;
-//}
+std::vector<filament::math::float3> Sphere::vertexs()
+{
+  return std::vector<filament::math::float3>();
+}
+
+std::vector<uint16_t> Sphere::indexs()
+{
+  return std::vector<uint16_t>();
+}
 
 } // namespace fv

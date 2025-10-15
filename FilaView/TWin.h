@@ -12,11 +12,11 @@ public:
 
   enum Flag { en_Frameless = 0x1, en_SetupGui = 0x2 };
   uint32_t flags() { return _flags; }
-  void set_flags(uint32_t flags) { _flags = flags; }
+  void setFlags(uint32_t flags) { _flags = flags; }
 
   void resize(int w, int h);
 
-  void realize_context();
+  void realizeContext();
 
 public:
 

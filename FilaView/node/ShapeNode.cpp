@@ -19,15 +19,18 @@ namespace fv {
 
 void ShapeNode::build(filament::Engine *engine, filament::Material const *material)
 {
+  _vertexs = std::move(_shape->vertexs()); 
+  _indices = std::move(_shape->indexs());
+
   _engine = engine;
   _vert_buf = VertexBuffer::Builder()
-                .vertexCount(24)
+                .vertexCount(_vertexs.size())
                 .bufferCount(2)
                 .attribute(VertexAttribute::POSITION, 0, VertexBuffer::AttributeType::FLOAT3)
                 .attribute(VertexAttribute::TANGENTS, 1, VertexBuffer::AttributeType::SHORT4)
                 .build(*engine);
 
-  _index_buf = IndexBuffer::Builder().bufferType(IndexBuffer::IndexType::USHORT).indexCount(12 * 2 + 3 * 2 * 6).build(*engine);
+  _index_buf = IndexBuffer::Builder().bufferType(IndexBuffer::IndexType::USHORT).indexCount(_indices.size()).build(*engine);
 
   if (material) {
     _solid_instance = material->createInstance();
@@ -36,17 +39,15 @@ void ShapeNode::build(filament::Engine *engine, filament::Material const *materi
     _wire_instance->setParameter("baseColor", RgbaType::LINEAR, LinearColorA{0.0, 0.6, 0.0, 0.5});
   }
 
-  _vertexs = std::move(_shape->vertexs()); 
-  _indices = std::move(_shape->indices());
   
   auto *quats = geometry::SurfaceOrientation::Builder()
                   .vertexCount(_vertexs.size())
                   .positions(_vertexs.data(), sizeof(float3))
-                  .triangleCount(12)
+                  .triangleCount(_indices.size() / 3)
                   .triangles((ushort3 *)_indices.data())
                   .build();
-  _tangents.resize(24);
-  quats->getQuats((short4 *)_tangents.data(), 24);
+  _tangents.resize(_vertexs.size());
+  quats->getQuats((short4 *)_tangents.data(), _vertexs.size());
   delete quats;
 
   _vert_buf->setBufferAt(*engine, 0, VertexBuffer::BufferDescriptor(_vertexs.data(), _vertexs.size() * sizeof(float3)));
@@ -58,7 +59,7 @@ void ShapeNode::build(filament::Engine *engine, filament::Material const *materi
   RenderableManager::Builder(1)
     .boundingBox(_shape->box())
     .material(0, _solid_instance)
-    .geometry(0, RenderableManager::PrimitiveType::TRIANGLES, _vert_buf, _index_buf, 0, 3 * 2 * 6)
+    .geometry(0, RenderableManager::PrimitiveType::TRIANGLES, _vert_buf, _index_buf, 0, _indices.size())
     .priority(7)
     .culling(true)
     .build(*engine, _solid_entity);
@@ -86,15 +87,6 @@ void ShapeNode::release(filament::Engine *engine)
     engine->destroy(_index_buf);
     _index_buf = nullptr;
   }
-  if (_solid_instance) {
-    engine->destroy(_solid_instance);
-    _solid_instance = nullptr;
-  }
-  if (_wire_instance) {
-    engine->destroy(_wire_instance);
-    _wire_instance = nullptr;
-  }
-
   utils::EntityManager &em = utils::EntityManager::get();
   if (_solid_entity) {
     engine->destroy(_solid_entity);
@@ -106,6 +98,15 @@ void ShapeNode::release(filament::Engine *engine)
     engine->destroy(_wire_entity);
     em.destroy(_wire_entity);
     _wire_entity = {};
+  }
+
+  if (_solid_instance) {
+    engine->destroy(_solid_instance);
+    _solid_instance = nullptr;
+  }
+  if (_wire_instance) {
+    engine->destroy(_wire_instance);
+    _wire_instance = nullptr;
   }
 }
 

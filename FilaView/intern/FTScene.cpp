@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <filesystem>
+#include <memory>
 
 #include <filament/Engine.h>
 #include <filament/View.h>
@@ -215,9 +216,9 @@ int FTScene::addShape(int pri)
 {
   std::shared_ptr<ShapeNode> node;
   if (pri == 0) {
-    node = std::make_shared<ShapeNode>(new Cube);
+    node = std::make_shared<ShapeNode>(std::make_unique<Cube>(math::float3{0, 0, 0}, math::float3{0.5, 0.5, 0.5}));
   } else if (pri == 1) {
-    node = std::make_shared<ShapeNode>(new Sphere);
+    node = std::make_shared<ShapeNode>(std::make_unique<Sphere>(math::float3{0, 0, 0}, 0.5));
   }
 
   if (!node)

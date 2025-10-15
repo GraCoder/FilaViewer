@@ -35,7 +35,7 @@ IWin *IWin::create(IWin *s, bool with_border)
 {
   fv::FTWin *win = new fv::FTWin(static_cast<fv::FTWin *>(s));
   if(!with_border)
-    win->set_flags((uint32_t)fv::TWin::en_Frameless);
+    win->setFlags((uint32_t)fv::TWin::en_Frameless);
   return win;
 }
 
@@ -64,11 +64,6 @@ FTWin::~FTWin()
   _close = true;
   if (_thread)
     _thread->join();
-
-  if (_gui) {
-    delete _gui;
-    _gui = nullptr;
-  }
 
   clean();
 }
@@ -112,6 +107,11 @@ void FTWin::configure_cameras()
 
 void FTWin::clean()
 {
+  if (_gui) {
+    delete _gui;
+    _gui = nullptr;
+  }
+
   if (_gui_view) {
     _engine->destroy(_gui_view);
     _gui_view = nullptr;
@@ -212,7 +212,7 @@ void FTWin::create_engine()
   _engine = Engine::Builder().backend(backend) /*.config(&engineConfig)*/.build();
 }
 
-void FTWin::realize_context()
+void FTWin::realizeContext()
 {
   if (_realized)
     return;
@@ -335,7 +335,7 @@ void FTWin::poll_events()
         case SDL_WINDOWEVENT_EXPOSED:
         case SDL_WINDOWEVENT_SHOWN: {
           if (!_realized)
-            realize_context();
+            realizeContext();
           break;
         }
         default:

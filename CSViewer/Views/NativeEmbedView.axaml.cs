@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -9,7 +8,6 @@ using Avalonia.Controls.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
-using Avalonia.Platform.Storage;
 
 namespace MdlViewer.Views
 {
@@ -98,19 +96,19 @@ namespace MdlViewer.Views
 
     public unsafe class VulkanWin : INativeControl
     {
-        FilaView.IWin _win = null;
+        fv.IWin ?_win = null;
 
         public IPlatformHandle CreateControl(IPlatformHandle parent, Func<IPlatformHandle> createDefault)
         {
 #if true 
-            _win = FilaView.IWin.Create(null, false);
-            _win.CreateOperators();
-            _win.Exec(true);
+            _win = fv.IWin.create(null, false);
+            //_win.CreateOperators();
+            _win.exec(true);
 
-            FilaIns.Instance.Win = _win;
-            FilaIns.Instance.View = _win.View(0);
+            //FilaIns.Instance.Win = _win;
+            //FilaIns.Instance.View = _win.View(0);
 
-            return new Win32WindowControlHandle((IntPtr)_win.Handle, "HWND");
+            return new Win32WindowControlHandle((IntPtr)_win.handle, "HWND");
 #else
             return null;
 #endif
@@ -118,17 +116,18 @@ namespace MdlViewer.Views
 
         public void DestroyControl()
         {
-            if (_win != null) {
-                FilaView.IWin.Destroy(_win);
-            }
+            //if (_win != null) {
+            //    FilaView.IWin.Destroy(_win);
+            //}
         }
 
         public int load_file(String file)
         {
             if (_win == null)
                 return -1;
-            
-            return _win.LoadModel(file, 10);
+
+            return 0;
+            //return _win.LoadModel(file, 10);
         }
     }
 

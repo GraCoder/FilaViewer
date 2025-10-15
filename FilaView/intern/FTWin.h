@@ -50,7 +50,7 @@ private:
 
   void create_engine();
 
-  void realize_context();
+  void realizeContext();
 
   void configure_cameras();
 

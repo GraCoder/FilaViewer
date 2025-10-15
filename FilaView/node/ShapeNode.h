@@ -26,6 +26,9 @@ public:
   {
   }
 
+  ShapeNode(const ShapeNode &) = delete;
+  ShapeNode &operator=(const ShapeNode &) = delete;
+
   void build(filament::Engine *engine, filament::Material const *material);
   void release(filament::Engine *engine) override;
 

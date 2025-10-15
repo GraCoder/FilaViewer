@@ -19,13 +19,13 @@ int main(int argc, char **argv)
 
     //win->loadModel((ptr + "\\03_Dat\\Models\\models\\windmill\\windmill.obj").c_str(), 10);
     //win->loadModel((ptr + "\\03_Dat\\Models\\models\\knight\\KnightCharacter.gltf").c_str(), 10);
-    win->loadModel("D:\\06_Test\\LearnOpenGL\\resources\\objects\\backpack\\backpack.obj");
+    //win->loadModel("D:\\06_Test\\LearnOpenGL\\resources\\objects\\backpack\\backpack.obj");
   } else {
     win->loadModel(argv[1], 10);
   }
 
   win->createOperators();
-  //win->set_flags(win->flags() | win->en_SetupGui);
+  win->setFlags(win->flags() | win->en_SetupGui);
   win->exec(false);
   fv::TWin::destroy(win);
 }

@@ -123,10 +123,6 @@ ImGuiHelper::~ImGuiHelper()
   mEngine->destroy(_entity);
   mEngine->destroyCameraComponent(mCameraEntity);
 
-  for (auto &mi : mMaterialInstances) {
-    mEngine->destroy(mi);
-  }
-  mEngine->destroy(mMaterial);
   mEngine->destroy(mTexture);
   for (auto &vb : mVertexBuffers) {
     mEngine->destroy(vb);
@@ -138,6 +134,11 @@ ImGuiHelper::~ImGuiHelper()
   EntityManager &em = utils::EntityManager::get();
   em.destroy(_entity);
   em.destroy(mCameraEntity);
+
+  for (auto &mi : mMaterialInstances) {
+    mEngine->destroy(mi);
+  }
+  mEngine->destroy(mMaterial);
 
   ImGui::DestroyContext(mImGuiContext);
   mImGuiContext = nullptr;

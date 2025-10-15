@@ -32,9 +32,9 @@ void TWin::resize(int w, int h)
   downcast(this)->configure_cameras();
 }
 
-void TWin::realize_context()
+void TWin::realizeContext()
 {
-  downcast(this)->realize_context();
+  downcast(this)->realizeContext();
 
   downcast(this)->configure_cameras();
 }
