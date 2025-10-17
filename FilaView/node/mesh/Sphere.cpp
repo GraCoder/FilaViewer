@@ -1,35 +1,26 @@
+#include "Sphere.h"
+
 #include <vector>
 #include <map>
 #include <array>
 #include <math/norm.h>
-
-#include "Sphere.h"
+#include <geometry/SurfaceOrientation.h>
 
 using namespace filament;
 using namespace filament::math;
 
 using TriangleList = std::vector<ushort3>;
 using VertexList = std::vector<float3>;
-using IndexedMesh = std::pair<VertexList, TriangleList>;
 
 static constexpr float X = .525731112119133606f;
 static constexpr float Z = .850650808352039932f;
 static constexpr float N = 0.f;
 
-const VertexList sVertices = {
-  {-X, N, Z}, {X, N, Z}, 
-  {-X, N, -Z}, {X, N, -Z}, 
-  {N, Z, X}, {N, Z, -X}, 
-  {N, -Z, X}, {N, -Z, -X}, 
-  {Z, X, N}, {-Z, X, N}, 
-  {Z, -X, N}, {-Z, -X, N}
-};
+const VertexList sVertices = {{-X, N, Z}, {X, N, Z},   {-X, N, -Z}, {X, N, -Z}, {N, Z, X},  {N, Z, -X},
+                             {N, -Z, X}, {N, -Z, -X}, {Z, X, N},   {-Z, X, N}, {Z, -X, N}, {-Z, -X, N}};
 
-const TriangleList sTriangles = {
-  {1, 4, 0}, {4, 9, 0}, {4, 5, 9}, 
-  {8, 5, 4}, {1, 8, 4}, {1, 10, 8}, 
-  {10, 3, 8}, {8, 3, 5}, {3, 2, 5},  {3, 7, 2},  {3, 10, 7}, {10, 6, 7}, {6, 11, 7}, {6, 0, 11},
-  {6, 1, 0}, {10, 1, 6}, {11, 0, 9}, {2, 11, 9}, {5, 2, 9},  {11, 2, 7}};
+const TriangleList sTriangles = {{1, 4, 0},  {4, 9, 0},  {4, 5, 9},  {8, 5, 4},  {1, 8, 4}, {1, 10, 8}, {10, 3, 8}, {8, 3, 5},  {3, 2, 5}, {3, 7, 2},
+                                 {3, 10, 7}, {10, 6, 7}, {6, 11, 7}, {6, 0, 11}, {6, 1, 0}, {10, 1, 6}, {11, 0, 9}, {2, 11, 9}, {5, 2, 9}, {11, 2, 7}};
 
 
 namespace {
@@ -56,6 +47,7 @@ TriangleList subdivide(VertexList &vertices, TriangleList const &triangles)
 {
   Lookup lookup;
   TriangleList result;
+  result.reserve(triangles.size() * 4);
   for (ushort3 const &each : triangles) {
     std::array<uint16_t, 3> mid;
     mid[0] = vertex_for_edge(lookup, vertices, each[0], each[1]);
@@ -69,23 +61,14 @@ TriangleList subdivide(VertexList &vertices, TriangleList const &triangles)
   return result;
 }
 
-auto create_sphere(const float3 &pos, float sz, int subdiv = 5) 
-{
-  VertexList vertices = sVertices;
-  TriangleList triangles = sTriangles;
-  for (int i = 0; i < subdiv; ++i) {
-    triangles = subdivide(vertices, triangles);
-  }
-  return std::make_tuple(vertices, triangles);
-}
-
 }
 
 namespace fv {
 
-Sphere::Sphere(const filament::math::float3 &center, float radius)
+Sphere::Sphere(const filament::math::float3 &center, float radius, int subdiv)
   : _center(center)
   , _radius(radius)
+  , _subDiv(std::min<uint8_t>(subdiv, 8))
 {
 }
 
@@ -93,17 +76,47 @@ Sphere::~Sphere() {}
 
 filament::Box Sphere::box() const
 {
-  return filament::Box();
+  filament::Box box;
+  box.center = _center;
+  box.halfExtent = filament::math::float3(_radius);
+  return box;
 }
 
-std::vector<filament::math::float3> Sphere::vertexs()
+Sphere::Mesh Sphere::mesh()
 {
-  return std::vector<filament::math::float3>();
-}
+  std::vector<filament::math::float3>();
 
-std::vector<uint16_t> Sphere::indexs()
-{
-  return std::vector<uint16_t>();
+  int vNum = sVertices.size(); 
+  int fnum = sTriangles.size();
+  for (int i = 0; i < _subDiv; i++) {
+    vNum = 2 * vNum + fnum - 2;
+    fnum = fnum * 4;
+  }
+  VertexList vertexs = sVertices;
+  vertexs.reserve(vNum);
+  TriangleList indexs = sTriangles;
+  for (int i = 0; i < _subDiv; ++i) {
+    indexs = subdivide(vertexs, indexs);
+  }
+  std::vector<filament::math::float3> normals(vertexs.size());
+  for(int i = 0; i < vertexs.size(); ++i) {
+    normals[i] = vertexs[i];
+    vertexs[i] = vertexs[i] * _radius + _center;
+  }
+
+  std::vector<filament::math::ushort4> tangents;
+  auto *quats = geometry::SurfaceOrientation::Builder()
+                  .vertexCount(vertexs.size())
+                  .positions(vertexs.data(), sizeof(float3))
+                  .normals(normals.data(), sizeof(float3))
+                  .triangleCount(indexs.size())
+                  .triangles(indexs.data())
+                  .build();
+  tangents.resize(vertexs.size());
+  quats->getQuats((short4 *)tangents.data(), vertexs.size());
+  delete quats;
+
+  return std::make_tuple(std::move(vertexs), std::move(tangents), std::move(indexs));
 }
 
 } // namespace fv

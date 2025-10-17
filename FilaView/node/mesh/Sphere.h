@@ -5,7 +5,7 @@ namespace fv {
 
 class Sphere : public Shape {
 public:
-  Sphere(const filament::math::float3 &center, float radius);
+  Sphere(const filament::math::float3 &center, float radius, int subDiv = 2);
   ~Sphere();
 
   Sphere(Sphere const &) = delete;
@@ -13,12 +13,12 @@ public:
 
   virtual filament::Box box() const override;
 
-  virtual std::vector<filament::math::float3> vertexs() override;
-  virtual std::vector<uint16_t> indexs() override;
+  virtual Mesh mesh() override;
 
 private:
   filament::math::float3 _center;
-  float _radius;
+  float   _radius;
+  uint8_t _subDiv = 2;
 };
 
 } // namespace fv

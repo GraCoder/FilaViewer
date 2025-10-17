@@ -40,9 +40,7 @@ public:
   const filament::Material *basic_material() { return _basic_material; }
   const filament::Material *default_material() { return _default_material; }
 
-  void show_box(const tg::boundingbox &box);
-
-  void set_environment(const std::string_view &prefix = "", bool filter = false);
+  void setEnvironment(const std::string_view &prefix = "", bool filter = false);
 
 public:
 

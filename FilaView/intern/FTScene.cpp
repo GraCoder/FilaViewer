@@ -64,18 +64,6 @@ std::vector<uint8_t> readfile(const std::string &path)
   return std::vector<uint8_t>((std::istreambuf_iterator<char>(file)), {});
 }
 
-constexpr float3 irr_sh[] = {
-(0.716741859912872, 0.667163610458374, 0.617367982864380),                              // L00, irradiance, pre-scaled base
-(0.416345566511154, 0.402111917734146, 0.396503597497940),                              // L1-1, irradiance, pre-scaled base
-(0.913356125354767, 0.771790504455566, 0.604631900787354),                              // L10, irradiance, pre-scaled base
-(-0.672907054424286, -0.567880451679230, -0.443705767393112),                           // L11, irradiance, pre-scaled base
-(-0.350750058889389, -0.298378944396973, -0.236268237233162),                           // L2-2, irradiance, pre-scaled base
-(0.482089698314667, 0.409613221883774, 0.325085431337357),                              // L2-1, irradiance, pre-scaled base
-(0.114844463765621, 0.095943816006184, 0.073779888451099),                              // L20, irradiance, pre-scaled base
-(-0.794750630855560, -0.675792217254639, -0.537204325199127),                           // L21, irradiance, pre-scaled base
-(0.099179431796074, 0.087250791490078, 0.070927888154984)                               // L22, irradiance, pre-scaled base
-}; // namespace
-
 } // namespace
 
 namespace fv {
@@ -102,22 +90,7 @@ FTScene::~FTScene()
   _engine->destroy(utils::Entity::import(_sunLight));
 }
 
-void FTScene::show_box(const tg::boundingbox &box)
-{
-#if 0
-  if (!_cube)
-    return;
-
-  auto &tcm = _engine.getTransformManager();
-  auto ti = tcm.getInstance(_cube->wire_entity());
-  tg::vec3 ct = box.center(), sz = box.max() - box.min();
-  auto fm = math::mat4f::translation<float>(math::float3(ct.x(), ct.y(), ct.z())) *
-            math::mat4f::scaling<float>(math::float3(sz.x(), sz.y(), sz.z()));
-  tcm.setTransform(ti, fm);
-#endif
-}
-
-void FTScene::set_environment(const std::string_view &prefix, bool filter)
+void FTScene::setEnvironment(const std::string_view &prefix, bool filter)
 {
   using namespace filament;
 
@@ -125,13 +98,13 @@ void FTScene::set_environment(const std::string_view &prefix, bool filter)
   LightManager::Builder(LightManager::Type::SUN)
     .color(Color::toLinear<ACCURATE>(sRGBColor(0.98f, 0.92f, 0.89f)))
     .intensity(100000)
-    .direction({1.0, -1.0, 0})
+    .direction({1, -1.0, -1})
     .sunAngularRadius(1.9f)
     .castShadows(false)
     .sunHaloSize(10.0f)
     .sunHaloFalloff(80.f)
     .build(*_engine, light);
-  _scene->addEntity(light);
+  _scene->addEntity(light); // 影响场景光照和天空上的太阳
   _sunLight = light.getId();
 
   auto create_ktx = [](const std::string &path) {
@@ -156,21 +129,20 @@ void FTScene::set_environment(const std::string_view &prefix, bool filter)
 #endif
   }
 
-  Skybox::Builder skyBuilder;
-  skyBuilder.showSun(true);
-
   if (ibl_ktx && skybox_ktx) {
-    _ibl_tex = ktxreader::Ktx1Reader::createTexture(_engine, ibl_ktx, true);
-    _ibl = IndirectLight::Builder().irradiance(3, irr_sh).reflections(_ibl_tex).intensity(30000).build(*_engine);
+    _ibl_tex = ktxreader::Ktx1Reader::createTexture(_engine, ibl_ktx, false);
+    _ibl = IndirectLight::Builder()
+             //.irradiance(3, irr_sh)
+             .intensity(30000)
+             .reflections(_ibl_tex)
+             .build(*_engine);
     _scene->setIndirectLight(_ibl);
 
-    _skybox_tex = ktxreader::Ktx1Reader::createTexture(_engine, skybox_ktx, true);
-    //_skybox_tex->generateMipmaps(*_engine);
+    _skybox_tex = ktxreader::Ktx1Reader::createTexture(_engine, skybox_ktx, false);
+    _skybox = Skybox::Builder().showSun(true).environment(_skybox_tex).build(*_engine);
     //_skybox->setLayerMask(0x7, 0x4);
-    skyBuilder.environment(_skybox_tex);
+    _scene->setSkybox(_skybox);
   }
-  _skybox = skyBuilder.build(*_engine);
-  _scene->setSkybox(_skybox);
 }
 
 int FTScene::loadModel(const std::string &file, float size)
@@ -216,9 +188,9 @@ int FTScene::addShape(int pri)
 {
   std::shared_ptr<ShapeNode> node;
   if (pri == 0) {
-    node = std::make_shared<ShapeNode>(std::make_unique<Cube>(math::float3{0, 0, 0}, math::float3{0.5, 0.5, 0.5}));
+    node = std::make_shared<ShapeNode>(std::make_unique<Cube>(math::float3{0, 0, 0}, math::float3{5, 5, 5}));
   } else if (pri == 1) {
-    node = std::make_shared<ShapeNode>(std::make_unique<Sphere>(math::float3{0, 0, 0}, 0.5));
+    node = std::make_shared<ShapeNode>(std::make_unique<Sphere>(math::float3{0, 0, 0}, 5, 8));
   }
 
   if (!node)
@@ -281,8 +253,10 @@ void FTScene::initialize(filament::Engine *engine)
     _legacy_material = legacy_mtl;
   }
 
-  set_environment();
-  // set_environment("C:\\Users\\t\\dev\\0\\filament\\samples\\assets\\ibl\\lightroom_14b\\lightroom_14b");
+  //setEnvironment();
+  //setEnvironment("C:\\Users\\t\\dev\\0\\filament\\samples\\assets\\ibl\\lightroom_14b\\lightroom_14b");
+  setEnvironment("D:\\49_temp\\engine\\examples\\assets\\hdri\\hdri");
+  //setEnvironment("D:\\06_Test\\godot\\gd_material\\materials\\texture\\background\\background");
 }
 void FTScene::process(double timestamp)
 {

@@ -51,16 +51,16 @@ add_custom_command(
 )
 ####################################################################################
 
-set(env_output)
-set(bin2c CACHE FILEPATH "")
-set(ibl_tex CACHE FILEPATH "")
-set(skybox_tex CACHE FILEPATH "")
-if(EXISTS "${ibl_tex}" AND EXISTS "${skybox_tex}")
-add_custom_command(OUTPUT ${resource_dir}/ibl.h COMMAND ${bin2c} ${ibl_tex} ${resource_dir}/ibl.h ibl DEPENDS ${ibl_tex})
-add_custom_command(OUTPUT ${resource_dir}/skybox.h COMMAND ${bin2c} ${skybox_tex} ${resource_dir}/skybox.h skybox DEPENDS ${skybox_tex})
-list(APPEND env_output ${resource_dir}/ibl.h ${resource_dir}/skybox.h)
-add_definitions(-DHAS_ENVIRONMENT)
-endif()
+#set(env_output)
+#set(bin2c CACHE FILEPATH "")
+#set(ibl_tex CACHE FILEPATH "")
+#set(skybox_tex CACHE FILEPATH "")
+#if(EXISTS "${ibl_tex}" AND EXISTS "${skybox_tex}")
+#add_custom_command(OUTPUT ${resource_dir}/ibl.h COMMAND ${bin2c} ${ibl_tex} ${resource_dir}/ibl.h ibl DEPENDS ${ibl_tex})
+#add_custom_command(OUTPUT ${resource_dir}/skybox.h COMMAND ${bin2c} ${skybox_tex} ${resource_dir}/skybox.h skybox DEPENDS ${skybox_tex})
+#list(APPEND env_output ${resource_dir}/ibl.h ${resource_dir}/skybox.h)
+#add_definitions(-DHAS_ENVIRONMENT)
+#endif()
 
 ####################################################################################
 

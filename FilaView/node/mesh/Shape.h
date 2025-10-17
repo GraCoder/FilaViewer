@@ -15,8 +15,8 @@ public:
 
   virtual filament::Box box() const = 0;
 
-  virtual std::vector<filament::math::float3> vertexs() = 0;
-  virtual std::vector<uint16_t> indexs() = 0;
+  using Mesh = std::tuple<std::vector<filament::math::float3>, std::vector<filament::math::ushort4>, std::vector<filament::math::ushort3>>;
+  virtual Mesh mesh() = 0;
 };
 
 } // namespace fv

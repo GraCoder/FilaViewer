@@ -109,7 +109,7 @@ filament::Box Cube::box() const
   return box;
 }
 
-std::vector<filament::math::float3> Cube::vertexs()
+Cube::Mesh Cube::mesh()
 {
   constexpr int vertexCount = sizeof(vertices) / (3 * sizeof(vertices[0]));
   std::vector<filament::math::float3> vertexs(vertexCount);
@@ -117,14 +117,24 @@ std::vector<filament::math::float3> Cube::vertexs()
   for (int i = 0; i < vertexCount; i++) {
     vertexs[i] = v[i] * _half + _center;
   }
-  return vertexs;
-}
 
-std::vector<uint16_t> Cube::indexs()
-{
-  std::vector<uint16_t> indexs;
-  indexs.assign(indices, indices + sizeof(indices) / sizeof(indices[0]));
-  return indexs;
+  std::vector<filament::math::ushort3> indexs;
+  indexs.resize(sizeof(indices) / sizeof(indices[0]) / 3);
+  memcpy(indexs.data(), indices, sizeof(indices));
+
+ 
+  std::vector<filament::math::ushort4> tangents;
+  auto *quats = geometry::SurfaceOrientation::Builder()
+                  .vertexCount(vertexs.size())
+                  .positions(vertexs.data(), sizeof(float3))
+                  .triangleCount(indexs.size())
+                  .triangles(indexs.data())
+                  .build();
+  tangents.resize(vertexs.size());
+  quats->getQuats((short4 *)tangents.data(), vertexs.size());
+  delete quats;
+
+  return std::make_tuple(std::move(vertexs), std::move(tangents), std::move(indexs));
 }
 
 } // namespace fv

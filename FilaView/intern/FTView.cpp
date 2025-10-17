@@ -4,6 +4,7 @@
 #include <filament/Engine.h>
 #include <filament/View.h>
 #include <filament/Viewport.h>
+#include <filament/DebugRegistry.h>
 
 #include <utils/Entity.h>
 #include <utils/EntityManager.h>
@@ -32,7 +33,6 @@ FTView::~FTView()
 void FTView::realize(filament::Engine *engine)
 {
   _engine = engine;
-
   _view = engine->createView();
 
   {

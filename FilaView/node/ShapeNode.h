@@ -51,8 +51,8 @@ private:
   utils::Entity _wire_entity;
 
   std::vector<filament::math::float3>   _vertexs;
-  std::vector<filament::math::short4>   _tangents;
-  std::vector<uint16_t>                 _indices;
+  std::vector<filament::math::ushort4>  _tangents;
+  std::vector<filament::math::ushort3>  _indices;
 };
 
 } // namespace fv
