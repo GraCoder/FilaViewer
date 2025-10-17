@@ -46,19 +46,19 @@ public:
 
 private:
 
-  void create_window();
+  void createWindow();
 
-  void create_engine();
+  void createEngine();
 
   void realizeContext();
 
-  void configure_cameras();
+  void configCamera();
 
   void clean();
 
   void setupGui();
 
-  void poll_events();
+  void pollEvents();
 
 private:
 
@@ -75,7 +75,7 @@ private:
   filament::SwapChain *_swapchain = nullptr;
   filament::Renderer *_renderer = nullptr;
 
-  filament::View *_gui_view = nullptr;
+  filament::View *_gview = nullptr;
   filagui::ImGuiHelper *_gui = nullptr;
 
   std::shared_ptr<FTView> _view = nullptr;

@@ -22,7 +22,7 @@ set(material_src
   materials/basic.mat
   materials/default.mat
   materials/legacy.mat
-  materials/ui_blit.mat
+  materials/ui.mat
 
   materials/pc.mat
 )

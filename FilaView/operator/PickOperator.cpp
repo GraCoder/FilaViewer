@@ -28,7 +28,7 @@ bool PickOperator::mouse_release(const SDL_MouseButtonEvent &btn)
   auto v = static_cast<FTView *>(_view)->fila_view();
   v->pick(btn.x, btn.y, [this](filament::View::PickingQueryResult const &result) {
     auto s = static_cast<FTView *>(_view)->scene();
-    auto node = s->find_node(result.renderable.getId());
+    auto node = s->findNode(result.renderable.getId());
     if (_fun) {
       if (node)
         _fun(node->id());

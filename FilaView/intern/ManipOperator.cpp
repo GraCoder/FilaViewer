@@ -20,7 +20,7 @@ ManipOperator::~ManipOperator()
   }
 }
 
-void ManipOperator::set_pivot(const tg::vec3d &pos, double dis)
+void ManipOperator::setPivot(const tg::vec3d &pos, double dis)
 {
   using namespace filament::camutils;
 
@@ -45,14 +45,14 @@ void ManipOperator::set_pivot(const tg::vec3d &pos, double dis)
              .build(filament::camutils::Mode::ORBIT);
 }
 
-void ManipOperator::set_viewport(int w, int h)
+void ManipOperator::setViewport(int w, int h)
 {
   _width = w;
   _height = h;
   _manip->setViewport(w, h);
 }
 
-bool ManipOperator::mouse_press(const SDL_MouseButtonEvent &btn)
+bool ManipOperator::mousePress(const SDL_MouseButtonEvent &btn)
 {
   _grabing = true;
   _manip->grabBegin(btn.x, _height - btn.y, btn.button == SDL_BUTTON_RIGHT);
@@ -63,36 +63,36 @@ bool ManipOperator::mouse_press(const SDL_MouseButtonEvent &btn)
   return true;
 }
 
-bool ManipOperator::mouse_release(const SDL_MouseButtonEvent &btn)
+bool ManipOperator::mouseRelease(const SDL_MouseButtonEvent &btn)
 {
   _grabing = false;
   _manip->grabEnd();
-  _view->dirty_camera();
+  _view->dirtyCamera();
 
   return true;
 }
 
-bool ManipOperator::mouse_wheel(const SDL_MouseWheelEvent &wheel)
+bool ManipOperator::mouseWheel(const SDL_MouseWheelEvent &wheel)
 {
   if (_manip) {
     _manip->scroll(wheel.x, _height - wheel.y, wheel.preciseY);
   }
 
-  _view->dirty_camera();
+  _view->dirtyCamera();
 
   return true;
 }
 
-bool ManipOperator::mouse_move(const SDL_MouseMotionEvent &motion)
+bool ManipOperator::mouseMove(const SDL_MouseMotionEvent &motion)
 {
   if (_grabing) {
     _manip->grabUpdate(motion.x, _height - motion.y);
-    _view->dirty_camera();
+    _view->dirtyCamera();
   }
   return true;
 }
 
-bool ManipOperator::key_press(const SDL_KeyboardEvent &key)
+bool ManipOperator::keyPress(const SDL_KeyboardEvent &key)
 {
   if (key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
     //_close = true;
@@ -101,20 +101,20 @@ bool ManipOperator::key_press(const SDL_KeyboardEvent &key)
   } else if (key.keysym.scancode == SDL_SCANCODE_LSHIFT) {
     // view()->set_manip_factor(5.0);
   }
-  _view->dirty_camera();
+  _view->dirtyCamera();
   return true;
 }
 
-bool ManipOperator::key_release(const SDL_KeyboardEvent &key)
+bool ManipOperator::keyRelease(const SDL_KeyboardEvent &key)
 {
   if (key.keysym.scancode == SDL_SCANCODE_SPACE) {
     _manip->jumpToBookmark(_manip->getHomeBookmark());
   }
-  _view->dirty_camera();
+  _view->dirtyCamera();
   return true;
 }
 
-void ManipOperator::get_lookat(filament::math::float3 &eye, filament::math::float3 &target, filament::math::float3 &up)
+void ManipOperator::getLookAt(filament::math::float3 &eye, filament::math::float3 &target, filament::math::float3 &up)
 {
   _manip->getLookAt(&eye, &target, &up);
 }

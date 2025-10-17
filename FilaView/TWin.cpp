@@ -29,14 +29,14 @@ void TWin::resize(int w, int h)
   _width = w;
   _height = h;
 
-  downcast(this)->configure_cameras();
+  downcast(this)->configCamera();
 }
 
 void TWin::realizeContext()
 {
   downcast(this)->realizeContext();
 
-  downcast(this)->configure_cameras();
+  downcast(this)->configCamera();
 }
 
 TView *TWin::view(int id)

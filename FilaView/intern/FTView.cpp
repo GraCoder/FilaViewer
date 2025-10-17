@@ -71,8 +71,8 @@ void FTView::realize(filament::Engine *engine)
 void FTView::set_scene(const std::shared_ptr<FTScene> &scene)
 {
   _scene = scene;
-  if (_view && scene->fila_scene())
-    _view->setScene(scene->fila_scene());
+  if (_view && scene->filaScene())
+    _view->setScene(scene->filaScene());
 }
 
 void FTView::process(double delta)
@@ -105,7 +105,7 @@ void FTView::release()
 {
 }
 
-void FTView::set_viewport(int x, int y, uint32_t width, uint32_t height)
+void FTView::setViewport(int x, int y, uint32_t width, uint32_t height)
 {
   // auto aspectRatio = double(width) / height;
   //_camera->setScaling({1.0 / aspectRatio, 1.0});
@@ -114,7 +114,7 @@ void FTView::set_viewport(int x, int y, uint32_t width, uint32_t height)
     _view->setViewport({x, y, width, height});
 
   if (_manip)
-    _manip->set_viewport(width, height);
+    _manip->setViewport(width, height);
 
   reset_projection();
 }
@@ -130,7 +130,7 @@ void FTView::update_camera()
   _camera_dirty = false;
 
   math::float3 eye, center, up;
-  _manip->get_lookat(eye, center, up);
+  _manip->getLookAt(eye, center, up);
   _camera->lookAt(eye, center, up);
 }
 

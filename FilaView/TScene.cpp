@@ -29,7 +29,7 @@ TScene::~TScene()
 
 void TScene::addNode(const std::shared_ptr<Node> &node)
 {
-  downcast(this)->_add_node(node);
+  downcast(this)->_addNode(node);
 }
 
 } // namespace fv

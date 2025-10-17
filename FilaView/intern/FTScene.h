@@ -35,26 +35,26 @@ public:
   filament::Engine *engine() { return _engine; }
 
   operator filament::Scene *() { return _scene; }
-  filament::Scene *fila_scene() { return _scene; }
+  filament::Scene *filaScene() { return _scene; }
 
-  const filament::Material *basic_material() { return _basic_material; }
-  const filament::Material *default_material() { return _default_material; }
+  const filament::Material *basicMaterial() { return _basic_material; }
+  const filament::Material *defaultMaterial() { return _default_material; }
 
   void setEnvironment(const std::string_view &prefix = "", bool filter = false);
 
 public:
 
-  void  showModel(int id, bool show);
+  void showModel(int id, bool show);
 
-  int   loadModel(const std::string &file, float sz);
+  int loadModel(const std::string &file, float sz);
 
-  int   addShape(int);
+  int addShape(int);
 
-  std::shared_ptr<Node> find_node(uint32_t rent);
+  std::shared_ptr<Node> findNode(uint32_t rent);
 
 public:
 
-  void _add_node(const std::shared_ptr<Node> &node);
+  void _addNode(const std::shared_ptr<Node> &node);
 
 public:
 

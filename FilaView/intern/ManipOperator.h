@@ -15,18 +15,18 @@ public:
   ManipOperator(FTView *);
   ~ManipOperator();
 
-  void set_pivot(const tg::vec3d &pos, double dis = 100);
-  void set_viewport(int w, int h);
+  void setPivot(const tg::vec3d &pos, double dis = 100);
+  void setViewport(int w, int h);
 
 public:
-  bool mouse_press(const SDL_MouseButtonEvent &btn) override;
-  bool mouse_release(const SDL_MouseButtonEvent &btn) override;
-  bool mouse_wheel(const SDL_MouseWheelEvent &wheel) override;
-  bool mouse_move(const SDL_MouseMotionEvent &mov) override;
-  bool key_press(const SDL_KeyboardEvent &key) override;
-  bool key_release(const SDL_KeyboardEvent &key) override;
+  bool mousePress(const SDL_MouseButtonEvent &btn) override;
+  bool mouseRelease(const SDL_MouseButtonEvent &btn) override;
+  bool mouseWheel(const SDL_MouseWheelEvent &wheel) override;
+  bool mouseMove(const SDL_MouseMotionEvent &mov) override;
+  bool keyPress(const SDL_KeyboardEvent &key) override;
+  bool keyRelease(const SDL_KeyboardEvent &key) override;
 
-  void get_lookat(filament::math::float3 &, filament::math::float3 &, filament::math::float3 &);
+  void getLookAt(filament::math::float3 &, filament::math::float3 &, filament::math::float3 &);
 
 private:
   FTView *_view = nullptr;

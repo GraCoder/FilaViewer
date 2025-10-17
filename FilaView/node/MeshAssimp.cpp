@@ -227,7 +227,7 @@ template <typename T> struct State {
 };
 
 struct TextureImage {
-  std::string _img_path;
+  std::string _imgPath;
 };
 
 MeshAssimp::MeshAssimp() {}
@@ -235,10 +235,10 @@ MeshAssimp::MeshAssimp() {}
 MeshAssimp::~MeshAssimp()
 {
   if (_engine) {
-    _engine->destroy(_vertex_buffer);
-    _engine->destroy(_index_buffer);
-    _engine->destroy(_def_map);
-    _engine->destroy(_def_normal_map);
+    _engine->destroy(_vertexBuffer);
+    _engine->destroy(_indexBuffer);
+    _engine->destroy(_defMap);
+    _engine->destroy(_defNormalMap);
 
     for (Entity renderable : _renderables) {
       _engine->destroy(renderable);
@@ -314,7 +314,7 @@ TextureSampler::MagFilter ai_magfilter_to_filament(unsigned int aiMagFilter)
 
 } // namespace
 
-bool MeshAssimp::load_assert(const utils::Path &path)
+bool MeshAssimp::loadAssert(const utils::Path &path)
 {
   Assimp::Importer importer;
   importer.SetPropertyInteger(AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_LINE | aiPrimitiveType_POINT);
@@ -394,15 +394,15 @@ bool MeshAssimp::load_assert(const utils::Path &path)
 
   if (asset->snorm_uv0) {
     if (asset->snorm_uv1) {
-      process_node<true, true>(*asset, scene, deep, matCount, node, -1, depth);
+      processNode<true, true>(*asset, scene, deep, matCount, node, -1, depth);
     } else {
-      process_node<true, false>(*asset, scene, deep, matCount, node, -1, depth);
+      processNode<true, false>(*asset, scene, deep, matCount, node, -1, depth);
     }
   } else {
     if (asset->snorm_uv1) {
-      process_node<false, true>(*asset, scene, deep, matCount, node, -1, depth);
+      processNode<false, true>(*asset, scene, deep, matCount, node, -1, depth);
     } else {
-      process_node<false, false>(*asset, scene, deep, matCount, node, -1, depth);
+      processNode<false, false>(*asset, scene, deep, matCount, node, -1, depth);
     }
   }
 
@@ -415,45 +415,45 @@ bool MeshAssimp::load_assert(const utils::Path &path)
     float3 aabbMax = transformedAabb.getMax();
 
     if (!isinf(aabbMin.x) && !isinf(aabbMax.x)) {
-      if (_min_bound.x > _max_bound.x) {
-        _min_bound.x = aabbMin.x;
-        _max_bound.x = aabbMax.x;
+      if (_minBound.x > _maxBound.x) {
+        _minBound.x = aabbMin.x;
+        _maxBound.x = aabbMax.x;
       } else {
-        _min_bound.x = fmin(_min_bound.x, aabbMin.x);
-        _max_bound.x = fmax(_max_bound.x, aabbMax.x);
+        _minBound.x = fmin(_minBound.x, aabbMin.x);
+        _maxBound.x = fmax(_maxBound.x, aabbMax.x);
       }
     }
 
     if (!isinf(aabbMin.y) && !isinf(aabbMax.y)) {
-      if (_min_bound.y > _max_bound.y) {
-        _min_bound.y = aabbMin.y;
-        _max_bound.y = aabbMax.y;
+      if (_minBound.y > _maxBound.y) {
+        _minBound.y = aabbMin.y;
+        _maxBound.y = aabbMax.y;
       } else {
-        _min_bound.y = fmin(_min_bound.y, aabbMin.y);
-        _max_bound.y = fmax(_max_bound.y, aabbMax.y);
+        _minBound.y = fmin(_minBound.y, aabbMin.y);
+        _maxBound.y = fmax(_maxBound.y, aabbMax.y);
       }
     }
 
     if (!isinf(aabbMin.z) && !isinf(aabbMax.z)) {
-      if (_min_bound.z > _max_bound.z) {
-        _min_bound.z = aabbMin.z;
-        _max_bound.z = aabbMax.z;
+      if (_minBound.z > _maxBound.z) {
+        _minBound.z = aabbMin.z;
+        _maxBound.z = aabbMax.z;
       } else {
-        _min_bound.z = fmin(_min_bound.z, aabbMin.z);
-        _max_bound.z = fmax(_max_bound.z, aabbMax.z);
+        _minBound.z = fmin(_minBound.z, aabbMin.z);
+        _maxBound.z = fmax(_maxBound.z, aabbMax.z);
       }
     }
   }
 
   _asset = std::move(asset);
 
-  process_materials(scene);
+  processMaterials(scene);
 
   return true;
 }
 
 template <bool SNORMUV0, bool SNORMUV1>
-void MeshAssimp::process_node(Asset &asset, const aiScene *scene, size_t deep, size_t matCount, const aiNode *node, int parentIndex, size_t &depth) const
+void MeshAssimp::processNode(Asset &asset, const aiScene *scene, size_t deep, size_t matCount, const aiNode *node, int parentIndex, size_t &depth) const
 {
   mat4f const &current = transpose(*reinterpret_cast<mat4f const *>(&node->mTransformation));
 
@@ -590,20 +590,20 @@ void MeshAssimp::process_node(Asset &asset, const aiScene *scene, size_t deep, s
     depth = std::max(deep, depth);
     parentIndex = static_cast<int>(asset.meshes.size()) - 1;
     for (size_t i = 0, c = node->mNumChildren; i < c; i++) {
-      process_node<SNORMUV0, SNORMUV1>(asset, scene, deep, matCount, node->mChildren[i], parentIndex, depth);
+      processNode<SNORMUV0, SNORMUV1>(asset, scene, deep, matCount, node->mChildren[i], parentIndex, depth);
     }
     deep--;
   }
 }
 
-void MeshAssimp::build_assert(filament::Engine *engine, const filament::Material *basic_mtl, const filament::Material *default_mtl, bool override_mtl)
+void MeshAssimp::buildAssert(filament::Engine *engine, const filament::Material *basic_mtl, const filament::Material *default_mtl, bool override_mtl)
 {
   if (!_asset)
     return;
 
   _engine = engine;
 
-  build_materials(engine);
+  buildMaterial(engine);
 
   {
     VertexBuffer::Builder vertexBufferBuilder = VertexBuffer::Builder()
@@ -625,7 +625,7 @@ void MeshAssimp::build_assert(filament::Engine *engine, const filament::Material
       vertexBufferBuilder.attribute(VertexAttribute::UV1, 3, VertexBuffer::AttributeType::HALF2);
     }
 
-    _vertex_buffer = vertexBufferBuilder.build(*_engine);
+    _vertexBuffer = vertexBufferBuilder.build(*_engine);
 
     auto ps = new State<half4>(std::move(_asset->positions));
     auto ns = new State<short4>(std::move(_asset->tangents));
@@ -633,16 +633,16 @@ void MeshAssimp::build_assert(filament::Engine *engine, const filament::Material
     auto t1s = new State<ushort2>(std::move(_asset->texCoords1));
     auto is = new State<uint32_t>(std::move(_asset->indices));
 
-    _vertex_buffer->setBufferAt(*_engine, 0, VertexBuffer::BufferDescriptor(ps->data(), ps->size(), State<half4>::free, ps));
+    _vertexBuffer->setBufferAt(*_engine, 0, VertexBuffer::BufferDescriptor(ps->data(), ps->size(), State<half4>::free, ps));
 
-    _vertex_buffer->setBufferAt(*_engine, 1, VertexBuffer::BufferDescriptor(ns->data(), ns->size(), State<short4>::free, ns));
+    _vertexBuffer->setBufferAt(*_engine, 1, VertexBuffer::BufferDescriptor(ns->data(), ns->size(), State<short4>::free, ns));
 
-    _vertex_buffer->setBufferAt(*_engine, 2, VertexBuffer::BufferDescriptor(t0s->data(), t0s->size(), State<ushort2>::free, t0s));
+    _vertexBuffer->setBufferAt(*_engine, 2, VertexBuffer::BufferDescriptor(t0s->data(), t0s->size(), State<ushort2>::free, t0s));
 
-    _vertex_buffer->setBufferAt(*_engine, 3, VertexBuffer::BufferDescriptor(t1s->data(), t1s->size(), State<ushort2>::free, t1s));
+    _vertexBuffer->setBufferAt(*_engine, 3, VertexBuffer::BufferDescriptor(t1s->data(), t1s->size(), State<ushort2>::free, t1s));
 
-    _index_buffer = IndexBuffer::Builder().indexCount(uint32_t(is->size())).build(*_engine);
-    _index_buffer->setBuffer(*_engine, IndexBuffer::BufferDescriptor(is->data(), is->size(), State<uint32_t>::free, is));
+    _indexBuffer = IndexBuffer::Builder().indexCount(uint32_t(is->size())).build(*_engine);
+    _indexBuffer->setBuffer(*_engine, IndexBuffer::BufferDescriptor(is->data(), is->size(), State<uint32_t>::free, is));
   }
 
   std::map<std::string, filament::MaterialInstance *> &materials = _materials;
@@ -650,10 +650,10 @@ void MeshAssimp::build_assert(filament::Engine *engine, const filament::Material
   size_t startIndex = _renderables.size();
   _renderables.resize(startIndex + _asset->meshes.size());
   EntityManager::get().create(_asset->meshes.size(), _renderables.data() + startIndex);
-  EntityManager::get().create(1, &_root_entity);
+  EntityManager::get().create(1, &_rootEntity);
 
   TransformManager &tcm = _engine->getTransformManager();
-  tcm.create(_root_entity, TransformManager::Instance{}, mat4f());
+  tcm.create(_rootEntity, TransformManager::Instance{}, mat4f());
 
   for (auto &mesh : _asset->meshes) {
     RenderableManager::Builder builder(mesh.parts.size());
@@ -662,7 +662,7 @@ void MeshAssimp::build_assert(filament::Engine *engine, const filament::Material
 
     size_t partIndex = 0;
     for (auto &part : mesh.parts) {
-      builder.geometry(partIndex, RenderableManager::PrimitiveType::TRIANGLES, _vertex_buffer, _index_buffer, part.offset, part.count);
+      builder.geometry(partIndex, RenderableManager::PrimitiveType::TRIANGLES, _vertexBuffer, _indexBuffer, part.offset, part.count);
 
       if (override_mtl) {
         builder.material(partIndex, materials[AI_DEFAULT_MATERIAL_NAME]);
@@ -691,22 +691,22 @@ void MeshAssimp::build_assert(filament::Engine *engine, const filament::Material
       builder.build(*_engine, entity);
     }
     auto pindex = _asset->parents[meshIndex];
-    TransformManager::Instance parent((pindex < 0) ? tcm.getInstance(_root_entity) : tcm.getInstance(_renderables[pindex]));
+    TransformManager::Instance parent((pindex < 0) ? tcm.getInstance(_rootEntity) : tcm.getInstance(_renderables[pindex]));
     tcm.create(entity, parent, mesh.transform);
   }
 }
 
-void MeshAssimp::process_materials(const aiScene *scene)
+void MeshAssimp::processMaterials(const aiScene *scene)
 {
   std::map<std::string, std::unique_ptr<MaterialConfig>> mtls;
   for (int i = 0; i < scene->mNumMaterials; i++) {
     auto mtl = scene->mMaterials[i];
     std::string name = mtl->GetName().C_Str();
-    auto config = load_material(scene, mtl);
+    auto config = loadMaterial(scene, mtl);
     mtls[name] = std::move(config);
   }
 
-  _material_config = std::move(mtls);
+  _materialConfig = std::move(mtls);
 }
 
 namespace {
@@ -773,7 +773,7 @@ std::shared_ptr<TextureConfig> load_texture(const aiScene *scene, const std::str
 }
 } // namespace
 
-auto MeshAssimp::load_textures(const aiScene *scene, const aiMaterial *material, int type)
+auto MeshAssimp::loadTextures(const aiScene *scene, const aiMaterial *material, int type)
 {
   auto tex_type = (aiTextureType)type;
   unsigned int count = material->GetTextureCount(tex_type), uvindex = 0;
@@ -799,7 +799,7 @@ auto MeshAssimp::load_textures(const aiScene *scene, const aiMaterial *material,
     tex->magfilter = ai_magfilter_to_filament(mag_type);
 
     uint64_t tex_code = std::hash<std::string>()(std::string(tex_name.C_Str()) + std::to_string(type));
-    _texture_config[tex_code] = tex;
+    _textureConfig[tex_code] = tex;
 
     return std::tuple(tex_code, uvindex, std::string(tex_name.C_Str()));
   }
@@ -807,7 +807,7 @@ auto MeshAssimp::load_textures(const aiScene *scene, const aiMaterial *material,
   return std::make_tuple<uint64_t, uint32_t>(0, 0, std::string(""));
 }
 
-std::unique_ptr<MaterialConfig> MeshAssimp::load_material(const aiScene *scene, const aiMaterial *material)
+std::unique_ptr<MaterialConfig> MeshAssimp::loadMaterial(const aiScene *scene, const aiMaterial *material)
 {
   auto mtl = std::make_unique<MaterialConfig>();
   MaterialConfig &mtl_config = *mtl;
@@ -823,7 +823,7 @@ std::unique_ptr<MaterialConfig> MeshAssimp::load_material(const aiScene *scene, 
     aiColor4D color;
     material->Get(AI_MATKEY_BASE_COLOR, color);
     mtl_config.base_color = float4(color.r, color.g, color.b, color.a);
-    std::tie(mtl_config.tex_base_color, mtl_config.uv_base_color, tex_name) = load_textures(scene, material, aiTextureType_BASE_COLOR);
+    std::tie(mtl_config.tex_base_color, mtl_config.uv_base_color, tex_name) = loadTextures(scene, material, aiTextureType_BASE_COLOR);
   }
 
   {
@@ -831,7 +831,7 @@ std::unique_ptr<MaterialConfig> MeshAssimp::load_material(const aiScene *scene, 
     if (aiReturn_SUCCESS == material->Get(AI_MATKEY_COLOR_DIFFUSE, color))
       mtl_config.base_color = float4(color.r, color.g, color.b, color.a);
 
-    auto [tex, uv, n] = load_textures(scene, material, aiTextureType_DIFFUSE);
+    auto [tex, uv, n] = loadTextures(scene, material, aiTextureType_DIFFUSE);
     if (tex) {
       mtl_config.tex_base_color = tex;
       mtl_config.uv_base_color = uv;
@@ -840,24 +840,24 @@ std::unique_ptr<MaterialConfig> MeshAssimp::load_material(const aiScene *scene, 
 
   {
     material->Get(AI_MATKEY_METALLIC_FACTOR, mtl_config.metallic);
-    std::tie(mtl_config.tex_metallic, mtl_config.uv_metallic, tex_name) = load_textures(scene, material, aiTextureType_METALNESS);
+    std::tie(mtl_config.tex_metallic, mtl_config.uv_metallic, tex_name) = loadTextures(scene, material, aiTextureType_METALNESS);
     if (mtl_config.tex_metallic)
       spdlog::debug("metallic texture : %s", tex_name);
   }
 
   {
     material->Get(AI_MATKEY_ROUGHNESS_FACTOR, mtl_config.roughness);
-    std::tie(mtl_config.tex_roughness, mtl_config.uv_roughness, tex_name) = load_textures(scene, material, aiTextureType_DIFFUSE_ROUGHNESS);
+    std::tie(mtl_config.tex_roughness, mtl_config.uv_roughness, tex_name) = loadTextures(scene, material, aiTextureType_DIFFUSE_ROUGHNESS);
   }
 
   {
-    std::tie(mtl_config.tex_specular_color, mtl_config.uv_specular_color, tex_name) = load_textures(scene, material, aiTextureType_SHININESS);
+    std::tie(mtl_config.tex_specular_color, mtl_config.uv_specular_color, tex_name) = loadTextures(scene, material, aiTextureType_SHININESS);
     if (mtl_config.tex_specular_color)
       spdlog::debug("shininess texture(specular color) : %s", tex_name);
   }
 
   {
-    auto [tex, uv, name] = load_textures(scene, material, aiTextureType_SPECULAR);
+    auto [tex, uv, name] = loadTextures(scene, material, aiTextureType_SPECULAR);
     if (tex) {
       mtl_config.tex_glossiness = tex;
       mtl_config.uv_glossiness = uv;
@@ -867,11 +867,11 @@ std::unique_ptr<MaterialConfig> MeshAssimp::load_material(const aiScene *scene, 
   }
 
   {
-    std::tie(mtl_config.tex_height, mtl_config.uv_height, tex_name) = load_textures(scene, material, aiTextureType_HEIGHT);
+    std::tie(mtl_config.tex_height, mtl_config.uv_height, tex_name) = loadTextures(scene, material, aiTextureType_HEIGHT);
   }
 
   {
-    std::tie(mtl_config.tex_normal, mtl_config.uv_normal, tex_name) = load_textures(scene, material, aiTextureType_NORMALS);
+    std::tie(mtl_config.tex_normal, mtl_config.uv_normal, tex_name) = loadTextures(scene, material, aiTextureType_NORMALS);
   }
 
   {
@@ -879,13 +879,13 @@ std::unique_ptr<MaterialConfig> MeshAssimp::load_material(const aiScene *scene, 
   }
 
   // for (int i = 0; i < 32; i++) {
-  //   load_textures(scene, material, i);
+  //   loadTextures(scene, material, i);
   // }
 
   return mtl;
 }
 
-void MeshAssimp::build_materials(filament::Engine *engine)
+void MeshAssimp::buildMaterial(filament::Engine *engine)
 {
   auto build_texture = [this, engine](uint64_t tex_id) -> filament::Texture * {
     filament::Texture *texture = nullptr;
@@ -894,7 +894,7 @@ void MeshAssimp::build_materials(filament::Engine *engine)
     if (iter != _textures.end())
       return iter->second;
 
-    auto &tc = _texture_config[tex_id];
+    auto &tc = _textureConfig[tex_id];
     filament::Texture::Builder builder;
     builder.usage(Texture::Usage::DEFAULT | Texture::Usage::GEN_MIPMAPPABLE);
 
@@ -949,7 +949,7 @@ void MeshAssimp::build_materials(filament::Engine *engine)
         return;
     }
 
-    auto &tc = _texture_config[tex_id];
+    auto &tc = _textureConfig[tex_id];
     TextureSampler sampler(tc->minfilter, tc->magfilter);
     auto iter = tex_name.find(tc->type);
     if (iter == tex_name.end())
@@ -958,15 +958,15 @@ void MeshAssimp::build_materials(filament::Engine *engine)
     mtl->setParameter(name.c_str(), _textures[tex_id], sampler);
   };
 
-  for (auto &iter : _texture_config)
+  for (auto &iter : _textureConfig)
     build_texture(iter.first);
 
-  for (auto &iter : _material_config) {
+  for (auto &iter : _materialConfig) {
     auto &c = iter.second;
 
-    adjust_material_config(iter.second.get());
+    adjustMaterialConfig(iter.second.get());
 
-    auto material = create_material_from_config(*_engine, *c);
+    auto material = createMaterialFromConfig(*_engine, *c);
     auto mtl = material->createInstance(iter.first.c_str());
     _materials[iter.first] = mtl;
 
@@ -985,18 +985,18 @@ void MeshAssimp::build_materials(filament::Engine *engine)
   }
 }
 
-bool MeshAssimp::has_texture(uint64_t id)
+bool MeshAssimp::hasTexture(uint64_t id)
 {
   return id && _textures.find(id) != _textures.end();
 }
 
-std::string MeshAssimp::shader_from_config(const MaterialConfig &config)
+std::string MeshAssimp::shaderFromConfig(const MaterialConfig &config)
 {
   std::string shader = R"SHADER(
         void material(inout MaterialInputs material) {
     )SHADER";
 
-  if (has_texture(config.tex_normal)) {
+  if (hasTexture(config.tex_normal)) {
     shader += "float2 uv_normal = getUV" + std::to_string(config.uv_normal) + "();\n";
     shader += R"SHADER(
       vec3 nrm_dis = texture(materialParams_normalMap, uv_normal).xyz * 2.0 - 1.0;
@@ -1010,7 +1010,7 @@ std::string MeshAssimp::shader_from_config(const MaterialConfig &config)
         material.baseColor = materialParams.baseColor; 
     )SHADER";
 
-  if (has_texture(config.tex_base_color)) {
+  if (hasTexture(config.tex_base_color)) {
     shader += "float2 uv_base_color = getUV" + std::to_string(config.uv_base_color) + "();\n";
     shader += R"SHADER(
       vec4 baseColor = texture(materialParams_baseColorMap, uv_base_color);
@@ -1018,7 +1018,7 @@ std::string MeshAssimp::shader_from_config(const MaterialConfig &config)
     )SHADER";
   }
 
-  if (has_texture(config.tex_specular_color)) {
+  if (hasTexture(config.tex_specular_color)) {
     shader += "float2 uv_specular_color = getUV" + std::to_string(config.uv_specular_color) + "();\n";
     shader += R"SHADER(
       vec3 specularColor = texture(materialParams_specularColorMap, uv_specular_color).rgb;
@@ -1026,7 +1026,7 @@ std::string MeshAssimp::shader_from_config(const MaterialConfig &config)
     )SHADER";
   }
 
-  if (has_texture(config.tex_glossiness)) {
+  if (hasTexture(config.tex_glossiness)) {
     shader += "float2 uv_glossiness = getUV" + std::to_string(config.uv_glossiness) + "();\n";
     shader += R"(
       float glossiness = texture(materialParams_glossinessMap, uv_glossiness).r;
@@ -1061,9 +1061,9 @@ std::string MeshAssimp::shader_from_config(const MaterialConfig &config)
   return shader;
 }
 
-filament::Material *MeshAssimp::create_material_from_config(Engine &engine, MaterialConfig &config)
+filament::Material *MeshAssimp::createMaterialFromConfig(Engine &engine, MaterialConfig &config)
 {
-  std::string shader = shader_from_config(config);
+  std::string shader = shaderFromConfig(config);
   MaterialBuilder::init();
   MaterialBuilder builder;
   builder.name("material")
@@ -1086,15 +1086,15 @@ filament::Material *MeshAssimp::create_material_from_config(Engine &engine, Mate
   //.parameter("aoStrength", MaterialBuilder::UniformType::FLOAT)
   //.parameter("emissiveFactor", MaterialBuilder::UniformType::FLOAT3)
 
-  if (has_texture(config.tex_ao))
+  if (hasTexture(config.tex_ao))
     builder.parameter("aoMap", MaterialBuilder::SamplerType::SAMPLER_2D);
-  if (has_texture(config.tex_emissive))
+  if (hasTexture(config.tex_emissive))
     builder.parameter("emissiveMap", MaterialBuilder::SamplerType::SAMPLER_2D);
 
-  if (has_texture(config.tex_specular_color)) {
+  if (hasTexture(config.tex_specular_color)) {
     builder.parameter("specularColorMap", MaterialBuilder::SamplerType::SAMPLER_2D);
   }
-  if (has_texture(config.tex_glossiness)) {
+  if (hasTexture(config.tex_glossiness)) {
     builder.parameter("glossinessMap", MaterialBuilder::SamplerType::SAMPLER_2D);
   }
 
@@ -1129,16 +1129,16 @@ filament::Material *MeshAssimp::create_material_from_config(Engine &engine, Mate
   return Material::Builder().package(pkg.getData(), pkg.getSize()).build(engine);
 }
 
-void MeshAssimp::adjust_material_config(MaterialConfig *material)
+void MeshAssimp::adjustMaterialConfig(MaterialConfig *material)
 {
   if (auto id = material->tex_height) {
-    if (_texture_config[id]->channel == 3) {
+    if (_textureConfig[id]->channel == 3) {
       material->tex_normal = material->tex_height;
       material->uv_normal = material->uv_height;
       material->tex_height = 0;
       material->uv_height = 0;
-      _texture_config[id]->type = aiTextureType_NORMALS;
-    } else if (_texture_config[id]->channel != 1) {
+      _textureConfig[id]->type = aiTextureType_NORMALS;
+    } else if (_textureConfig[id]->channel != 1) {
       material->tex_height = 0;
     }
   }

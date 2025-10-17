@@ -47,16 +47,16 @@ public:
   explicit MeshAssimp();
   ~MeshAssimp();
 
-  bool load_assert(const utils::Path &path);
+  bool loadAssert(const utils::Path &path);
 
-  void build_assert(filament::Engine *engine, const filament::Material *basic_mtl, const filament::Material *default_mtl, bool override_mtl = false);
+  void buildAssert(filament::Engine *engine, const filament::Material *basic_mtl, const filament::Material *default_mtl, bool override_mtl = false);
 
-  utils::Entity root() { return _root_entity; }
+  utils::Entity root() { return _rootEntity; }
 
   const std::vector<utils::Entity> &renderables() const noexcept { return _renderables; }
 
-  const float3 &min_bound() { return _min_bound; }
-  const float3 &max_bound() { return _max_bound; }
+  const float3 &minBound() { return _minBound; }
+  const float3 &maxBound() { return _maxBound; }
 
 private:
   struct Part {
@@ -93,23 +93,23 @@ private:
   };
 
   template <bool SNORMUV0S, bool SNORMUV1S>
-  void process_node(Asset &asset, const aiScene *scene, size_t deep, size_t matCount, const aiNode *node, int parentIndex, size_t &depth) const;
+  void processNode(Asset &asset, const aiScene *scene, size_t deep, size_t matCount, const aiNode *node, int parentIndex, size_t &depth) const;
 
-  void process_materials(const aiScene *scene);
+  void processMaterials(const aiScene *scene);
 
-  auto load_textures(const aiScene *scene, const aiMaterial *material, int tex_type);
+  auto loadTextures(const aiScene *scene, const aiMaterial *material, int tex_type);
 
-  std::unique_ptr<MaterialConfig> load_material(const aiScene *scene, const aiMaterial *material);
+  std::unique_ptr<MaterialConfig> loadMaterial(const aiScene *scene, const aiMaterial *material);
 
-  void build_materials(filament::Engine *engine);
+  void buildMaterial(filament::Engine *engine);
 
-  inline bool has_texture(uint64_t id);
+  inline bool hasTexture(uint64_t id);
 
-  std::string shader_from_config(const MaterialConfig &config);
+  std::string shaderFromConfig(const MaterialConfig &config);
 
-  filament::Material *create_material_from_config(filament::Engine &engine, MaterialConfig &config);
+  filament::Material *createMaterialFromConfig(filament::Engine &engine, MaterialConfig &config);
 
-  void adjust_material_config(MaterialConfig *material);
+  void adjustMaterialConfig(MaterialConfig *material);
 
 private:
 
@@ -117,24 +117,24 @@ private:
 
   filament::Engine *_engine = nullptr;
 
-  filament::math::float3 _min_bound = filament::math::float3(1.0f);
-  filament::math::float3 _max_bound = filament::math::float3(-1.0f);
+  filament::math::float3 _minBound = filament::math::float3(1.0f);
+  filament::math::float3 _maxBound = filament::math::float3(-1.0f);
 
-  filament::VertexBuffer *_vertex_buffer = nullptr;
-  filament::IndexBuffer *_index_buffer = nullptr;
+  filament::VertexBuffer *_vertexBuffer = nullptr;
+  filament::IndexBuffer *_indexBuffer = nullptr;
 
-  float _def_metallic = 0.0f;
-  float _def_roughness = 0.4f;
-  filament::sRGBColor _def_emissive = filament::sRGBColor({0.0f, 0.0f, 0.0f});
+  float _defMetallic = 0.0f;
+  float _defRoughness = 0.4f;
+  filament::sRGBColor _defEmissive = filament::sRGBColor({0.0f, 0.0f, 0.0f});
 
-  filament::Texture *_def_map = nullptr;
-  filament::Texture *_def_normal_map = nullptr;
+  filament::Texture *_defMap = nullptr;
+  filament::Texture *_defNormalMap = nullptr;
 
-  std::map<std::string, std::unique_ptr<MaterialConfig>> _material_config;
+  std::map<std::string, std::unique_ptr<MaterialConfig>> _materialConfig;
   std::map<std::string, filament::MaterialInstance *> _materials;
-  std::map<uint64_t, std::shared_ptr<TextureConfig>> _texture_config;
+  std::map<uint64_t, std::shared_ptr<TextureConfig>> _textureConfig;
   std::map<uint64_t, filament::Texture *> _textures;
 
-  utils::Entity _root_entity;
+  utils::Entity _rootEntity;
   std::vector<utils::Entity> _renderables;
 };

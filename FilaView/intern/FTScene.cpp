@@ -190,7 +190,7 @@ int FTScene::addShape(int pri)
   if (pri == 0) {
     node = std::make_shared<ShapeNode>(std::make_unique<Cube>(math::float3{0, 0, 0}, math::float3{5, 5, 5}));
   } else if (pri == 1) {
-    node = std::make_shared<ShapeNode>(std::make_unique<Sphere>(math::float3{0, 0, 0}, 5, 8));
+    node = std::make_shared<ShapeNode>(std::make_unique<Sphere>(math::float3{0, 0, 0}, 5));
   }
 
   if (!node)
@@ -199,12 +199,12 @@ int FTScene::addShape(int pri)
   std::unique_lock<std::mutex> lock(_mutex);
   _tasks.push(std::bind([this, node]() {
     node->build(_engine, _default_material);
-    _add_node(node);
+    addNode(node);
   }));
   return node->id();
 }
 
-std::shared_ptr<Node> FTScene::find_node(uint32_t rent)
+std::shared_ptr<Node> FTScene::findNode(uint32_t rent)
 {
   for (auto &iter : _nodes) {
     auto rds = iter.second->entities();
@@ -216,7 +216,7 @@ std::shared_ptr<Node> FTScene::find_node(uint32_t rent)
   return nullptr;
 }
 
-void FTScene::_add_node(const std::shared_ptr<Node> &node)
+void FTScene::_addNode(const std::shared_ptr<Node> &node)
 {
   _nodes.insert_or_assign(node->id(), node);
 

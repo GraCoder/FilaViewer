@@ -60,7 +60,7 @@ ImGuiHelper::ImGuiHelper(Engine *engine, filament::View *view, const Path &fontP
   io.IniFilename = mSettingsPath.c_str();
 
   // Create a simple alpha-blended 2D blitting material.
-  mMaterial = Material::Builder().package(PCV_MAT_UI_BLIT_DATA, PCV_MAT_UI_BLIT_SIZE).build(*engine);
+  mMaterial = Material::Builder().package(PCV_MAT_UI_DATA, PCV_MAT_UI_SIZE).build(*engine);
 
   // If the given font path is invalid, ImGui will silently fall back to proggy, which is a
   // tiny "pixel art" texture that is compiled into the library.

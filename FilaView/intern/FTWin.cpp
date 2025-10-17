@@ -71,7 +71,7 @@ FTWin::~FTWin()
 uint64_t FTWin::handle()
 {
   if (!_window)
-    create_window();
+    createWindow();
 
   auto hwnd = native_window(_window);
   return (uint64_t)hwnd;
@@ -80,15 +80,15 @@ uint64_t FTWin::handle()
 void FTWin::exec(bool thread)
 {
   if (!_window)
-    create_window();
+    createWindow();
 
   if (thread) {
-    _thread = std::make_unique<std::thread>(std::bind(&FTWin::poll_events, this));
+    _thread = std::make_unique<std::thread>(std::bind(&FTWin::pollEvents, this));
   } else
-    poll_events();
+    pollEvents();
 }
 
-void FTWin::configure_cameras()
+void FTWin::configCamera()
 {
   float dpiScaleX = 1.0f;
   float dpiScaleY = 1.0f;
@@ -101,8 +101,8 @@ void FTWin::configure_cameras()
   dpiScaleX = (float)width / virtualWidth;
   dpiScaleY = (float)height / virtualHeight;
 
-  _view->manip()->set_pivot({0, 0, 0}, 15);
-  _view->set_viewport(0, 0, width, height);
+  _view->manip()->setPivot({0, 0, 0}, 15);
+  _view->setViewport(0, 0, width, height);
 }
 
 void FTWin::clean()
@@ -112,9 +112,9 @@ void FTWin::clean()
     _gui = nullptr;
   }
 
-  if (_gui_view) {
-    _engine->destroy(_gui_view);
-    _gui_view = nullptr;
+  if (_gview) {
+    _engine->destroy(_gview);
+    _gview = nullptr;
   }
 
   if (_renderer) {
@@ -143,10 +143,10 @@ void FTWin::setupGui()
 
   using namespace filagui;
 
-  _gui_view = _engine->createView();
-  _gui_view->setViewport({0, 0, _width, _height});
+  _gview = _engine->createView();
+  _gview->setViewport({0, 0, _width, _height});
 
-  _gui = new ImGuiHelper(_engine, _gui_view, "");
+  _gui = new ImGuiHelper(_engine, _gview, "");
   _gui->setDisplaySize(_width, _height);
 
   ImGuiIO &io = ImGui::GetIO();
@@ -182,7 +182,7 @@ void FTWin::setupGui()
   io.ClipboardUserData = nullptr;
 }
 
-void FTWin::create_window()
+void FTWin::createWindow()
 {
   const int x = SDL_WINDOWPOS_CENTERED;
   const int y = SDL_WINDOWPOS_CENTERED;
@@ -197,19 +197,25 @@ void FTWin::create_window()
   _window = win;
 }
 
-void FTWin::create_engine()
+void FTWin::createEngine()
 {
   using namespace filament;
 
   backend::Backend backend = Engine::Backend::VULKAN;
   // Engine::Config engineConfig = {};
 
-  _engine = Engine::Builder().backend(backend) /*.config(&engineConfig)*/.build();
+  _engine = Engine::Builder()
+    .backend(backend) 
+    //.config(&engineConfig)
+    .build();
   if (_engine)
     return;
 
   backend = Engine::Backend::OPENGL;
-  _engine = Engine::Builder().backend(backend) /*.config(&engineConfig)*/.build();
+  _engine = Engine::Builder()
+    .backend(backend) 
+    //.config(&engineConfig)
+    .build();
 }
 
 void FTWin::realizeContext()
@@ -219,11 +225,11 @@ void FTWin::realizeContext()
 
   _realized = true;
 
-  create_engine();
+  createEngine();
 
   _view->realize(_engine);
 
-  configure_cameras();
+  configCamera();
 
   _swapchain = _engine->createSwapChain(native_window(_window), filament::SwapChain::CONFIG_HAS_STENCIL_BUFFER);
   _renderer = _engine->createRenderer();
@@ -241,10 +247,8 @@ void FTWin::realizeContext()
     setupGui();
 }
 
-#define OperIter                                                                                                                                               \
-  for (auto iter = _operators.rbegin(); iter != _operators.rend(); iter++)                                                                                     \
-  (*iter)
-void FTWin::poll_events()
+#define OperIter for (auto iter = _operators.rbegin(); iter != _operators.rend(); iter++) (*iter)
+void FTWin::pollEvents()
 {
   uint32_t freq = SDL_GetPerformanceFrequency() / 1000;
   uint64_t stamp = SDL_GetPerformanceCounter(), prev_time = stamp;
@@ -257,12 +261,12 @@ void FTWin::poll_events()
     if (!UTILS_HAS_THREADING)
       _engine->execute();
 
-    int ev_count = 0;
+    int eventCount = 0;
     bool immediate = false;
 
-    while (ev_count < max_event && SDL_PollEvent(&events[ev_count++]) != 0) {
+    while (eventCount < max_event && SDL_PollEvent(&events[eventCount++]) != 0) {
     }
-    for (int i = 0; i < ev_count; i++) {
+    for (int i = 0; i < eventCount; i++) {
       const SDL_Event &event = events[i];
       switch (event.type) {
       case SDL_QUIT: {
@@ -271,13 +275,13 @@ void FTWin::poll_events()
         break;
       }
       case SDL_KEYDOWN:
-        OperIter->key_press(event.key);
+        OperIter->keyPress(event.key);
         break;
       case SDL_KEYUP:
-        OperIter->key_release(event.key);
+        OperIter->keyRelease(event.key);
         break;
       case SDL_MOUSEWHEEL: {
-        OperIter->mouse_wheel(event.wheel);
+        OperIter->mouseWheel(event.wheel);
         break;
       }
       case SDL_MOUSEBUTTONDOWN: {
@@ -288,7 +292,7 @@ void FTWin::poll_events()
           if (io.WantCaptureMouse)
             break;
         }
-        OperIter->mouse_press(event.button);
+        OperIter->mousePress(event.button);
         break;
       }
       case SDL_MOUSEBUTTONUP: {
@@ -299,7 +303,7 @@ void FTWin::poll_events()
           if (io.WantCaptureMouse)
             break;
         }
-        OperIter->mouse_release(event.button);
+        OperIter->mouseRelease(event.button);
         break;
       }
       case SDL_MOUSEMOTION: {
@@ -309,7 +313,7 @@ void FTWin::poll_events()
           if (io.WantCaptureMouse)
             break;
         }
-        OperIter->mouse_move(event.motion);
+        OperIter->mouseMove(event.motion);
         break;
       }
       case SDL_DROPFILE:
@@ -327,8 +331,8 @@ void FTWin::poll_events()
             if (_gui) {
               _gui->setDisplaySize(w, h);
             }
-            if (_gui_view) {
-              _gui_view->setViewport({0, 0, w, h});
+            if (_gview) {
+              _gview->setViewport({0, 0, w, h});
             }
             break;
           }
@@ -375,8 +379,8 @@ void FTWin::poll_events()
     if (_renderer->beginFrame(swapchain())) {
       _renderer->render(*_view);
 
-      if (_gui_view) {
-        _renderer->render(_gui_view);
+      if (_gview) {
+        _renderer->render(_gview);
       }
 
       _renderer->endFrame();

@@ -107,32 +107,32 @@ void GltfNode::build(const std::string &file, filament::Engine *engine)
 
 void GltfNode::update(double timestamp)
 {
-  if (_reset_animation) {
-    _pre_stamp = _cur_stamp;
-    _cur_stamp = timestamp;
-    _reset_animation = false;
+  if (_resetAnimation) {
+    _preStamp = _curStamp;
+    _curStamp = timestamp;
+    _resetAnimation = false;
   }
 
-  const double elapsedSeconds = (timestamp - _cur_stamp) / 1000.0;
+  const double elapsedSeconds = (timestamp - _curStamp) / 1000.0;
 
   for (auto &instance : _instances) {
     Animator &animator = *instance->getAnimator();
     const size_t animationCount = animator.getAnimationCount();
-    if (animationCount > 0 && _cur_animation >= 0) {
-      if (_cur_animation == animationCount) {
+    if (animationCount > 0 && _curAnimation >= 0) {
+      if (_curAnimation == animationCount) {
         for (size_t i = 0; i < animationCount; i++) {
           animator.applyAnimation(i, elapsedSeconds);
         }
       } else {
-        animator.applyAnimation(_cur_animation, elapsedSeconds);
+        animator.applyAnimation(_curAnimation, elapsedSeconds);
       }
-      if (elapsedSeconds < _fade_duraion && _pre_animation >= 0 && _pre_animation != animationCount) {
-        const double previousSeconds = timestamp - _pre_stamp;
-        const float lerpFactor = elapsedSeconds / _fade_duraion;
-        animator.applyCrossFade(_pre_animation, previousSeconds, lerpFactor);
+      if (elapsedSeconds < _fadeDuration && _preAnimation >= 0 && _preAnimation != animationCount) {
+        const double previousSeconds = timestamp - _preStamp;
+        const float lerpFactor = elapsedSeconds / _fadeDuration;
+        animator.applyCrossFade(_preAnimation, previousSeconds, lerpFactor);
       }
     }
-    if (_reset_pose) {
+    if (_resetPose) {
       animator.resetBoneMatrices();
     } else {
       animator.updateBoneMatrices();

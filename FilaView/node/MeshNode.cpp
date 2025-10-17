@@ -15,10 +15,10 @@ void MeshNode::build(const std::string &file, filament::Engine *engine, const fi
   if (!_assimp)
     _assimp = std::make_unique<MeshAssimp>();
 
-  if (!_assimp->load_assert(file.c_str()))
+  if (!_assimp->loadAssert(file.c_str()))
     return;
 
-  _assimp->build_assert(engine, basicmtl, defmtl);
+  _assimp->buildAssert(engine, basicmtl, defmtl);
 
   _entities.clear();
   for (auto ent : _assimp->renderables()) {

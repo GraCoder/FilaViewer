@@ -40,14 +40,14 @@ public:
   void process(double delta);
 
 public:
-  void dirty_camera() { _camera_dirty = true; }
+  void dirtyCamera() { _camera_dirty = true; }
   void reset_projection();
 
   void release();
 
 protected:
 
-  void set_viewport(int x, int y, uint32_t w, uint32_t h);
+  void setViewport(int x, int y, uint32_t w, uint32_t h);
   void update_camera();
 
 private:
