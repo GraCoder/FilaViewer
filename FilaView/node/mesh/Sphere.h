@@ -5,7 +5,7 @@ namespace fv {
 
 class Sphere : public Shape {
 public:
-  Sphere(const filament::math::float3 &center, float radius, int subDiv = 2);
+  Sphere(const filament::math::float3 &center, float radius, int subDiv = 3);
   ~Sphere();
 
   Sphere(Sphere const &) = delete;

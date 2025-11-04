@@ -109,8 +109,6 @@ private:
 
   filament::Material *createMaterialFromConfig(filament::Engine &engine, MaterialConfig &config);
 
-  void adjustMaterialConfig(MaterialConfig *material);
-
 private:
 
   std::unique_ptr<Asset> _asset;

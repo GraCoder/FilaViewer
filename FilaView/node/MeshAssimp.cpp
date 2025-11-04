@@ -62,9 +62,15 @@ using namespace utils;
 #define _AI_MATKEY_GLTF_STRENGTH_BASE "$tex.strength"
 
 std::map<aiTextureType, std::string> tex_name = {
-  {aiTextureType_BASE_COLOR, "baseColorMap"}, {aiTextureType_DIFFUSE, "baseColorMap"}, {aiTextureType_AMBIENT, "aoMap"},
-  {aiTextureType_EMISSIVE, "emissiveMap"},    {aiTextureType_NORMALS, "normalMap"},    {aiTextureType_SHININESS, "specularColorMap"},
+  {aiTextureType_BASE_COLOR, "baseColorMap"}, 
+
+  {aiTextureType_NORMALS, "normalMap"},       
+  {aiTextureType_AMBIENT, "aoMap"},
+
+  {aiTextureType_EMISSIVE, "emissiveMap"}, 
+
   {aiTextureType_SPECULAR, "glossinessMap"},
+  {aiTextureType_DIFFUSE, "baseColorMap"}, 
 };
 
 enum class AlphaMode : uint8_t { OPAQUE, MASKED, TRANSPARENT };
@@ -105,12 +111,6 @@ struct MaterialConfig {
   uint64_t tex_specular = 0;
   uint8_t uv_specular = 0;
 
-  uint64_t tex_specular_color = 0;
-  uint8_t uv_specular_color = 0;
-
-  uint64_t tex_specular_factor = 0;
-  uint8_t uv_specular_factor = 0;
-
   uint64_t tex_metallic_rough = 0;
   uint8_t uv_metallic_rough = 0;
 
@@ -119,9 +119,6 @@ struct MaterialConfig {
 
   uint64_t tex_ao = 0;
   uint8_t uv_ao = 0;
-
-  uint64_t tex_glossiness = 0;
-  uint8_t uv_glossiness = 0;
 
   float metallic = 0;
   uint64_t tex_metallic = 0;
@@ -324,14 +321,14 @@ bool MeshAssimp::loadAssert(const utils::Path &path)
   const aiScene *scene = importer.ReadFile(path,
                                            // normals and tangents
                                            aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_FixInfacingNormals |
-                                             // UV Coordinates
-                                             aiProcess_GenUVCoords |
-                                             // topology optimization
-                                             aiProcess_FindInstances | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices |
-                                             // misc optimization
-                                             aiProcess_ImproveCacheLocality | aiProcess_SortByPType |
-                                             // we only support triangles
-                                             aiProcess_Triangulate);
+                                           // UV Coordinates
+                                           aiProcess_GenUVCoords |
+                                           // topology optimization
+                                           aiProcess_FindInstances | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices |
+                                           // misc optimization
+                                           aiProcess_ImproveCacheLocality | aiProcess_SortByPType |
+                                           // we only support triangles
+                                           aiProcess_Triangulate);
 
   if (!scene) {
     std::cout << "No scene" << std::endl;
@@ -476,6 +473,7 @@ void MeshAssimp::processNode(Asset &asset, const aiScene *scene, size_t deep, si
     float3 const *texCoords0 = reinterpret_cast<float3 const *>(mesh->mTextureCoords[0]);
     float3 const *texCoords1 = reinterpret_cast<float3 const *>(mesh->mTextureCoords[1]);
 
+    float3 tangent, bitangent;
     const size_t numVertices = mesh->mNumVertices;
 
     if (numVertices > 0) {
@@ -487,8 +485,6 @@ void MeshAssimp::processNode(Asset &asset, const aiScene *scene, size_t deep, si
 
         for (size_t j = 0; j < numVertices; j++) {
           float3 normal = normals[j];
-          float3 tangent;
-          float3 bitangent;
 
           // Assimp always returns 3D tex coords but we only support 2D tex coords.
           float2 texCoord0 = texCoords0 ? texCoords0[j].xy : float2{0.0};
@@ -851,22 +847,6 @@ std::unique_ptr<MaterialConfig> MeshAssimp::loadMaterial(const aiScene *scene, c
   }
 
   {
-    std::tie(mtl_config.tex_specular_color, mtl_config.uv_specular_color, tex_name) = loadTextures(scene, material, aiTextureType_SHININESS);
-    if (mtl_config.tex_specular_color)
-      spdlog::debug("shininess texture(specular color) : %s", tex_name);
-  }
-
-  {
-    auto [tex, uv, name] = loadTextures(scene, material, aiTextureType_SPECULAR);
-    if (tex) {
-      mtl_config.tex_glossiness = tex;
-      mtl_config.uv_glossiness = uv;
-    }
-    if (mtl_config.tex_glossiness)
-      spdlog::debug("glossiness texture : %s", name);
-  }
-
-  {
     std::tie(mtl_config.tex_height, mtl_config.uv_height, tex_name) = loadTextures(scene, material, aiTextureType_HEIGHT);
   }
 
@@ -964,8 +944,6 @@ void MeshAssimp::buildMaterial(filament::Engine *engine)
   for (auto &iter : _materialConfig) {
     auto &c = iter.second;
 
-    adjustMaterialConfig(iter.second.get());
-
     auto material = createMaterialFromConfig(*_engine, *c);
     auto mtl = material->createInstance(iter.first.c_str());
     _materials[iter.first] = mtl;
@@ -979,9 +957,6 @@ void MeshAssimp::buildMaterial(filament::Engine *engine)
     fun2(mtl, c->tex_emissive);
     fun2(mtl, c->tex_normal);
     fun2(mtl, c->tex_specular);
-    fun2(mtl, c->tex_specular_factor);
-    fun2(mtl, c->tex_specular_color);
-    fun2(mtl, c->tex_glossiness);
   }
 }
 
@@ -1016,22 +991,6 @@ std::string MeshAssimp::shaderFromConfig(const MaterialConfig &config)
       vec4 baseColor = texture(materialParams_baseColorMap, uv_base_color);
       material.baseColor = baseColor;
     )SHADER";
-  }
-
-  if (hasTexture(config.tex_specular_color)) {
-    shader += "float2 uv_specular_color = getUV" + std::to_string(config.uv_specular_color) + "();\n";
-    shader += R"SHADER(
-      vec3 specularColor = texture(materialParams_specularColorMap, uv_specular_color).rgb;
-      material.specularColor = specularColor; 
-    )SHADER";
-  }
-
-  if (hasTexture(config.tex_glossiness)) {
-    shader += "float2 uv_glossiness = getUV" + std::to_string(config.uv_glossiness) + "();\n";
-    shader += R"(
-      float glossiness = texture(materialParams_glossinessMap, uv_glossiness).r;
-      material.glossiness = glossiness;
-    )";
   }
 
   // shader += "float2 uv_ao = getUV" + std::to_string(config.uv_ao) + "();\n";
@@ -1091,13 +1050,6 @@ filament::Material *MeshAssimp::createMaterialFromConfig(Engine &engine, Materia
   if (hasTexture(config.tex_emissive))
     builder.parameter("emissiveMap", MaterialBuilder::SamplerType::SAMPLER_2D);
 
-  if (hasTexture(config.tex_specular_color)) {
-    builder.parameter("specularColorMap", MaterialBuilder::SamplerType::SAMPLER_2D);
-  }
-  if (hasTexture(config.tex_glossiness)) {
-    builder.parameter("glossinessMap", MaterialBuilder::SamplerType::SAMPLER_2D);
-  }
-
   if (config.max_uv_index() > 0) {
     builder.require(VertexAttribute::UV1);
   }
@@ -1114,10 +1066,7 @@ filament::Material *MeshAssimp::createMaterialFromConfig(Engine &engine, Materia
     builder.blending(MaterialBuilder::BlendingMode::OPAQUE);
   }
 
-  if (config.tex_specular_color || config.tex_glossiness)
-    builder.shading(Shading::SPECULAR_GLOSSINESS);
-  else
-    builder.shading(Shading::LIT);
+  builder.shading(Shading::LIT);
 
   using namespace filament;
   // builder.shading(Shading::UNLIT);
@@ -1129,17 +1078,3 @@ filament::Material *MeshAssimp::createMaterialFromConfig(Engine &engine, Materia
   return Material::Builder().package(pkg.getData(), pkg.getSize()).build(engine);
 }
 
-void MeshAssimp::adjustMaterialConfig(MaterialConfig *material)
-{
-  if (auto id = material->tex_height) {
-    if (_textureConfig[id]->channel == 3) {
-      material->tex_normal = material->tex_height;
-      material->uv_normal = material->uv_height;
-      material->tex_height = 0;
-      material->uv_height = 0;
-      _textureConfig[id]->type = aiTextureType_NORMALS;
-    } else if (_textureConfig[id]->channel != 1) {
-      material->tex_height = 0;
-    }
-  }
-}

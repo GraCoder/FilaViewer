@@ -201,19 +201,15 @@ void FTWin::createEngine()
 {
   using namespace filament;
 
-  backend::Backend backend = Engine::Backend::VULKAN;
-  // Engine::Config engineConfig = {};
-
   _engine = Engine::Builder()
-    .backend(backend) 
+    .backend(Engine::Backend::VULKAN) 
     //.config(&engineConfig)
     .build();
   if (_engine)
     return;
 
-  backend = Engine::Backend::OPENGL;
   _engine = Engine::Builder()
-    .backend(backend) 
+    .backend(Engine::Backend::OPENGL) 
     //.config(&engineConfig)
     .build();
 }
