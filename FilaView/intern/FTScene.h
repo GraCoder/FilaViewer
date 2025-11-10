@@ -44,7 +44,7 @@ public:
 
 public:
 
-  void showModel(int id, bool show);
+  void showEntity(int id, bool show);
 
   int loadModel(const std::string &file, float sz);
 

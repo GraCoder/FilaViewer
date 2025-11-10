@@ -607,7 +607,10 @@ template <typename T> class Tquat {
   template <typename T> friend class Tmat3;
 
 public:
-  inline Tquat() {}
+  inline Tquat() 
+    : s_(T(1))
+    , v_(T(0))
+  {}
 
   inline Tquat(const Tquat &q)
     : s_(q.s_)
@@ -643,6 +646,13 @@ public:
     : v_(v)
     , s_(0)
   {
+  }
+
+  inline Tquat &operator=(const Tquat &q)
+  {
+    s_ = q.s_;
+    v_ = q.v_;
+    return *this;
   }
 
   inline T &operator[](int32_t n) { return data_[n]; }

@@ -18,7 +18,7 @@ FT_DOWNCAST(TView)
 
 TView::TView() {}
 
-std::shared_ptr<TView> TView::create(TWin *win)
+std::shared_ptr<TView> TView::create()
 {
   return std::make_shared<FTView>();
 }
@@ -30,7 +30,14 @@ TView::~TView() {}
 //   return downcast(this)->_manip;
 // }
 
-void TView::zoom_box(const tg::boundingbox &box)
+tg::mat4d TView::projectionMatrix()
+{
+  tg::mat4d m;
+  m.set(downcast(this)->_camera->getProjectionMatrix().asArray());
+  return m;
+}
+
+void TView::zoomBox(const tg::boundingbox &box)
 {
   auto m = downcast(this)->_camera->getProjectionMatrix();
   float l = m[1][1] * box.radius();
@@ -63,11 +70,6 @@ std::optional<tg::vec3d> TView::getPosition(int x, int y)
   }
 
   return std::optional<tg::vec3d>();
-}
-
-void TView::showModel(int id, bool show)
-{
-  downcast(this)->scene()->showModel(id, show);
 }
 
 } // namespace fv

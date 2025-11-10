@@ -1,6 +1,7 @@
 #include <functional>
 #include <stdexcept>
 
+#include <filament/Camera.h>
 #include <filament/Renderer.h>
 #include <filament/Engine.h>
 #include <filament/Options.h>
@@ -14,14 +15,13 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
 
-#include "ManipOperator.h"
-
 #include "imgui/ImGuiHelper.h"
 #include "imgui/imgui.h"
 
 #include "FTView.h"
 #include "FTScene.h"
 #include "FTWin.h"
+#include "operator/ManipOperator.h"
 
 HWND native_window(SDL_Window *win)
 {
@@ -53,10 +53,12 @@ FTWin::FTWin(FTWin *win)
   if (SDL_Init(SDL_INIT_EVENTS))
     throw(std::runtime_error("sdl init failed."));
 
-  _view = std::static_pointer_cast<FTView>(FTView::create(this));
+  _view = std::static_pointer_cast<FTView>(FTView::create());
 
   auto scene = std::static_pointer_cast<FTScene>(FTScene::create());
-  _view->set_scene(scene);
+  _view->setScene(scene);
+
+  _manip = std::make_shared<ManipOperator>();
 }
 
 FTWin::~FTWin()
@@ -101,7 +103,6 @@ void FTWin::configCamera()
   dpiScaleX = (float)width / virtualWidth;
   dpiScaleY = (float)height / virtualHeight;
 
-  _view->manip()->setPivot({0, 0, 0}, 15);
   _view->setViewport(0, 0, width, height);
 }
 
@@ -237,20 +238,18 @@ void FTWin::realizeContext()
   //  _renderer->setClearOptions(opts);
   //}
 
-  _operators.emplace_back(_view->manip());
-
   if (_flags & en_SetupGui)
     setupGui();
 }
 
-#define OperIter for (auto iter = _operators.rbegin(); iter != _operators.rend(); iter++) (*iter)
+#define OperIter for (auto iter = _operators.rbegin(); iter != _operators.rend(); iter++) handled |= (*iter)
 void FTWin::pollEvents()
 {
   uint32_t freq = SDL_GetPerformanceFrequency() / 1000;
   uint64_t stamp = SDL_GetPerformanceCounter(), prev_time = stamp;
 
   static constexpr int mk[4] = {0, 0, 1, 2};
-  constexpr int max_event = 16;
+  constexpr int max_event = 8;
   SDL_Event events[max_event];
 
   while (!_close) {
@@ -260,9 +259,9 @@ void FTWin::pollEvents()
     int eventCount = 0;
     bool immediate = false;
 
-    while (eventCount < max_event && SDL_PollEvent(&events[eventCount++]) != 0) {
-    }
+    while (eventCount < max_event && SDL_PollEvent(&events[eventCount++]) != 0) {}
     for (int i = 0; i < eventCount; i++) {
+      bool handled = false;
       const SDL_Event &event = events[i];
       switch (event.type) {
       case SDL_QUIT: {
@@ -271,13 +270,13 @@ void FTWin::pollEvents()
         break;
       }
       case SDL_KEYDOWN:
-        OperIter->keyPress(event.key);
+        OperIter->keyPress(_view.get(), event.key);
         break;
       case SDL_KEYUP:
-        OperIter->keyRelease(event.key);
+        OperIter->keyRelease(_view.get(), event.key);
         break;
       case SDL_MOUSEWHEEL: {
-        OperIter->mouseWheel(event.wheel);
+        OperIter->mouseWheel(_view.get(), event.wheel);
         break;
       }
       case SDL_MOUSEBUTTONDOWN: {
@@ -288,7 +287,7 @@ void FTWin::pollEvents()
           if (io.WantCaptureMouse)
             break;
         }
-        OperIter->mousePress(event.button);
+        OperIter->mousePress(_view.get(), event.button);
         break;
       }
       case SDL_MOUSEBUTTONUP: {
@@ -299,7 +298,7 @@ void FTWin::pollEvents()
           if (io.WantCaptureMouse)
             break;
         }
-        OperIter->mouseRelease(event.button);
+        OperIter->mouseRelease(_view.get(), event.button);
         break;
       }
       case SDL_MOUSEMOTION: {
@@ -309,7 +308,7 @@ void FTWin::pollEvents()
           if (io.WantCaptureMouse)
             break;
         }
-        OperIter->mouseMove(event.motion);
+        OperIter->mouseMove(_view.get(), event.motion);
         break;
       }
       case SDL_DROPFILE:
@@ -344,6 +343,12 @@ void FTWin::pollEvents()
         break;
       default:
         break;
+      }
+
+      if (!handled && _manip->handle(_view.get(), &event)) {
+        filament::math::double3 eye, target, up;
+        _manip->getLookAt(*(tg::vec3d *)&eye, *(tg::vec3d *)&target, *(tg::vec3d *)&up);
+        static_cast<FTView *>(_view.get())->view()->getCamera().lookAt(eye, target, up);
       }
     }
 

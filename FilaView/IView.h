@@ -4,5 +4,5 @@
 
 class FILAVIEW_EXPORT IView {
 public:
-  virtual void showModel(int id, bool show) = 0;
+  virtual void showEntity(int id, bool show) = 0;
 };

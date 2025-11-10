@@ -21,6 +21,7 @@ namespace fv {
 
 class FTView;
 class TOperator;
+class ManipOperator;
 
 class FTWin : public TWin {
   friend class TWin;
@@ -42,6 +43,7 @@ public:
 
   inline FTView *view(int id = 0) { return _view.get(); }
 
+  const std::shared_ptr<ManipOperator> &manip() { return _manip; }
   std::vector<std::shared_ptr<TOperator>> &operators() { return _operators; }
 
 private:
@@ -80,6 +82,7 @@ private:
 
   std::shared_ptr<FTView> _view = nullptr;
 
+  std::shared_ptr<ManipOperator> _manip = nullptr;
   std::vector<std::shared_ptr<TOperator>> _operators;
 
   std::unique_ptr<std::thread> _thread;

@@ -13,7 +13,6 @@ class Engine;
 namespace fv {
 
 class FTScene;
-class ManipOperator;
 
 class FTView : public TView {
   friend class TView;
@@ -26,29 +25,27 @@ public:
   filament::Engine *engine() { return _engine; }
 
   operator filament::View *() { return _view; }
-  filament::View *fila_view() { return _view; }
+  filament::View *view() { return _view; }
+
+  void showEntity(int id, bool show) override;
 
 public:
 
   void realize(filament::Engine *engine);
 
-  const std::shared_ptr<ManipOperator> &manip() { return _manip; }
-
   const std::shared_ptr<FTScene> &scene() { return _scene; }
-  void set_scene(const std::shared_ptr<FTScene> &scene);
+  void setScene(const std::shared_ptr<FTScene> &scene);
 
   void process(double delta);
 
 public:
-  void dirtyCamera() { _camera_dirty = true; }
-  void reset_projection();
+  void resetProjection();
 
   void release();
 
 protected:
 
   void setViewport(int x, int y, uint32_t w, uint32_t h);
-  void update_camera();
 
 private:
 
@@ -57,7 +54,6 @@ private:
   filament::Camera *_camera = nullptr;
 
   std::shared_ptr<FTScene> _scene = nullptr;
-  std::shared_ptr<ManipOperator> _manip = nullptr;
 };
 
 } // namespace fv

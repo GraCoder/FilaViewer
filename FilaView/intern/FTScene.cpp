@@ -170,7 +170,7 @@ int FTScene::loadModel(const std::string &file, float size)
   return node->id();
 }
 
-void FTScene::showModel(int id, bool show)
+void FTScene::showEntity(int id, bool show)
 {
   auto iter = _nodes.find(id);
   if (iter == _nodes.end())

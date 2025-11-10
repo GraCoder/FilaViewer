@@ -72,8 +72,6 @@ set(intern_src
   intern/FTView.cpp
   intern/FTScene.h
   intern/FTScene.cpp
-  intern/ManipOperator.h
-  intern/ManipOperator.cpp
 
   #intern/PCCDispatch.h
   #intern/PCCDispatch.cpp
@@ -121,6 +119,10 @@ endif()
 
 
 set(operator_src
+  operator/TOperator.h
+  operator/TOperator.cpp
+  operator/ManipOperator.h
+  operator/ManipOperator.cpp
   operator/PickOperator.h
   operator/PickOperator.cpp
 )
@@ -143,8 +145,6 @@ list(APPEND source_files
   TView.cpp
   TScene.h 
   TScene.cpp
-  TOperator.h
-  TOperator.cpp
 )
 
 add_library(${target_name} SHARED ${source_files} ${resgen_output} ${env_output})
@@ -172,7 +172,6 @@ set(filament_libs
   ${filament_dir}/lib/x86_64/filament-iblprefilter.lib
   ${filament_dir}/lib/x86_64/smol-v.lib
   ${filament_dir}/lib/x86_64/utils.lib
-  ${filament_dir}/lib/x86_64/camutils.lib
   ${filament_dir}/lib/x86_64/gltfio.lib
   ${filament_dir}/lib/x86_64/gltfio_core.lib
   ${filament_dir}/lib/x86_64/shaders.lib

@@ -10,7 +10,7 @@
 #include <utils/EntityManager.h>
 
 #include "FTScene.h"
-#include "ManipOperator.h"
+#include "Operator/ManipOperator.h"
 
 using namespace filament;
 
@@ -28,6 +28,11 @@ FTView::~FTView()
 
   if (_engine && _view)
     _engine->destroy(_view);
+}
+
+void FTView::showEntity(int id, bool show) 
+{
+  static_cast<FTScene *>(_scene.get())->showEntity(id, show);
 }
 
 void FTView::realize(filament::Engine *engine)
@@ -58,17 +63,15 @@ void FTView::realize(filament::Engine *engine)
   _camera->setExposure(16.0f, 1 / 125.0f, 100.0f);
   _view->setCamera(_camera);
 
-  reset_projection();
+  resetProjection();
 
   if (_scene) {
     _scene->initialize(engine);
     _view->setScene(*_scene);
   }
-
-  _manip = std::make_shared<ManipOperator>(this);
 }
 
-void FTView::set_scene(const std::shared_ptr<FTScene> &scene)
+void FTView::setScene(const std::shared_ptr<FTScene> &scene)
 {
   _scene = scene;
   if (_view && scene->filaScene())
@@ -77,12 +80,10 @@ void FTView::set_scene(const std::shared_ptr<FTScene> &scene)
 
 void FTView::process(double delta)
 {
-  update_camera();
-
   scene()->process(delta);
 }
 
-void FTView::reset_projection()
+void FTView::resetProjection()
 {
   if (_view == nullptr)
     return;
@@ -94,7 +95,7 @@ void FTView::reset_projection()
   double const h = (0.5 * _near) * ((SENSOR_SIZE * 1000.0) / 35.0);
   double const w = h * vp.width / vp.height;
 
-  auto mat = tg::frustum<double>(-w, w, -h, h, _near, _far);
+  auto mat = tg::frustum(-w, w, -h, h, _near, _far);
   filament::math::mat4 fmat;
   memcpy(&fmat, &mat, sizeof(tg::mat4d));
 
@@ -110,28 +111,12 @@ void FTView::setViewport(int x, int y, uint32_t width, uint32_t height)
   // auto aspectRatio = double(width) / height;
   //_camera->setScaling({1.0 / aspectRatio, 1.0});
 
+  _viewport.set(x, y, width, height);
+
   if (_view)
     _view->setViewport({x, y, width, height});
 
-  if (_manip)
-    _manip->setViewport(width, height);
-
-  reset_projection();
-}
-
-void FTView::update_camera()
-{
-  if (!_camera)
-    return;
-
-  if (!_camera_dirty)
-    return;
-
-  _camera_dirty = false;
-
-  math::float3 eye, center, up;
-  _manip->getLookAt(eye, center, up);
-  _camera->lookAt(eye, center, up);
+  resetProjection();
 }
 
 } // namespace fv

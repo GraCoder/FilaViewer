@@ -3,14 +3,7 @@
 
 #include "tvec.h"
 #include <algorithm>
-#if __cplusplus >= 201703L 
-#define CXX_17_SUPPORT
-#include <optional>
-#endif
 
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
 
 namespace tg {
 
@@ -65,105 +58,149 @@ template <> struct random<unsigned int> {
   }
 };
 
-template <typename T> inline Tmat4<T> frustum(T left, T right, T bottom, T top, T n, T f)
+inline mat4d frustum(double l, double r, double b, double t, double n, double f)
 {
-  T A = (2.0f * n) / (right - left);
-  T B = (2.0f * n) / (top - bottom);
-  T C = (right + left) / (right - left);
-  T D = (top + bottom) / (top - bottom);
+  double A = (2.0 * n) / (r - l);
+  double B = (2.0 * n) / (t - b);
+  double C = (r + l) / (r - l);
+  double D = (t + b) / (t - b);
 
-#ifdef DEPTH_REVERSE
-  T E = n / (f - n);
-  T F = (f * n) / (f - n);
-#elif defined DEPTH_ZERO
-  T E = f / (n - f);
-  T F = f * n / (n - f);
+#if defined(DEPTH_REVERSE) && defined(ZERO_NEAR)
+  double E = 0.0f;
+  double F = n;
+#elif defined(DEPTH_REVERSE) && !defined(ZERO_NEAR)
+  double E = n / (f - n);
+  double F = (f * n) / (f - n);
+#elif !defined(DEPTH_REVERSE) && defined(ZERO_NEAR)
+  double E = -1.0f;
+  double F = -2.0f * n;
 #else
-  T E = -(f + n) / (f - n);
-  T F = -(2.0f * f * n) / (f - n);
+  double E = -(f + n) / (f - n);
+  double F = -(2.0f * f * n) / (f - n);
 #endif
-  Tmat4<T> result;
-  result[0] = Tvec4<T>(A, 0, 0, 0);
-  result[1] = Tvec4<T>(0, B, 0, 0);
-  result[2] = Tvec4<T>(C, D, E, -1);
-  result[3] = Tvec4<T>(0, 0, F, 0);
-  return result;
+
+  mat4d m;
+  m[0] = vec4d(A, 0, 0, 0);
+  m[1] = vec4d(0, B, 0, 0);
+  m[2] = vec4d(C, D, E, -1);
+  m[3] = vec4d(0, 0, F, 0);
+  return m;
+}
+
+inline bool get_frustum(const tg::mat4d &m, double &l, double &r, double &b, double &t, double &n, double &f)
+{
+  if (m[0][3] != 0.0 || m[1][3] != 0.0 || m[2][3] != -1.0 || m[3][3] != 0.0)
+    return false;
+
+#if DEPTH_REVERSE && ZERO_NEAR
+  n = 0.0;
+  f = m[3][2] / m[2][2];
+#elif DEPTH_REVERSE && !ZERO_NEAR
+  n = m[3][2] / m[2][2];
+  f = m[3][2] / (m[2][2] + 1.0f);
+#elif !DEPTH_REVERSE && ZERO_NEAR
+  n = 0.0;
+  f = m[3][2] / (m[2][2] + 1.0);
+#else
+  n = m[3][2] / (m[2][2] - 1.0);
+  f = m[3][2] / (1.0 + m[2][2]);
+#endif
+
+#if defined(DEPTH_REVERSE) && defined(ZERO_NEAR)
+  double ref_depth = f;
+#else
+  double ref_depth = n;
+#endif
+
+  l = ref_depth * (m[2][0] - 1.0f) / m[0][0];
+  r = ref_depth * (1.0f + m[2][0]) / m[0][0];
+  t = ref_depth * (1.0f + m[2][1]) / m[1][1];
+  b = ref_depth * (m[2][1] - 1.0f) / m[1][1];
+  return true;
 }
 
 // aspect = width/height
-template <typename T> inline Tmat4<T> perspective(T fovy, T aspect, T n, T f)
+inline mat4d perspective(double fovy, double aspect, double n, double f)
 {
-  T q = 1.0f / tan(radians(0.5f * fovy));
-  T A = q / aspect;
-#ifdef DEPTH_REVERSE
-  T B = n / (f - n);
-  T C = n * f / (f - n);
-#elif defined DEPTH_ZERO
-  T B = f / (n - f);
-  T C = n * f / (n - f);
+  double q = 1.0 / tan(radians(0.5 * fovy));
+  double A = q / aspect;
+#if DEPTH_REVERSE && ZERO_NEAR
+  double B = 0;
+  double C = n;
+#elif DEPTH_REVERSE && !ZERO_NEAR
+  double B = n / (f - n);
+  double C = (n * f) / (f - n);
+#elif !DEPTH_REVERSE && ZERO_NEAR
+  double B = -1.0;
+  double C = -2.0 * n;
 #else
-  T B = (n + f) / (n - f);
-  T C = (2.0f * n * f) / (n - f);
+  double B = (f + n) / (n - f);
+  double C = (2.0 * f * n) / (n - f);
 #endif
 
-  Tmat4<T> result;
-  result[0] = Tvec4<T>(A, 0.0f, 0.0f, 0.0f);
-  result[1] = Tvec4<T>(0.0f, q, 0.0f, 0.0f);
-  result[2] = Tvec4<T>(0.0f, 0.0f, B, -1.0f);
-  result[3] = Tvec4<T>(0.0f, 0.0f, C, 0.0f);
-  return result;
+  mat4d m;
+  m[0] = vec4d(A, 0.0f, 0.0f, 0.0f);
+  m[1] = vec4d(0.0f, q, 0.0f, 0.0f);
+  m[2] = vec4d(0.0f, 0.0f, B, -1.0f);
+  m[3] = vec4d(0.0f, 0.0f, C, 0.0f);
+  return m;
 }
 
-template <typename T> inline Tmat4<T> ortho(T left, T right, T bottom, T top, T n, T f)
+inline bool get_perspective(const tg::mat4d &m, double &fovy, double &aspect, double &n, double &f)
 {
-  Tmat4<T> result;
+  double l, r, b, t;
+  if (!get_frustum(m, l, r, b, t, n, f))
+    return false;
 
-  result[0] = Tvec4<T>(2.0f / (right - left), 0.0f, 0.0f, 0.0f);
-  result[1] = Tvec4<T>(0.0f, 2.0f / (top - bottom), 0.0f, 0.0f);
-#ifdef DEPTH_ZERO
-  result[2] = Tvec4<T>(0.0f, 0.0f, 1.0f / (n - f), 0.0f);
-  result[3] = Tvec4<T>((left + right) / (left - right), (bottom + top) / (bottom - top), n / (n - f), 1.0f);
-#else
-  result[2] = Tvec4<T>(0.0f, 0.0f, 2.0f / (n - f), 0.0f);
-  result[3] = Tvec4<T>((left + right) / (left - right), (bottom + top) / (bottom - top), (n + f) / (n - f), 1.0f);
-#endif
-  return result;
+  fovy = 2.0 * atan((t - b) / (2.0 * n)) * (180.0 / M_PI);
+  aspect = (r - l) / (t - b);
+  return true;
 }
 
-Tmat4<int> frustum(int, int, int, int, int, int) = delete;
-Tmat4<int> perspective(int, int, int, int) = delete;
-Tmat4<int> ortho(int, int, int, int, int, int) = delete;
+inline mat4d ortho(double l, double r, double b, double t, double n, double f)
+{
+  mat4d m;
+  m[0] = vec4d(2.0 / (r - l), 0.0, 0.0, 0.0);
+  m[1] = vec4d(0.0, 2.0 / (t - b), 0.0, 0.0);
+#ifdef ZERO_NEAR
+  m[2] = vec4d(0.0, 0.0, 1.0 / (n - f), 0.0);
+  m[3] = vec4d((l + r) / (l - r), (b + t) / (b - t), n / (n - f), 1.0);
+#else
+  m[2] = vec4d(0.0, 0.0, 2.0 / (n - f), 0.0);
+  m[3] = vec4d((l + r) / (l - r), (b + t) / (b - t), (n + f) / (n - f), 1.0);
+#endif
+  return m;
+}
 
 // reverse///////////////////////////////////////////////////////////////////////
-inline void view_planes(const mat4& transmat, vec4& l, vec4& r, vec4& b, vec4& t, vec4& n, vec4& f)
+inline void view_planes(const mat4d& transmat, vec4d& l, vec4d& r, vec4d& b, vec4d& t, vec4d& n, vec4d& f)
 {
   // mi represent ith row of transmat;
   //  left = m4 + m1
-  l = vec4(transmat[0][0] + transmat[0][3], transmat[1][0] + transmat[1][3], transmat[2][0] + transmat[2][3], transmat[3][0] + transmat[3][3]);
+  l = vec4d(transmat[0][0] + transmat[0][3], transmat[1][0] + transmat[1][3], transmat[2][0] + transmat[2][3], transmat[3][0] + transmat[3][3]);
   // right = m4 - m1
-  r = vec4(transmat[0][3] - transmat[0][0], transmat[1][3] - transmat[1][0], transmat[2][3] - transmat[2][0], transmat[3][3] - transmat[3][0]);
+  r = vec4d(transmat[0][3] - transmat[0][0], transmat[1][3] - transmat[1][0], transmat[2][3] - transmat[2][0], transmat[3][3] - transmat[3][0]);
   // bottom = m2 + m4
-  b = vec4(transmat[0][1] + transmat[0][3], transmat[1][1] + transmat[1][3], transmat[2][1] + transmat[2][3], transmat[3][1] + transmat[3][3]);
+  b = vec4d(transmat[0][1] + transmat[0][3], transmat[1][1] + transmat[1][3], transmat[2][1] + transmat[2][3], transmat[3][1] + transmat[3][3]);
   // top = m4 - m2
-  t = vec4(transmat[0][3] - transmat[0][1], transmat[1][3] - transmat[1][1], transmat[2][3] - transmat[2][1], transmat[3][3] - transmat[3][1]);
+  t = vec4d(transmat[0][3] - transmat[0][1], transmat[1][3] - transmat[1][1], transmat[2][3] - transmat[2][1], transmat[3][3] - transmat[3][1]);
   // near = m3 + m4
-  n = vec4(transmat[0][2] + transmat[0][3], transmat[1][2] + transmat[1][3], transmat[2][2] + transmat[2][3], transmat[3][2] + transmat[3][3]);
+  n = vec4d(transmat[0][2] + transmat[0][3], transmat[1][2] + transmat[1][3], transmat[2][2] + transmat[2][3], transmat[3][2] + transmat[3][3]);
   // far = m4 - m3
-  f = vec4(transmat[0][3] - transmat[0][2], transmat[1][3] - transmat[1][2], transmat[2][3] - transmat[2][2], transmat[3][3] - transmat[3][2]);
-}
-
-inline float sgn(float x)
-{
-  if (x > 0)
-    return 1.f;
-  else if (x < 0)
-    return -1.f;
-  return 0.f;
+  f = vec4d(transmat[0][3] - transmat[0][2], transmat[1][3] - transmat[1][2], transmat[2][3] - transmat[2][2], transmat[3][3] - transmat[3][2]);
 }
 
 // frustum space clip
 inline void near_clip(mat4& prjmat, const vec4& clip_plane)
 {
+  auto sgn = [](float x) -> float {
+    if (x > 0)
+      return 1.f;
+    else if (x < 0)
+      return -1.f;
+    return 0.f;
+  };
+
   vec4 q;
   q[0] = (sgn(clip_plane[0]) + prjmat[2][0]) / prjmat[0][0];
   q[1] = (sgn(clip_plane[1]) + prjmat[2][1]) / prjmat[1][1];
@@ -403,21 +440,19 @@ inline T mix(const T& a, const T& b, const T& t)
   return b + t * (b - a);
 }
 
-#ifdef CXX_17_SUPPORT 
-
-template <typename T, int n>
-std::optional<matNM<T, n, n>> inverse(const matNM<T, n, n>& ori)
+template <typename T, int n> 
+bool inverse(matNM<T, n, n> &des, const matNM<T, n, n> &ori)
 {
-  const int width = 2 * n;
+  constexpr int width = 2 * n;
   T mat[n][width];
   memset(&mat, 0, sizeof(T) * n * width);
-  T* cidx[n];
+  T *cidx[n];
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       mat[i][j] = ori[j][i];
     }
     mat[i][n + i] = 1;
-    cidx[i] = (T*)&mat[i];
+    cidx[i] = (T *)&mat[i];
   }
   for (int i = 0; i < n; i++) {
     if (fabs(cidx[i][i]) < teps<T>::eps) {
@@ -428,9 +463,9 @@ std::optional<matNM<T, n, n>> inverse(const matNM<T, n, n>& ori)
         k++;
       }
       if (k == n)
-        return std::optional<matNM<T, n, n>>();
+        return false;
       else {
-        T* tmp = cidx[i];
+        T *tmp = cidx[i];
         cidx[i] = cidx[k];
         cidx[k] = tmp;
       }
@@ -451,7 +486,6 @@ std::optional<matNM<T, n, n>> inverse(const matNM<T, n, n>& ori)
     }
   }
 
-  matNM<T, n, n> des;
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       des[j][i] = cidx[i][j + n];
@@ -460,16 +494,19 @@ std::optional<matNM<T, n, n>> inverse(const matNM<T, n, n>& ori)
   return des;
 }
 
-// translate, rotate, scale, scaleo
-template<typename T>
-std::tuple<vec3d, Tquat<T>, vec3d, Tquat<T>> decompose(const Tmat4<T>& m)
+inline void frisvad_tangent(const vec3 &n, vec3 &t, vec3 &b) 
 {
-  vec3d trans, scale;
-  Tquat<T> rotate, scale_o;
-  return std::make_tuple(trans, rotate, scale, scale_o);
-}
+  if(n.y() < -1.f + teps<float>::eps) {
+    t = vec3(0, -1, 0);
+    b = vec3(-1, 0, 0);
+    return;
+  }
 
-#endif
+  const float a = 1.f / (1.f + n.z());
+  const float c = -n.x() * n.y() * a;
+  t = vec3(c, -n.z(), 1.f - n.y() * n.y() * a);
+  b = vec3(1.f - n.x() * n.x() * a, -n.x(), c);
+}
 
 template<typename T>
 class Tboundingbox {
