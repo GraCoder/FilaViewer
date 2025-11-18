@@ -19,7 +19,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        FilaIns.Instance.MainWin = this;
+        //FilaIns.Instance.MainWin = this;
     }
 
     private async Task OpenFileHandle(IInteractionContext<string?, string[]?> context)
@@ -50,22 +50,22 @@ public partial class MainWindow : Window
 
     public void AddCube()
     {
-        var cubeOps = new PrimitiveOperator(PrimitiveOperator.PrimitiveType.Cube);
-        var ops = JsonSerializer.Serialize<PrimitiveOperator>(cubeOps, OperatorSerializeContext.Default.PrimitiveOperator);
-        int id = FilaIns.Instance.Win.OperatorS(ops, ops.Length);
-        if (id == -1)
-            return;
-        mdllist.AddModel(id, "Cube");
+        //var cubeOps = new PrimitiveOperator(PrimitiveOperator.PrimitiveType.Cube);
+        //var ops = JsonSerializer.Serialize<PrimitiveOperator>(cubeOps, OperatorSerializeContext.Default.PrimitiveOperator);
+        //int id = FilaIns.Instance.Win.OperatorS(ops, ops.Length);
+        //if (id == -1)
+        //    return;
+        //mdllist.AddModel(id, "Cube");
     }
 
     public void AddSphere()
     {
-        var cubeOps = new PrimitiveOperator(PrimitiveOperator.PrimitiveType.Sphere);
-        var ops = JsonSerializer.Serialize<PrimitiveOperator>(cubeOps, OperatorSerializeContext.Default.PrimitiveOperator);
-        int id = FilaIns.Instance.Win.OperatorS(ops, ops.Length);
-        if (id == -1)
-            return;
-        mdllist.AddModel(id, "Sphere");
+        //var cubeOps = new PrimitiveOperator(PrimitiveOperator.PrimitiveType.Sphere);
+        //var ops = JsonSerializer.Serialize<PrimitiveOperator>(cubeOps, OperatorSerializeContext.Default.PrimitiveOperator);
+        //int id = FilaIns.Instance.Win.OperatorS(ops, ops.Length);
+        //if (id == -1)
+        //    return;
+        //mdllist.AddModel(id, "Sphere");
     }
 
     public void SelectModel(uint id)

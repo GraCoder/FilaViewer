@@ -130,7 +130,7 @@ void FTScene::setEnvironment(const std::string_view &prefix, bool filter)
   }
 
   if (ibl_ktx && skybox_ktx) {
-    _ibl_tex = ktxreader::Ktx1Reader::createTexture(_engine, ibl_ktx, false);
+    _ibl_tex = ktxreader::Ktx1Reader::createTexture(_engine, ibl_ktx, true);
     _ibl = IndirectLight::Builder()
              //.irradiance(3, irr_sh)
              .intensity(30000)
@@ -138,7 +138,7 @@ void FTScene::setEnvironment(const std::string_view &prefix, bool filter)
              .build(*_engine);
     _scene->setIndirectLight(_ibl);
 
-    _skybox_tex = ktxreader::Ktx1Reader::createTexture(_engine, skybox_ktx, false);
+    _skybox_tex = ktxreader::Ktx1Reader::createTexture(_engine, skybox_ktx, true);
     _skybox = Skybox::Builder().showSun(true).environment(_skybox_tex).build(*_engine);
     //_skybox->setLayerMask(0x7, 0x4);
     _scene->setSkybox(_skybox);

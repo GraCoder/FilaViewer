@@ -30,7 +30,6 @@ public:
   void showEntity(int id, bool show) override;
 
 public:
-
   void realize(filament::Engine *engine);
 
   const std::shared_ptr<FTScene> &scene() { return _scene; }

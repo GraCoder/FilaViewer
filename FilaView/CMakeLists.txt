@@ -200,7 +200,5 @@ if(Assimp_FOUND)
 target_link_libraries(${target_name} PRIVATE assimp::assimp)
 endif()
 
-#wtf PUBLIC PRIVATE will block the incude directories
-target_link_libraries(${target_name} INTERFACE absl::base absl::strings)
-#target_link_libraries(${target_name} PRIVATE Opengl32)
+target_link_libraries(${target_name} PUBLIC absl::base absl::strings)
 

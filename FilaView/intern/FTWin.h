@@ -27,7 +27,6 @@ class FTWin : public TWin {
   friend class TWin;
 
 public:
-
   FTWin(FTWin *);
   ~FTWin();
 
@@ -47,7 +46,6 @@ public:
   std::vector<std::shared_ptr<TOperator>> &operators() { return _operators; }
 
 private:
-
   void createWindow();
 
   void createEngine();
@@ -63,11 +61,9 @@ private:
   void pollEvents();
 
 private:
-
   void gui(filament::Engine *, filament::View *);
 
 private:
-
   bool _close = false;
   bool _realized = false;
 
@@ -78,6 +74,8 @@ private:
   filament::Renderer *_renderer = nullptr;
 
   filament::View *_gview = nullptr;
+
+  float _fps = 0;
   filagui::ImGuiHelper *_gui = nullptr;
 
   std::shared_ptr<FTView> _view = nullptr;

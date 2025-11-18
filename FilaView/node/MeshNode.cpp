@@ -15,8 +15,9 @@ void MeshNode::build(const std::string &file, filament::Engine *engine, const fi
   if (!_assimp)
     _assimp = std::make_unique<MeshAssimp>();
 
-  if (!_assimp->loadAssert(file.c_str()))
+  if (!_assimp->loadAssert(file.c_str())) {
     return;
+  }
 
   _assimp->buildAssert(engine, basicmtl, defmtl);
 

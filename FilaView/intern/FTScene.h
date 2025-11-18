@@ -43,7 +43,6 @@ public:
   void setEnvironment(const std::string_view &prefix = "", bool filter = false);
 
 public:
-
   void showEntity(int id, bool show);
 
   int loadModel(const std::string &file, float sz);

@@ -12,13 +12,17 @@ public:
   ManipOperator();
   ~ManipOperator();
 
+  bool process(double refTime);
+
   void getLookAt(tg::vec3d &, tg::vec3d &, tg::vec3d &);
 
   void setViewer(FTView *view) { _view = view; }
   void setPivot(const tg::vec3d &pos, double dis = 10);
   void setViewport(int w, int h);
 
-public:
+  bool handle(TView *view, const SDL_Event *event) override;
+
+private:
   bool mousePress(TView *view, const SDL_MouseButtonEvent &btn) override;
   bool mouseRelease(TView *view, const SDL_MouseButtonEvent &btn) override;
   bool mouseMove(TView *view, const SDL_MouseMotionEvent &mov) override;
@@ -37,11 +41,10 @@ private:
   tg::quatd _rotation;
   double _distance = 100;
 
-  struct MouseStamp {
-    int x, y;
-    uint8_t button;
-  };
-  MouseStamp _ms_t0, _ms_t1;
+  double _refTime;
+
+  uint32_t _throwStamp;
+  float _dx, _dy, _throwTime = 0;
 
   std::optional<tg::vec3d> _upAxis, _rtAxis;
 };

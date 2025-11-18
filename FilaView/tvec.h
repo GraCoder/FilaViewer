@@ -659,7 +659,7 @@ public:
 
   inline const T &operator[](int32_t n) const { return data_[n]; }
 
-  inline Tquat operator+(const Tquat &q) const { return quat(s_ + q.s_, v_ + q.v_); }
+  inline Tquat operator+(const Tquat &q) const { return Tquat(s_ + q.s_, v_ + q.v_); }
 
   inline Tquat &operator+=(const Tquat &q)
   {
@@ -668,7 +668,7 @@ public:
     return *this;
   }
 
-  inline Tquat operator-(const Tquat &q) const { return quat(s_ - q.s_, v_ - q.v_); }
+  inline Tquat operator-(const Tquat &q) const { return Tquat(s_ - q.s_, v_ - q.v_); }
 
   inline Tquat &operator-=(const Tquat &q)
   {

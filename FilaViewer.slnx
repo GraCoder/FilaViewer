@@ -1,0 +1,33 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="MinSizeRel" />
+    <BuildType Name="Release" />
+    <BuildType Name="RelWithDebInfo" />
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="../0/filament/filament/backend/backend.vcxproj" Id="35e50c96-b325-3bef-8db9-8e2fb398c95f">
+    <Platform Project="x64" />
+  </Project>
+  <Project Path="../0/filament/filament/filament.vcxproj" Id="e3ae7dbd-42f8-3389-8781-01923cfe897a">
+    <Platform Project="x64" />
+  </Project>
+  <Project Path="../0/filament/libs/filamat/filamat.vcxproj" Id="8d7e1e83-3bc3-3fe0-9342-2f4e46c32035">
+    <Platform Project="x64" />
+  </Project>
+  <Project Path="../0/filament/libs/gltfio/gltfio_core.vcxproj" Id="df8f4bbf-7671-3aea-8f0e-77998c08ea50">
+    <Platform Project="x64" />
+  </Project>
+  <Project Path="../0/FilaViewer/FilaView/FilaView.vcxproj" Id="c6b1c0b5-100c-3f6b-8994-e883be28c88e">
+    <Platform Project="x64" />
+  </Project>
+  <Project Path="../0/FilaViewer/ViewTest/ViewTest.vcxproj" Id="1af8d22a-edcb-3d96-a1aa-3c82a277fd26">
+    <Platform Project="x64" />
+  </Project>
+  <Project Path="CSViewer/CSViewer.csproj">
+    <BuildType Solution="MinSizeRel|*" Project="Release" />
+    <BuildType Solution="RelWithDebInfo|*" Project="Debug" />
+  </Project>
+</Solution>

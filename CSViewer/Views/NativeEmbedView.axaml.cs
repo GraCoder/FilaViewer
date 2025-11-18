@@ -96,19 +96,19 @@ namespace MdlViewer.Views
 
     public unsafe class VulkanWin : INativeControl
     {
-        fv.IWin ?_win = null;
+        fv.IWin *_win = null;
 
         public IPlatformHandle CreateControl(IPlatformHandle parent, Func<IPlatformHandle> createDefault)
         {
 #if true 
             _win = fv.IWin.create(null, false);
             //_win.CreateOperators();
-            _win.exec(true);
+            _win->exec(true);
 
             //FilaIns.Instance.Win = _win;
             //FilaIns.Instance.View = _win.View(0);
 
-            return new Win32WindowControlHandle((IntPtr)_win.handle, "HWND");
+            return new Win32WindowControlHandle((IntPtr)_win->handle(), "HWND");
 #else
             return null;
 #endif

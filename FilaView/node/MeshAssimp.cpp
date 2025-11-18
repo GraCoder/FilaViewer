@@ -120,11 +120,11 @@ struct MaterialConfig {
   uint64_t tex_ao = 0;
   uint8_t uv_ao = 0;
 
-  float metallic = 0;
+  float metallic = 0.2;
   uint64_t tex_metallic = 0;
   uint8_t uv_metallic = 0;
 
-  float roughness = 0.8;
+  float roughness = 0.5;
   uint64_t tex_roughness = 0;
   uint8_t uv_roughness = 0;
 
@@ -835,14 +835,18 @@ std::unique_ptr<MaterialConfig> MeshAssimp::loadMaterial(const aiScene *scene, c
   }
 
   {
-    material->Get(AI_MATKEY_METALLIC_FACTOR, mtl_config.metallic);
+    float metallic = -1;
+    material->Get(AI_MATKEY_METALLIC_FACTOR, metallic);
+    if (metallic > 0 && metallic < 1) mtl_config.metallic = metallic;
     std::tie(mtl_config.tex_metallic, mtl_config.uv_metallic, tex_name) = loadTextures(scene, material, aiTextureType_METALNESS);
     if (mtl_config.tex_metallic)
       spdlog::debug("metallic texture : %s", tex_name);
   }
 
   {
-    material->Get(AI_MATKEY_ROUGHNESS_FACTOR, mtl_config.roughness);
+    float roughness = -1;
+    material->Get(AI_MATKEY_ROUGHNESS_FACTOR,  roughness);
+    if (roughness > 0 && roughness < 1) mtl_config.roughness = roughness;
     std::tie(mtl_config.tex_roughness, mtl_config.uv_roughness, tex_name) = loadTextures(scene, material, aiTextureType_DIFFUSE_ROUGHNESS);
   }
 
@@ -998,8 +1002,8 @@ std::string MeshAssimp::shaderFromConfig(const MaterialConfig &config)
 
   // shader += "float2 uv_metallic_rough = getUV" + std::to_string(config.uv_metallic_rough) + "();\n";
   shader += R"SHADER(
-        //material.metallic = materialParams.metallicFactor;
-        //material.roughness = materialParams.roughnessFactor;
+        material.metallic = materialParams.metallicFactor;
+        material.roughness = materialParams.roughnessFactor;
         //material.roughness = materialParams.roughnessFactor * metallicRoughness.g;
         //material.metallic = materialParams.metallicFactor * metallicRoughness.b;
         //vec4 metallicRoughness = texture(materialParams_metallicRoughnessMap, uv_metallic_rough);

@@ -19,7 +19,7 @@ internal class ModelNode
         get { return _visible; }
         set {
             _visible = value;
-            FilaIns.Instance.View?.ShowModel(Id, _visible);
+            //FilaIns.Instance.View?.ShowModel(Id, _visible);
         }
     }
 

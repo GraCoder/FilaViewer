@@ -1,8 +1,9 @@
 #include <SDL2/SDL_events.h>
+#include <SDL2/SDL_timer.h>
 #include "ManipOperator.h"
 #include "TView.h"
 
-#define RefreshView if(_view) _view->dirtyCamera();
+#define THROW_EVENT SDL_USEREVENT + 1000
 
 namespace fv {
 
@@ -13,6 +14,18 @@ ManipOperator::ManipOperator()
 }
 
 ManipOperator::~ManipOperator() {}
+
+bool ManipOperator::process(double refTime)
+{
+  if (_throwTime > 0) {
+
+    float f = 3 * (refTime - _refTime) / _throwTime;
+    auto dx = _dx * f; auto dy = _dy * f;
+    performLeft(0, dx, dy);
+  }
+  _refTime = refTime;
+  return true;
+}
 
 void ManipOperator::getLookAt(tg::vec3d &eye, tg::vec3d &target, tg::vec3d &up)
 {
@@ -27,43 +40,55 @@ void ManipOperator::setPivot(const tg::vec3d &pos, double dis) {}
 
 void ManipOperator::setViewport(int w, int h) {}
 
+bool ManipOperator::handle(TView *view, const SDL_Event *event)
+{
+  bool result = TOperator::handle(view, event);
+  return result;
+}
+
 bool ManipOperator::mousePress(TView *view, const SDL_MouseButtonEvent &btn)
 {
-  _ms_t0.x = _ms_t1.x = btn.x;
-  _ms_t1.y = _ms_t1.y = btn.y;
-
-  if (btn.button == SDL_BUTTON_LEFT) {
-    _ms_t0.button = SDL_BUTTON_LEFT;
+  {
   }
+  if (btn.button == SDL_BUTTON_LEFT) {
+  }
+  _throwTime = 0;
+  _dx = btn.x; _dy = btn.y;
+  _throwStamp = btn.timestamp;
   return true;
 }
 
 bool ManipOperator::mouseRelease(TView *view, const SDL_MouseButtonEvent &btn)
 {
-  _ms_t0.x = btn.x;
-  _ms_t0.y = btn.y;
+  auto inv = btn.timestamp - _throwStamp;
+  if (inv > 0) {
+    _dx = btn.x - _dx; _dy = btn.y - _dy;
+    float velocity = sqrt(_dx * _dx + _dy * _dy) / inv;
+    if (velocity > 0.1) {
+      _throwTime = inv;
+      auto &vp = view->viewport();
+      _dx /= vp.z(); _dy /= vp.w();
+    }
+  }
 
   return true;
 }
 
 bool ManipOperator::mouseMove(TView *view, const SDL_MouseMotionEvent &motion)
 {
-  _ms_t1 = _ms_t0;
-  _ms_t0.x = motion.x;
-  _ms_t0.y = motion.y;
-
   auto &vp = view->viewport();
-  float dx = _ms_t0.x - _ms_t1.x, dy = _ms_t0.y - _ms_t1.y;
-  dx = dx / vp.z(), dy = dy / vp.w();
-
+  float dx = motion.xrel, dy = motion.yrel;
+  dx /= vp.z(); dy /= vp.w();
   if (motion.state & SDL_BUTTON_LMASK) {
-    _ms_t0.button = SDL_BUTTON_LEFT;
-    performLeft(view, dx, dy); 
+    performLeft(view, dx, dy);
   } else if (motion.state & SDL_BUTTON_RMASK) {
-    _ms_t0.button = SDL_BUTTON_RIGHT;
     performRight(view, dx, dy);
   } else if (motion.state & SDL_BUTTON_MMASK) {
-    _ms_t0.button = SDL_BUTTON_MIDDLE;
+  }
+
+  if (motion.state && (motion.timestamp - _throwStamp) > 50) {
+    _dx = motion.x; _dy = motion.y;
+    _throwStamp = motion.timestamp;
   }
   return true;
 }
@@ -91,6 +116,9 @@ bool ManipOperator::keyPress(TView *view, const SDL_KeyboardEvent &key)
 bool ManipOperator::keyRelease(TView *view, const SDL_KeyboardEvent &key)
 {
   if (key.keysym.scancode == SDL_SCANCODE_SPACE) {
+    _throwTime = 0;
+    _distance = 100;
+    _rotation = tg::quatd();
   }
   return true;
 }
@@ -101,10 +129,8 @@ void ManipOperator::performLeft(TView *view, float dx, float dy)
     tg::quatd qx = tg::quatd::rotate(-dx, *_upAxis);
     auto right = qx * _rotation * *_rtAxis;
     tg::quatd qy = tg::quatd::rotate(-dy, right);
-  
     _rotation = qy * qx * _rotation;
   }
-
 }
 
 void ManipOperator::performRight(TView *view, float dx, float dy)
@@ -122,6 +148,5 @@ void ManipOperator::performRight(TView *view, float dx, float dy)
     _target += oft;
   }
 }
-
 
 } // namespace fv

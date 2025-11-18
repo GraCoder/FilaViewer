@@ -1,6 +1,6 @@
 D:\06_Test\CppSharp\bin\Release_x64\CppSharp.CLI.exe -a x64  -m FilaView.dll -o C:\Users\t\dev\FilaViewer\MdlViewer\FilaView C:\Users\t\dev\FilaViewer\FilaView\IWin.h C:\Users\t\dev\FilaViewer\FilaView\node\Node.h
 
-ClangSharpPInvokeGenerator.exe -f C:\Users\t\dev\FilaViewer\FilaView\IWin.h  -o C:\Users\t\Downloads\IWin.cs -n fv -l FilaView
+D:\06_Test\ClangSharp\artifacts\bin\sources\ClangSharpPInvokeGenerator\Debug\net10.0\ClangSharpPInvokeGenerator.exe @GenerateClang.rsp
 
 
 cmgen.exe  --format=ktx --size=512  -x D:\49_temp\engine\examples\assets\hdri  D:\49_temp\engine\examples\assets\hdri\wide-street.hdr 

@@ -245,19 +245,16 @@ void FTWin::realizeContext()
 #define OperIter for (auto iter = _operators.rbegin(); iter != _operators.rend(); iter++) handled |= (*iter)
 void FTWin::pollEvents()
 {
-  uint32_t freq = SDL_GetPerformanceFrequency() / 1000;
-  uint64_t stamp = SDL_GetPerformanceCounter(), prev_time = stamp;
+  uint64_t stampInit = SDL_GetPerformanceCounter(), stampPrev = stampInit;
 
   static constexpr int mk[4] = {0, 0, 1, 2};
   constexpr int max_event = 8;
   SDL_Event events[max_event];
 
-  while (!_close) {
-    if (!UTILS_HAS_THREADING)
-      _engine->execute();
-
+  while (true) {
     int eventCount = 0;
-    bool immediate = false;
+    bool refresh = false, setCamera = false;
+    double freq = SDL_GetPerformanceFrequency();
 
     while (eventCount < max_event && SDL_PollEvent(&events[eventCount++]) != 0) {}
     for (int i = 0; i < eventCount; i++) {
@@ -319,7 +316,7 @@ void FTWin::pollEvents()
         case SDL_WINDOWEVENT_SIZE_CHANGED:
           // case SDL_WINDOWEVENT_RESIZED:
           {
-            immediate = true;
+            refresh = true;
             uint32_t w = event.window.data1;
             uint32_t h = event.window.data2;
             resize(w, h);
@@ -335,6 +332,7 @@ void FTWin::pollEvents()
         case SDL_WINDOWEVENT_SHOWN: {
           if (!_realized)
             realizeContext();
+          setCamera = true;
           break;
         }
         default:
@@ -345,15 +343,18 @@ void FTWin::pollEvents()
         break;
       }
 
-      if (!handled && _manip->handle(_view.get(), &event)) {
-        filament::math::double3 eye, target, up;
-        _manip->getLookAt(*(tg::vec3d *)&eye, *(tg::vec3d *)&target, *(tg::vec3d *)&up);
-        static_cast<FTView *>(_view.get())->view()->getCamera().lookAt(eye, target, up);
-      }
+      if (!handled && _manip->handle(_view.get(), &event))
+        setCamera = true;
     }
+
+    if (_close)
+      break;
 
     if (!_realized)
       continue;
+
+    if (!UTILS_HAS_THREADING)
+      _engine->execute();
 
     // SDL_DisplayMode mode;
     // if(SDL_GetDesktopDisplayMode(SDL_GetWindowDisplayIndex(_window), &mode) == 0 && mode.refresh_rate != 0) {
@@ -361,22 +362,40 @@ void FTWin::pollEvents()
     // }
 
     uint64_t now = SDL_GetPerformanceCounter();
-    double timestamp = (now - stamp) / freq;
-    view()->process(timestamp);
+    double timestamp = (now - stampInit) / freq;
+    {
+      auto refTime = timestamp * 1000.0;
+      if ((_manip && _manip->process(refTime)) || setCamera) {
+        filament::math::double3 eye, target, up;
+        _manip->getLookAt(*(tg::vec3d *)&eye, *(tg::vec3d *)&target, *(tg::vec3d *)&up);
+        static_cast<FTView *>(_view.get())->view()->getCamera().lookAt(eye, target, up);
+      }
+      view()->process(refTime);
+    }
 
     if (_gui) {
       ImGui::GetIO().DeltaTime = timestamp;
       _gui->render(timestamp, std::bind(&FTWin::gui, this, std::placeholders::_1, std::placeholders::_2));
     }
 
-    if (!immediate) {
-      uint32_t interval = uint32_t(now - prev_time) / freq;
-      if (interval < 10) {
-        SDL_Delay(10 - interval);
-      }
+    if (!refresh) {
+      uint32_t interval = uint32_t(now - stampPrev) / freq * 1000.0;
+      if (interval < 8)
+        SDL_Delay(8 - interval);
     }
 
-    prev_time = SDL_GetPerformanceCounter();
+    {
+      auto counter = SDL_GetPerformanceCounter();
+      static uint64_t fpsStamp = stampInit;
+#ifndef NDEBUG
+      if ((counter - fpsStamp) / freq > 1) {
+        fpsStamp = counter;
+        _fps = freq / double(counter - stampPrev);
+      }
+#endif
+      stampPrev = counter;
+    }
+
     if (_renderer->beginFrame(swapchain())) {
       _renderer->render(*_view);
 
@@ -397,6 +416,8 @@ void FTWin::gui(filament::Engine *, filament::View *)
   ImGui::SetNextWindowSize(ImVec2(400, 200), ImGuiCond_Once);
   ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_Once);
   ImGui::Begin("Panel");
+  if (_fps > 0)
+    ImGui::LabelText("FPS", "%8.3f", _fps);
   if (ImGui::Button("Add Cube"))
     _view->scene()->addShape(0);
   if (ImGui::Button("Add Sphere"))
