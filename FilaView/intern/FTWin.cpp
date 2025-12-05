@@ -157,27 +157,6 @@ void FTWin::setupGui()
   SDL_GetWindowWMInfo(_window, &wmInfo);
   // io.ImeWindowHandle = wmInfo.info.win.window;
 #endif
-  io.KeyMap[ImGuiKey_Tab] = SDL_SCANCODE_TAB;
-  io.KeyMap[ImGuiKey_LeftArrow] = SDL_SCANCODE_LEFT;
-  io.KeyMap[ImGuiKey_RightArrow] = SDL_SCANCODE_RIGHT;
-  io.KeyMap[ImGuiKey_UpArrow] = SDL_SCANCODE_UP;
-  io.KeyMap[ImGuiKey_DownArrow] = SDL_SCANCODE_DOWN;
-  io.KeyMap[ImGuiKey_PageUp] = SDL_SCANCODE_PAGEUP;
-  io.KeyMap[ImGuiKey_PageDown] = SDL_SCANCODE_PAGEDOWN;
-  io.KeyMap[ImGuiKey_Home] = SDL_SCANCODE_HOME;
-  io.KeyMap[ImGuiKey_End] = SDL_SCANCODE_END;
-  io.KeyMap[ImGuiKey_Insert] = SDL_SCANCODE_INSERT;
-  io.KeyMap[ImGuiKey_Delete] = SDL_SCANCODE_DELETE;
-  io.KeyMap[ImGuiKey_Backspace] = SDL_SCANCODE_BACKSPACE;
-  io.KeyMap[ImGuiKey_Space] = SDL_SCANCODE_SPACE;
-  io.KeyMap[ImGuiKey_Enter] = SDL_SCANCODE_RETURN;
-  io.KeyMap[ImGuiKey_Escape] = SDL_SCANCODE_ESCAPE;
-  io.KeyMap[ImGuiKey_A] = SDL_SCANCODE_A;
-  io.KeyMap[ImGuiKey_C] = SDL_SCANCODE_C;
-  io.KeyMap[ImGuiKey_V] = SDL_SCANCODE_V;
-  io.KeyMap[ImGuiKey_X] = SDL_SCANCODE_X;
-  io.KeyMap[ImGuiKey_Y] = SDL_SCANCODE_Y;
-  io.KeyMap[ImGuiKey_Z] = SDL_SCANCODE_Z;
   io.SetClipboardTextFn = [](void *, const char *text) { SDL_SetClipboardText(text); };
   io.GetClipboardTextFn = [](void *) -> const char * { return SDL_GetClipboardText(); };
   io.ClipboardUserData = nullptr;
@@ -247,7 +226,6 @@ void FTWin::pollEvents()
 {
   uint64_t stampInit = SDL_GetPerformanceCounter(), stampPrev = stampInit;
 
-  static constexpr int mk[4] = {0, 0, 1, 2};
   constexpr int max_event = 8;
   SDL_Event events[max_event];
 
@@ -267,45 +245,46 @@ void FTWin::pollEvents()
         break;
       }
       case SDL_KEYDOWN:
-        OperIter->keyPress(_view.get(), event.key);
+        if (_gui && _gui->keyDn(event.key))
+          handled = true;
+        else
+          OperIter->keyPress(_view.get(), event.key);
         break;
       case SDL_KEYUP:
-        OperIter->keyRelease(_view.get(), event.key);
+        if (_gui && _gui->keyUp(event.key))
+          handled = true;
+        else
+          OperIter->keyRelease(_view.get(), event.key);
+        break;
+      case SDL_TEXTINPUT:
+        if (_gui && _gui->inputText(event.text.text)) {}
         break;
       case SDL_MOUSEWHEEL: {
-        OperIter->mouseWheel(_view.get(), event.wheel);
+        if (_gui && _gui->mouseWheel(event.wheel))
+          handled = true;
+        else
+          OperIter->mouseWheel(_view.get(), event.wheel);
         break;
       }
       case SDL_MOUSEBUTTONDOWN: {
-        if (_gui) {
-          auto &io = ImGui::GetIO();
-          io.AddMousePosEvent(event.button.x, event.button.y);
-          io.AddMouseButtonEvent(mk[event.button.button], true);
-          if (io.WantCaptureMouse)
-            break;
-        }
-        OperIter->mousePress(_view.get(), event.button);
+        if (_gui && _gui->mouseButtonDn(event.button))
+          handled = true;
+        else
+          OperIter->mousePress(_view.get(), event.button);
         break;
       }
       case SDL_MOUSEBUTTONUP: {
-        if (_gui) {
-          auto &io = ImGui::GetIO();
-          io.AddMousePosEvent(event.button.x, event.button.y);
-          io.AddMouseButtonEvent(mk[event.button.button], false);
-          if (io.WantCaptureMouse)
-            break;
-        }
-        OperIter->mouseRelease(_view.get(), event.button);
+        if (_gui && _gui->mouseButtonUp(event.button))
+          handled = true;
+        else
+          OperIter->mouseRelease(_view.get(), event.button);
         break;
       }
       case SDL_MOUSEMOTION: {
-        if (_gui) {
-          auto &io = ImGui::GetIO();
-          io.AddMousePosEvent(event.motion.x, event.motion.y);
-          if (io.WantCaptureMouse)
-            break;
-        }
-        OperIter->mouseMove(_view.get(), event.motion);
+        if (_gui && _gui->mouseMove(event.motion))
+          handled = true;
+        else
+          OperIter->mouseMove(_view.get(), event.motion);
         break;
       }
       case SDL_DROPFILE:
@@ -362,6 +341,14 @@ void FTWin::pollEvents()
     // }
 
     uint64_t now = SDL_GetPerformanceCounter();
+    if (!refresh) {
+      uint32_t interval = uint32_t(now - stampPrev) / freq * 1000.0;
+      if (interval < 8) {
+        SDL_Delay(8 - interval);
+        now = SDL_GetPerformanceCounter();
+      }
+    }
+
     double timestamp = (now - stampInit) / freq;
     {
       auto refTime = timestamp * 1000.0;
@@ -374,26 +361,19 @@ void FTWin::pollEvents()
     }
 
     if (_gui) {
-      ImGui::GetIO().DeltaTime = timestamp;
-      _gui->render(timestamp, std::bind(&FTWin::gui, this, std::placeholders::_1, std::placeholders::_2));
-    }
-
-    if (!refresh) {
-      uint32_t interval = uint32_t(now - stampPrev) / freq * 1000.0;
-      if (interval < 8)
-        SDL_Delay(8 - interval);
+      float delta = (now - stampPrev) / freq;
+      _gui->render(delta, std::bind(&FTWin::gui, this, std::placeholders::_1, std::placeholders::_2));
     }
 
     {
-      auto counter = SDL_GetPerformanceCounter();
       static uint64_t fpsStamp = stampInit;
 #ifndef NDEBUG
-      if ((counter - fpsStamp) / freq > 1) {
-        fpsStamp = counter;
-        _fps = freq / double(counter - stampPrev);
+      if ((now - fpsStamp) / freq > 1) {
+        fpsStamp = now;
+        _fps = freq / double(now - stampPrev);
       }
 #endif
-      stampPrev = counter;
+      stampPrev = now;
     }
 
     if (_renderer->beginFrame(swapchain())) {
@@ -422,6 +402,11 @@ void FTWin::gui(filament::Engine *, filament::View *)
     _view->scene()->addShape(0);
   if (ImGui::Button("Add Sphere"))
     _view->scene()->addShape(1);
+
+  static char text[256] = {0};
+  if(ImGui::InputText("123", text, 256)){
+    printf("");
+  }
   ImGui::End();
 }
 

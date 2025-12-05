@@ -48,12 +48,9 @@ bool ManipOperator::handle(TView *view, const SDL_Event *event)
 
 bool ManipOperator::mousePress(TView *view, const SDL_MouseButtonEvent &btn)
 {
-  {
-  }
   if (btn.button == SDL_BUTTON_LEFT) {
   }
-  _throwTime = 0;
-  _dx = btn.x; _dy = btn.y;
+  _throwTime = 0; _dx = btn.x; _dy = btn.y;
   _throwStamp = btn.timestamp;
   return true;
 }
