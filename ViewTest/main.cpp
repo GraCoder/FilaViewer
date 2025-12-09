@@ -32,6 +32,6 @@ int main(int argc, char **argv)
 
   win->createOperators();
   win->setFlags(win->flags() | win->en_SetupGui);
-  win->exec(false);
+  win->exec();
   fv::TWin::destroy(win);
 }

@@ -53,8 +53,9 @@ ImGuiHelper::ImGuiHelper(Engine *engine, filament::View *view, const Path &fontP
   , mImGuiContext(imGuiContext ? imGuiContext : ImGui::CreateContext())
 {
   ImGuiIO &io = ImGui::GetIO();
-  io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
-  io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
+  //io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;
+  //io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
+  //io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
   mSettingsPath.setPath(Path::getUserSettingsDirectory() + Path(std::string(".") + Path::getCurrentExecutable().getNameWithoutExtension()) +
                         Path("imgui_settings.ini"));
   mSettingsPath.getParent().mkdirRecursive();
@@ -66,7 +67,7 @@ ImGuiHelper::ImGuiHelper(Engine *engine, filament::View *view, const Path &fontP
   // If the given font path is invalid, ImGui will silently fall back to proggy, which is a
   // tiny "pixel art" texture that is compiled into the library.
   if (fontPath.isFile()) {
-    io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f);
+    io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 16.0f, nullptr, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
   }
   createAtlasTexture(engine);
 
@@ -122,6 +123,18 @@ ImGuiHelper::~ImGuiHelper()
   mImGuiContext = nullptr;
 }
 
+inline void ImGuiHelper::syncThreads()
+{
+#if UTILS_HAS_THREADING
+  if (!mHasSynced) {
+    // This is called only when ImGui needs to grow a vertex buffer, which occurs a few times
+    // after launching and rarely (if ever) after that.
+    Fence::waitAndDestroy(mEngine->createFence());
+    mHasSynced = true;
+  }
+#endif
+}
+
 void ImGuiHelper::setDisplaySize(int width, int height, float scaleX, float scaleY, bool flipVertical)
 {
   ImGuiIO &io = ImGui::GetIO();
@@ -139,9 +152,10 @@ void ImGuiHelper::setDisplaySize(int width, int height, float scaleX, float scal
 
 void ImGuiHelper::render(float timeStepInSeconds, Callback imguiCommands)
 {
+  if (!_refresh) return; _refresh = false;
   ImGui::SetCurrentContext(mImGuiContext);
   ImGuiIO &io = ImGui::GetIO();
-  //io.DeltaTime = timeStepInSeconds;
+  io.DeltaTime = timeStepInSeconds;
   // First, let ImGui process events and increment its internal frame count.
   // This call will also update the io.WantCaptureMouse, io.WantCaptureKeyboard flag
   // that tells us whether to dispatch inputs (or not) to the app.
@@ -415,8 +429,10 @@ bool ImGuiHelper::keyDn(const SDL_KeyboardEvent &keyEvent)
   io.AddKeyEvent(static_cast<ImGuiKey>(key), true);
   if (keyEvent.keysym.mod > 0)
     addMod(io, keyEvent.keysym.mod, true);
-  if (io.WantCaptureKeyboard)
+  if (io.WantCaptureKeyboard) {
+    _refresh = true;
     return true;
+  }
   return false;
 }
 
@@ -428,8 +444,10 @@ bool ImGuiHelper::keyUp(const SDL_KeyboardEvent &keyEvent)
   io.AddKeyEvent(static_cast<ImGuiKey>(key), false);
   if (keyEvent.keysym.mod > 0)
     addMod(io, keyEvent.keysym.mod, false);
-  if (io.WantCaptureKeyboard)
+  if (io.WantCaptureKeyboard) {
+    _refresh = true;
     return true;
+  }
   return false;
 }
 
@@ -437,7 +455,11 @@ bool ImGuiHelper::inputText(const char *text)
 {
   auto &io = ImGui::GetIO();
   io.AddInputCharactersUTF8(text);
-  return io.WantCaptureKeyboard;
+  if (io.WantCaptureKeyboard) {
+    _refresh = true;
+    return true;
+  }
+  return false;
 }
 
 bool ImGuiHelper::mouseButtonDn(const SDL_MouseButtonEvent &mEvent)
@@ -445,8 +467,10 @@ bool ImGuiHelper::mouseButtonDn(const SDL_MouseButtonEvent &mEvent)
   auto &io = ImGui::GetIO();
   io.AddMousePosEvent(mEvent.x, mEvent.y);
   io.AddMouseButtonEvent(mk[mEvent.button], true);
-  if (io.WantCaptureMouse)
+  if (io.WantCaptureMouse) {
+    _refresh = true;
     return true;
+  }
 
   return false;
 }
@@ -456,18 +480,22 @@ bool ImGuiHelper::mouseButtonUp(const SDL_MouseButtonEvent &mEvent)
   auto &io = ImGui::GetIO();
   io.AddMousePosEvent(mEvent.x, mEvent.y);
   io.AddMouseButtonEvent(mk[mEvent.button], false);
-  if (io.WantCaptureMouse)
+  if (io.WantCaptureMouse) {
+    _refresh = true;
     return true;
+  }
 
   return false;
 }
 
 bool ImGuiHelper::mouseMove(const SDL_MouseMotionEvent &mEvent)
 {
+  _refresh = true;
   auto &io = ImGui::GetIO();
   io.AddMousePosEvent(mEvent.x, mEvent.y);
-  if (io.WantCaptureMouse)
+  if (io.WantCaptureMouse) {
     return true;
+  }
 
   return false;
 }
@@ -476,8 +504,10 @@ bool ImGuiHelper::mouseWheel(const SDL_MouseWheelEvent &wEvent)
 {
   auto &io = ImGui::GetIO();
   io.AddMouseWheelEvent(wEvent.mouseX, wEvent.mouseY);
-  if (io.WantCaptureMouse)
+  if (io.WantCaptureMouse) {
+    _refresh = true;
     return true;
+  }
 
   return false;
 }
@@ -553,16 +583,5 @@ void ImGuiHelper::createIndexBuffer(size_t bufferIndex, size_t capacity)
   mIndexBuffers[bufferIndex] = IndexBuffer::Builder().indexCount(capacity).bufferType(IndexBuffer::IndexType::USHORT).build(*mEngine);
 }
 
-void ImGuiHelper::syncThreads()
-{
-#if UTILS_HAS_THREADING
-  if (!mHasSynced) {
-    // This is called only when ImGui needs to grow a vertex buffer, which occurs a few times
-    // after launching and rarely (if ever) after that.
-    Fence::waitAndDestroy(mEngine->createFence());
-    mHasSynced = true;
-  }
-#endif
-}
 
 } // namespace filagui

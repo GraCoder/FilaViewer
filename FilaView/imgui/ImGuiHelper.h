@@ -89,8 +89,10 @@ private:
   void createVertexBuffer(size_t bufferIndex, size_t capacity);
   void createIndexBuffer(size_t bufferIndex, size_t capacity);
   void syncThreads();
+
+private:
   filament::Engine *mEngine;
-  filament::View *mView; // The view is owned by the client.
+  filament::View *mView;
   filament::Scene *mScene;
   filament::Material *mMaterial = nullptr;
   filament::Camera *mCamera = nullptr;
@@ -105,6 +107,8 @@ private:
   filament::TextureSampler mSampler;
   bool mFlipVertical = false;
   utils::Path mSettingsPath;
+
+  bool _refresh = true;
 };
 
 } // namespace filagui

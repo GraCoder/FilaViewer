@@ -147,7 +147,9 @@ void FTWin::setupGui()
   _gview = _engine->createView();
   _gview->setViewport({0, 0, _width, _height});
 
-  _gui = new ImGuiHelper(_engine, _gview, "");
+  std::string fontPath;
+  //fontPath = "c:/Windows/Fonts/simhei.ttf";
+  _gui = new ImGuiHelper(_engine, _gview, fontPath);
   _gui->setDisplaySize(_width, _height);
 
   ImGuiIO &io = ImGui::GetIO();
@@ -170,6 +172,7 @@ void FTWin::createWindow()
   uint32_t flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
   if (_flags & en_Frameless)
     flags |= SDL_WINDOW_BORDERLESS;
+  SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
   auto win = SDL_CreateWindow("", x, y, _width, _height, flags);
   SDL_SetWindowResizable(win, SDL_TRUE);
   SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1");
@@ -340,17 +343,10 @@ void FTWin::pollEvents()
     //   round(1000.0 / mode.refresh_rate);
     // }
 
-    uint64_t now = SDL_GetPerformanceCounter();
-    if (!refresh) {
-      uint32_t interval = uint32_t(now - stampPrev) / freq * 1000.0;
-      if (interval < 8) {
-        SDL_Delay(8 - interval);
-        now = SDL_GetPerformanceCounter();
-      }
-    }
+    uint64_t counter = SDL_GetPerformanceCounter();
 
-    double timestamp = (now - stampInit) / freq;
     {
+      double timestamp = (counter - stampInit) / freq;
       auto refTime = timestamp * 1000.0;
       if ((_manip && _manip->process(refTime)) || setCamera) {
         filament::math::double3 eye, target, up;
@@ -361,21 +357,20 @@ void FTWin::pollEvents()
     }
 
     if (_gui) {
-      float delta = (now - stampPrev) / freq;
+      float delta = (counter - stampPrev) / freq;
       _gui->render(delta, std::bind(&FTWin::gui, this, std::placeholders::_1, std::placeholders::_2));
     }
 
     {
       static uint64_t fpsStamp = stampInit;
 #ifndef NDEBUG
-      if ((now - fpsStamp) / freq > 1) {
-        fpsStamp = now;
-        _fps = freq / double(now - stampPrev);
+      if ((counter - fpsStamp) / freq > 1) {
+        fpsStamp = counter;
+        _fps = freq / double(counter - stampPrev);
       }
 #endif
-      stampPrev = now;
     }
-
+    
     if (_renderer->beginFrame(swapchain())) {
       _renderer->render(*_view);
 
@@ -386,6 +381,15 @@ void FTWin::pollEvents()
       _renderer->endFrame();
       //_renderer->readPixels();
     }
+
+    if (!refresh) {
+      uint32_t interval = uint32_t(counter- stampPrev) / freq * 1000.0;
+      if (interval < 14) {
+        SDL_Delay(14 - interval);
+      }
+    }
+
+    stampPrev = counter;
   }
 
   clean();
