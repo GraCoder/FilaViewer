@@ -1,7 +1,10 @@
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_timer.h>
-#include "ManipOperator.h"
+
 #include "TView.h"
+#include "tmath.h"
+
+#include "ManipOperator.h"
 
 #define THROW_EVENT SDL_USEREVENT + 1000
 
@@ -123,9 +126,9 @@ bool ManipOperator::keyRelease(TView *view, const SDL_KeyboardEvent &key)
 void ManipOperator::performLeft(TView *view, float dx, float dy) 
 {
   if(_upAxis && _rtAxis) {
-    tg::quatd qx = tg::quatd::rotate(-dx, *_upAxis);
+    tg::quatd qx = tg::quaternion<double>(-dx, *_upAxis);
     auto right = qx * _rotation * *_rtAxis;
-    tg::quatd qy = tg::quatd::rotate(-dy, right);
+    tg::quatd qy = tg::quaternion<double>(-dy, right);
     _rotation = qy * qx * _rotation;
   }
 }
