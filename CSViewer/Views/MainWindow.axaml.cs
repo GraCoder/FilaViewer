@@ -18,8 +18,6 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-
-        //FilaIns.Instance.MainWin = this;
     }
 
     private async Task OpenFileHandle(IInteractionContext<string?, string[]?> context)
@@ -36,10 +34,10 @@ public partial class MainWindow : Window
 
         for( var i = 0; i < storage_file.Count; i++ ) {
             var name = storage_file[i].Name;
-            int id = vkview.load_file(storage_file[i].TryGetLocalPath());
+            int id = _vkView.loadFile(storage_file[i].TryGetLocalPath());
             if (id == -1) 
                 continue;
-            mdllist.AddModel(id, name);
+            _mdls.AddModel(id, name);
         }
     }
 
@@ -48,30 +46,20 @@ public partial class MainWindow : Window
         (DataContext as MainWindowViewModel).SelectFileInteraction.RegisterHandler(this.OpenFileHandle);
     }
 
-    public void AddCube()
+    public void AddPrimitive(string name)
     {
-        //var cubeOps = new PrimitiveOperator(PrimitiveOperator.PrimitiveType.Cube);
-        //var ops = JsonSerializer.Serialize<PrimitiveOperator>(cubeOps, OperatorSerializeContext.Default.PrimitiveOperator);
-        //int id = FilaIns.Instance.Win.OperatorS(ops, ops.Length);
-        //if (id == -1)
-        //    return;
-        //mdllist.AddModel(id, "Cube");
-    }
-
-    public void AddSphere()
-    {
-        //var cubeOps = new PrimitiveOperator(PrimitiveOperator.PrimitiveType.Sphere);
-        //var ops = JsonSerializer.Serialize<PrimitiveOperator>(cubeOps, OperatorSerializeContext.Default.PrimitiveOperator);
-        //int id = FilaIns.Instance.Win.OperatorS(ops, ops.Length);
-        //if (id == -1)
-        //    return;
-        //mdllist.AddModel(id, "Sphere");
+        var cube = new AddPrimitive(name, 1);
+        var ops = JsonSerializer.Serialize(cube, OperJsonContext.Default.AddPrimitive);
+        int id = _vkView.handleCommand(ops);
+        if (id == -1)
+            return;
+        _mdls.AddModel(id, name);
     }
 
     public void SelectModel(uint id)
     {
         Dispatcher.UIThread.Post(() => {
-            var data = (ModelListViewModel)mdllist.DataContext;
+            var data = (ModelListViewModel)_mdls.DataContext;
             data.SelectNode(id);
         });
     }

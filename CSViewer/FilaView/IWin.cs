@@ -16,8 +16,8 @@ public unsafe partial struct IWin : IWin.Interface
     [DllImport("FilaView", CallingConvention = CallingConvention.ThisCall, EntryPoint = "?loadModel@IWin@@QEAAHPEBDM@Z", ExactSpelling = true)]
     public static extern int loadModel(IWin* pThis, [NativeTypeName("const char *")] sbyte* file, float sz = 1);
 
-    [DllImport("FilaView", CallingConvention = CallingConvention.ThisCall, EntryPoint = "?exeOperator@IWin@@QEAAHPEBDH@Z", ExactSpelling = true)]
-    public static extern int exeOperator(IWin* pThis, [NativeTypeName("const char *")] sbyte* ops, int len);
+    [DllImport("FilaView", CallingConvention = CallingConvention.ThisCall, EntryPoint = "?showModel@IWin@@QEAAXH_N@Z", ExactSpelling = true)]
+    public static extern void showModel(IWin* pThis, int param0, bool param1);
 
     [DllImport("FilaView", CallingConvention = CallingConvention.ThisCall, EntryPoint = "?createOperators@IWin@@QEAAXXZ", ExactSpelling = true)]
     public static extern void createOperators(IWin* pThis);
@@ -28,7 +28,7 @@ public unsafe partial struct IWin : IWin.Interface
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [VtblIndex(0)]
     [return: NativeTypeName("uint64_t")]
-    public ulong handle()
+    public ulong winId()
     {
         return ((delegate* unmanaged[Thiscall]<IWin*, ulong>)(lpVtbl[0]))((IWin*)Unsafe.AsPointer(ref this));
     }
@@ -54,11 +54,18 @@ public unsafe partial struct IWin : IWin.Interface
         return ((delegate* unmanaged[Thiscall]<IWin*, int, IView*>)(lpVtbl[3]))((IWin*)Unsafe.AsPointer(ref this), id);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [VtblIndex(4)]
+    public int handleCommand([NativeTypeName("const char *")] sbyte* ops, int len)
+    {
+        return ((delegate* unmanaged[Thiscall]<IWin*, sbyte*, int, int>)(lpVtbl[4]))((IWin*)Unsafe.AsPointer(ref this), ops, len);
+    }
+
     public interface Interface
     {
         [VtblIndex(0)]
         [return: NativeTypeName("uint64_t")]
-        ulong handle();
+        ulong winId();
 
         [VtblIndex(1)]
         void exec(bool thread);
@@ -68,13 +75,16 @@ public unsafe partial struct IWin : IWin.Interface
 
         [VtblIndex(3)]
         IView* view(int id = 0);
+
+        [VtblIndex(4)]
+        int handleCommand([NativeTypeName("const char *")] sbyte* ops, int len);
     }
 
     public partial struct Vtbl<TSelf>
         where TSelf : unmanaged, Interface
     {
         [NativeTypeName("uint64_t ()")]
-        public delegate* unmanaged[Thiscall]<TSelf*, ulong> handle;
+        public delegate* unmanaged[Thiscall]<TSelf*, ulong> winId;
 
         [NativeTypeName("void (bool)")]
         public delegate* unmanaged[Thiscall]<TSelf*, bool, void> exec;
@@ -84,5 +94,8 @@ public unsafe partial struct IWin : IWin.Interface
 
         [NativeTypeName("IView *(int)")]
         public delegate* unmanaged[Thiscall]<TSelf*, int, IView*> view;
+
+        [NativeTypeName("int (const char *, int)")]
+        public delegate* unmanaged[Thiscall]<TSelf*, sbyte*, int, int> handleCommand;
     }
 }

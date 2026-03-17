@@ -1,6 +1,6 @@
-#include "Node.h"
 #include <filament/Engine.h>
 #include <utils/Entity.h>
+#include "Node.h"
 
 namespace fv {
 
@@ -10,6 +10,8 @@ Node::Node()
   : _id(++id_)
 {
 }
+
+void Node::build(filament::Engine *engine, filament::Material const *material) {}
 
 void Node::release(filament::Engine *engine)
 {

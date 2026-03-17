@@ -8,138 +8,160 @@ using Avalonia.Controls.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
+using MdlViewer.ViewModels;
+using ReactiveUI;
 
-namespace MdlViewer.Views
+namespace MdlViewer.Views;
+
+public partial class NativeEmbedView : UserControl
 {
-    public partial class NativeEmbedView : UserControl
+    public NativeEmbedView()
     {
-        public NativeEmbedView()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
+    }
 
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
+    private void InitializeComponent()
+    {
+        AvaloniaXamlLoader.Load(this);
 
-            _view = this.FindNameScope()?.Find<global::MdlViewer.Views.EmbedView>("_view");
-        }
+        _view = this.FindNameScope()?.Find<global::MdlViewer.Views.EmbedView>("_view");
 
-        public async void ShowPopupDelay(object sender, RoutedEventArgs args)
+        MessageBus.Current.Listen<ModelVisibleMsg>().Subscribe(x =>
         {
-            await Task.Delay(3000);
-            ShowPopup(sender, args);
-        }
+            showModel(x.Id, x.Visible);
+        });
+    }
 
-        public void ShowPopup(object sender, RoutedEventArgs args)
+    public async void ShowPopupDelay(object sender, RoutedEventArgs args)
+    {
+        await Task.Delay(3000);
+        ShowPopup(sender, args);
+    }
+
+    public void ShowPopup(object sender, RoutedEventArgs args)
+    {
+        new ContextMenu()
         {
-            new ContextMenu()
+            Items =
             {
-                Items =
-                {
-                    new MenuItem() { Header = "Test" }, new MenuItem() { Header = "Test" }
-                }
-            }.Open((Control)sender);
-        }
+                new MenuItem() { Header = "Test" }, new MenuItem() { Header = "Test" }
+            }
+        }.Open((Control)sender);
+    }
 
-        protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+
+        if (change.Property == BoundsProperty)
         {
-            base.OnPropertyChanged(change);
+        }
+    }
 
-            if (change.Property == BoundsProperty)
+    public int loadFile(string file)
+    {
+        var exts = new string[] {
+            ".gltf", ".glb", ".obj", ".fbx"
+        };
+
+        var ext = Path.GetExtension(file);
+        if (!exts.Contains(ext))
+            return -1;
+
+        unsafe
+        {
+            var vkWin = (VulkanWin)(_view as EmbedView).Implementation;
+            var bytes = System.Text.Encoding.UTF8.GetBytes(file);
+            fixed (byte* p = bytes)
             {
+                return fv.IWin.loadModel(vkWin.Win, (sbyte*)p, bytes.Length);
             }
         }
+    }
 
-        public int load_file(string p)
+    public int handleCommand(string ops)
+    {
+        unsafe
         {
-            var exts = new string[] {
-                ".gltf", ".glb", ".obj", ".fbx"
-            };
-
-            var ext = Path.GetExtension(p);
-            if (!exts.Contains(ext))
-                return -1;
-
-            var vk_win = (VulkanWin)(_view as EmbedView).Implementation;
-            return vk_win.load_file(p);
+            var vkWin = (VulkanWin)(_view as EmbedView).Implementation;
+            var bytes = System.Text.Encoding.UTF8.GetBytes(ops);
+            fixed (byte* p = bytes)
+            {
+                return vkWin.Win->handleCommand((sbyte*)p, bytes.Length);
+            }
         }
     }
 
-    public class EmbedView : NativeControlHost
+    public void showModel(int id, bool visible)
     {
-        public INativeControl? Implementation { get; set; }
-
-        public EmbedView()
+        unsafe
         {
-            Implementation = new VulkanWin();
-        }
-
-        protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)
-        {
-            return Implementation?.CreateControl(parent, () => base.CreateNativeControlCore(parent))
-                ?? base.CreateNativeControlCore(parent);
-        }
-
-        protected override void DestroyNativeControlCore(IPlatformHandle control)
-        {
-            base.DestroyNativeControlCore(control);
-            ((VulkanWin)Implementation)?.DestroyControl();
+            var vkWin = (VulkanWin)(_view as EmbedView).Implementation;
+            fv.IWin.showModel(vkWin.Win, id, visible);
         }
     }
+}
 
-    public interface INativeControl
+public class EmbedView : NativeControlHost
+{
+    public INativeControl? Implementation { get; set; }
+
+    public EmbedView()
     {
-        IPlatformHandle CreateControl(IPlatformHandle parent, Func<IPlatformHandle> createDefault);
+        Implementation = new VulkanWin();
     }
 
-
-    public unsafe class VulkanWin : INativeControl
+    protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)
     {
-        fv.IWin *_win = null;
+        return Implementation?.CreateControl(parent, () => base.CreateNativeControlCore(parent))
+            ?? base.CreateNativeControlCore(parent);
+    }
 
-        public IPlatformHandle CreateControl(IPlatformHandle parent, Func<IPlatformHandle> createDefault)
-        {
+    protected override void DestroyNativeControlCore(IPlatformHandle control)
+    {
+        base.DestroyNativeControlCore(control);
+        ((VulkanWin)Implementation)?.DestroyControl();
+    }
+}
+
+public interface INativeControl
+{
+    IPlatformHandle CreateControl(IPlatformHandle parent, Func<IPlatformHandle> createDefault);
+}
+
+
+public unsafe class VulkanWin : INativeControl
+{
+    public fv.IWin* Win { get; private set; }
+
+    public IPlatformHandle CreateControl(IPlatformHandle parent, Func<IPlatformHandle> createDefault)
+    {
 #if true 
-            _win = fv.IWin.create(null, false);
-            //_win.CreateOperators();
-            _win->exec(true);
+        Win = fv.IWin.create(null, false);
+        Win->exec(true);
 
-            //FilaIns.Instance.Win = _win;
-            //FilaIns.Instance.View = _win.View(0);
-
-            return new Win32WindowControlHandle((IntPtr)_win->handle(), "HWND");
+        return new Win32WindowControlHandle((IntPtr)Win->winId(), "HWND");
 #else
-            return null;
+        return null;
 #endif
-        }
-
-        public void DestroyControl()
-        {
-            //if (_win != null) {
-            //    FilaView.IWin.Destroy(_win);
-            //}
-        }
-
-        public int load_file(String file)
-        {
-            if (_win == null)
-                return -1;
-
-            return 0;
-            //return _win.LoadModel(file, 10);
-        }
     }
 
-    internal class Win32WindowControlHandle : PlatformHandle, INativeControlHostDestroyableControlHandle
+    public void DestroyControl()
     {
-        public Win32WindowControlHandle(IntPtr handle, string descriptor) : base(handle, descriptor)
-        {
-        }
+        if (Win != null)
+            fv.IWin.destroy(Win);
+        Win = null;
+    }
+}
 
-        public void Destroy()
-        {
-            _ = WinApi.DestroyWindow(Handle);
-        }
+internal class Win32WindowControlHandle : PlatformHandle, INativeControlHostDestroyableControlHandle
+{
+    public Win32WindowControlHandle(IntPtr handle, string descriptor) : base(handle, descriptor)
+    {
+    }
+
+    public void Destroy()
+    {
+        _ = WinApi.DestroyWindow(Handle);
     }
 }

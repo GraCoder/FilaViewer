@@ -24,7 +24,6 @@ class PCDispatch;
 
 namespace fv {
 
-class Node;
 class FTView;
 
 class FTScene : public TScene {
@@ -46,8 +45,6 @@ public:
   void showEntity(int id, bool show);
 
   int loadModel(const std::string &file, float sz);
-
-  int addShape(int);
 
   std::shared_ptr<Node> findNode(uint32_t rent);
 
@@ -80,11 +77,6 @@ private:
   uint32_t _sunLight;
 
   uint32_t _point_count = 0;
-
-  std::mutex _mutex;
-  std::queue<std::function<void()>> _tasks;
-
-  tsl::robin_map<uint32_t, std::shared_ptr<Node>> _nodes;
 };
 
 } // namespace fv

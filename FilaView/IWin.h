@@ -8,16 +8,19 @@ public:
   static IWin*  create(IWin *win = nullptr, bool with_border = true);
   static void   destroy(IWin *win);
 
-  virtual uint64_t handle() = 0;
+  virtual uint64_t winId() = 0;
 
   virtual void exec(bool thread) = 0;
 
   virtual void setupGui() = 0;
   virtual IView *view(int id = 0) = 0;
 
-  int loadModel(const char *file, float sz = 1);
-  int  exeOperator(const char *ops, int len);
+  int  loadModel(const char *file, float sz = 1);
+  void showModel(int, bool);
   void createOperators();
+
+  virtual int  handleCommand(const char *ops, int len) = 0;
+
   void registPick(void(*fun)(unsigned int)); 
 
 };

@@ -5,26 +5,16 @@
 
 #include "operator/PickOperator.h"
 
-#include "nlohmann/json.hpp"
-
 int IWin::loadModel(const char *file, float sz)
 {
   auto scene = static_cast<fv::FTWin *>(this)->view(0)->scene();
   return scene->loadModel(file, sz);
 }
 
-int IWin::exeOperator(const char *ops, int len)
+void IWin::showModel(int id, bool b) 
 {
-  auto js = nlohmann::json::parse(std::string(ops, len));
-  auto iter = js.find("OperType");
-  if (iter == js.end())
-    return -1;
-  if (iter.value() == 1000) {
-    auto scene = static_cast<fv::FTWin *>(this)->view(0)->scene();
-    return scene->addShape(js.at("PrimType"));
-  } else if (iter.value() == 1001) {
-  }
-  return 0;
+  auto scene = static_cast<fv::FTWin *>(this)->view(0)->scene();
+  return scene->showEntity(id, b);
 }
 
 void IWin::createOperators()

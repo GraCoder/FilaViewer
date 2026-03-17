@@ -58,6 +58,8 @@ FTWin::FTWin(FTWin *win)
   auto scene = std::static_pointer_cast<FTScene>(FTScene::create());
   _view->setScene(scene);
 
+  scene->registerHandlers(_handlers);
+
   _manip = std::make_shared<ManipOperator>();
 }
 
@@ -70,7 +72,7 @@ FTWin::~FTWin()
   clean();
 }
 
-uint64_t FTWin::handle()
+uint64_t FTWin::winId()
 {
   if (!_window)
     createWindow();
@@ -402,10 +404,12 @@ void FTWin::gui(filament::Engine *, filament::View *)
   ImGui::Begin("Panel");
   if (_fps > 0)
     ImGui::LabelText("FPS", "%8.3f", _fps);
-  if (ImGui::Button("Add Cube"))
-    _view->scene()->addShape(0);
-  if (ImGui::Button("Add Sphere"))
-    _view->scene()->addShape(1);
+  if (ImGui::Button("Add Cube")) {
+    _view->scene()->addShape(0, 1);
+  }
+  if (ImGui::Button("Add Sphere")) {
+    _view->scene()->addShape(1, 1);
+  }
 
   static char text[256] = {0};
   if(ImGui::InputText("123", text, 256)){

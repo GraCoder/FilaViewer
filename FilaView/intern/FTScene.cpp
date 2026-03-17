@@ -33,8 +33,7 @@
 
 #include "imgui/imgui.h"
 
-#include "node/mesh/Cube.h"
-#include "node/mesh/Sphere.h"
+#include "node/Node.h"
 #include "node/GltfNode.h"
 #include "node/MeshNode.h"
 #include "node/Geometry.h"
@@ -184,26 +183,6 @@ void FTScene::showEntity(int id, bool show)
   }
 }
 
-int FTScene::addShape(int pri)
-{
-  std::shared_ptr<ShapeNode> node;
-  if (pri == 0) {
-    node = std::make_shared<ShapeNode>(std::make_unique<Cube>(math::float3{0, 0, 0}, math::float3{5, 5, 5}));
-  } else if (pri == 1) {
-    node = std::make_shared<ShapeNode>(std::make_unique<Sphere>(math::float3{0, 0, 0}, 5));
-  }
-
-  if (!node)
-    return -1;
-
-  std::unique_lock<std::mutex> lock(_mutex);
-  _tasks.push(std::bind([this, node]() {
-    node->build(_engine, _default_material);
-    addNode(node);
-  }));
-  return node->id();
-}
-
 std::shared_ptr<Node> FTScene::findNode(uint32_t rent)
 {
   for (auto &iter : _nodes) {
@@ -218,6 +197,7 @@ std::shared_ptr<Node> FTScene::findNode(uint32_t rent)
 
 void FTScene::_addNode(const std::shared_ptr<Node> &node)
 {
+  node->build(_engine, _default_material);
   _nodes.insert_or_assign(node->id(), node);
 
   auto &ents = node->entities();

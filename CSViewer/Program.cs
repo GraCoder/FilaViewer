@@ -19,6 +19,6 @@ namespace MdlViewer
                 .UsePlatformDetect()
                 .WithInterFont()
                 .LogToTrace()
-                .UseReactiveUI();
+                .UseReactiveUI(rxui => { });
     }
 }

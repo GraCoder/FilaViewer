@@ -47,10 +47,9 @@ protected:
   void setViewport(int x, int y, uint32_t w, uint32_t h);
 
 private:
-
-  filament::Engine *_engine = nullptr;
-  filament::View *_view = nullptr;
-  filament::Camera *_camera = nullptr;
+  filament::Engine    *_engine = nullptr;
+  filament::View      *_view = nullptr;
+  filament::Camera    *_camera = nullptr;
 
   std::shared_ptr<FTScene> _scene = nullptr;
 };

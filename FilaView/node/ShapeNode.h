@@ -3,9 +3,11 @@
 #include <vector>
 #include <math/mat4.h>
 #include <utils/Entity.h>
+#include <filament/Box.h>
 
-#include "node/Node.h"
 #include "tvec.h"
+#include "node/Node.h"
+#include "mesh/Shape.h"
 
 namespace filament{
 class Camera;
@@ -19,7 +21,7 @@ namespace fv {
 
 class Shape;
 
-class ShapeNode : public Node {
+class ShapeNode : public Node{
 public:
   ShapeNode(std::unique_ptr<Shape> &&shape)
     : _shape(std::move(shape))
@@ -29,7 +31,7 @@ public:
   ShapeNode(const ShapeNode &) = delete;
   ShapeNode &operator=(const ShapeNode &) = delete;
 
-  void build(filament::Engine *engine, filament::Material const *material);
+  void build(filament::Engine *engine, filament::Material const *material) override;
   void release(filament::Engine *engine) override;
 
   utils::Entity solidEntity() { return _solid_entity; }

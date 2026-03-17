@@ -30,7 +30,7 @@ public:
   FTWin(FTWin *);
   ~FTWin();
 
-  uint64_t handle();
+  uint64_t winId();
 
   void exec(bool thread);
 

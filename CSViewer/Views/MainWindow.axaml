@@ -13,7 +13,7 @@
         Background="Transparent"
         ExtendClientAreaToDecorationsHint="True"
         WindowStartupLocation="CenterScreen"
-        Name="mainwindow"
+        Name="mainWin"
         >
 
   <Design.DataContext>
@@ -39,16 +39,16 @@
           <MenuItem Header="Open" Command="{Binding OpenFileCommand}"/>
         </MenuItem>
         <MenuItem Header="Debug">
-          <MenuItem Header="Cube" Command="{Binding #mainwindow.AddCube}"/>
-          <MenuItem Header="Sphere" Command="{Binding #mainwindow.AddSphere}"/>
+          <MenuItem Header="Cube" Command="{Binding #mainWin.AddPrimitive}" CommandParameter="AddCube"/>
+	        <MenuItem Header="Sphere" Command="{Binding #mainWin.AddPrimitive}" CommandParameter ="AddSphere"/>
         </MenuItem>
       </Menu>
     </DockPanel>
 
     <Panel Margin="5,40,5,5">
       <Grid ColumnDefinitions="200,*,240">
-        <cc:NativeEmbedView x:Name="vkview" Grid.Column="1"/>
-        <cc:ModelListView Grid.Column="0" Name="mdllist"/>
+        <cc:NativeEmbedView x:Name="_vkView" Grid.Column="1"/>
+        <cc:ModelListView Grid.Column="0" Name="_mdls"/>
         <cc:PropertyView Grid.Column="2" Name="propview" />
       </Grid>
     </Panel>

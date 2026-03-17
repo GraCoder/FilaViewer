@@ -2,13 +2,11 @@
 
 #include <memory>
 #include <absl/container/inlined_vector.h>
-#include <filament/Box.h>
-
-class Node;
 
 namespace filament {
 class Engine;
-}
+class Material;
+} // namespace filament
 
 namespace fv {
 
@@ -25,6 +23,7 @@ public:
 
   virtual void update(double timestamp) {};
 
+  virtual void build(filament::Engine *engine, filament::Material const *material);
   virtual void release(filament::Engine *engine);
 
 protected:

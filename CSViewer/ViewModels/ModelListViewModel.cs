@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 
 namespace MdlViewer.ViewModels;
 
+public record ModelVisibleMsg(int Id, bool Visible);
+
 internal class ModelNode
 {
     private bool _visible = true;
@@ -19,7 +21,7 @@ internal class ModelNode
         get { return _visible; }
         set {
             _visible = value;
-            //FilaIns.Instance.View?.ShowModel(Id, _visible);
+            MessageBus.Current.SendMessage(new ModelVisibleMsg(Id, _visible));
         }
     }
 
