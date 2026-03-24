@@ -4,6 +4,7 @@
 #include <filament/Engine.h>
 #include <filament/View.h>
 #include <filament/Viewport.h>
+#include <filament/Renderer.h>
 #include <filament/DebugRegistry.h>
 
 #include <utils/Entity.h>
@@ -30,7 +31,12 @@ FTView::~FTView()
     _engine->destroy(_view);
 }
 
-void FTView::showEntity(int id, bool show) 
+void FTView::render(filament::Renderer *renderer)
+{
+  renderer->render(_view);
+}
+
+void FTView::showEntity(int id, bool show)
 {
   static_cast<FTScene *>(_scene.get())->showEntity(id, show);
 }

@@ -53,7 +53,6 @@ public:
   void _addNode(const std::shared_ptr<Node> &node);
 
 public:
-
   void initialize(filament::Engine *engine);
 
   void process(double delta);
@@ -71,7 +70,7 @@ private:
 
   filament::Material const *_basic_material = nullptr;
   filament::Material const *_default_material = nullptr;
-  filament::Material const *_legacy_material = nullptr;
+  //filament::Material const *_legacy_material = nullptr;
   filament::Material const *_depth_material = nullptr;
 
   uint32_t _sunLight;

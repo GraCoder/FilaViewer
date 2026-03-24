@@ -115,9 +115,9 @@ void FTWin::clean()
     _gui = nullptr;
   }
 
-  if (_gview) {
-    _engine->destroy(_gview);
-    _gview = nullptr;
+  if (_guiView) {
+    _engine->destroy(_guiView);
+    _guiView = nullptr;
   }
 
   if (_renderer) {
@@ -146,12 +146,12 @@ void FTWin::setupGui()
 
   using namespace filagui;
 
-  _gview = _engine->createView();
-  _gview->setViewport({0, 0, _width, _height});
+  _guiView = _engine->createView();
+  _guiView->setViewport({0, 0, _width, _height});
 
   std::string fontPath;
   //fontPath = "c:/Windows/Fonts/simhei.ttf";
-  _gui = new ImGuiHelper(_engine, _gview, fontPath);
+  _gui = new ImGuiHelper(_engine, _guiView, fontPath);
   _gui->setDisplaySize(_width, _height);
 
   ImGuiIO &io = ImGui::GetIO();
@@ -307,8 +307,8 @@ void FTWin::pollEvents()
             if (_gui) {
               _gui->setDisplaySize(w, h);
             }
-            if (_gview) {
-              _gview->setViewport({0, 0, w, h});
+            if (_guiView) {
+              _guiView->setViewport({0, 0, w, h});
             }
             break;
           }
@@ -374,10 +374,10 @@ void FTWin::pollEvents()
     }
     
     if (_renderer->beginFrame(swapchain())) {
-      _renderer->render(*_view);
+      _view->render(_renderer);
 
-      if (_gview) {
-        _renderer->render(_gview);
+      if (_guiView) {
+        _renderer->render(_guiView);
       }
 
       _renderer->endFrame();

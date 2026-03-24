@@ -73,7 +73,7 @@ private:
   filament::SwapChain *_swapchain = nullptr;
   filament::Renderer *_renderer = nullptr;
 
-  filament::View *_gview = nullptr;
+  filament::View *_guiView = nullptr;
 
   float _fps = 0;
   filagui::ImGuiHelper *_gui = nullptr;

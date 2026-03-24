@@ -8,6 +8,7 @@ namespace filament {
 class View;
 class Camera;
 class Engine;
+class Renderer;
 } // namespace filament
 
 namespace fv {
@@ -24,8 +25,10 @@ public:
 
   filament::Engine *engine() { return _engine; }
 
-  operator filament::View *() { return _view; }
   filament::View *view() { return _view; }
+  operator filament::View *() { return _view; }
+
+  void render(filament::Renderer *);
 
   void showEntity(int id, bool show) override;
 
@@ -43,7 +46,6 @@ public:
   void release();
 
 protected:
-
   void setViewport(int x, int y, uint32_t w, uint32_t h);
 
 private:

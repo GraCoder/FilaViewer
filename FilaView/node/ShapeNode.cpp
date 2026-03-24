@@ -37,9 +37,9 @@ void ShapeNode::build(filament::Engine *engine, filament::Material const *materi
 
   if (material) {
     _solid_instance = material->createInstance();
-    _wire_instance = material->createInstance();
     _solid_instance->setParameter("baseColor", RgbaType::LINEAR, LinearColorA(0.4, 0.41, 0.4, 1.0));
-    _wire_instance->setParameter("baseColor", RgbaType::LINEAR, LinearColorA{0.0, 0.6, 0.0, 0.5});
+    //_wire_instance = material->createInstance();
+    //_wire_instance->setParameter("baseColor", RgbaType::LINEAR, LinearColorA{0.0, 0.6, 0.0, 0.5});
   }
 
   utils::EntityManager &em = utils::EntityManager::get();

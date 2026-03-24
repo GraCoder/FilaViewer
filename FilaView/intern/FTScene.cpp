@@ -229,8 +229,8 @@ void FTScene::initialize(filament::Engine *engine)
     def_mtl->setDefaultParameter("reflectance", 0.5f);
     _default_material = def_mtl;
 
-    auto legacy_mtl = filament::Material::Builder().package(PCV_MAT_LEGACY_DATA, PCV_MAT_LEGACY_SIZE).build(*_engine);
-    _legacy_material = legacy_mtl;
+    //auto legacy_mtl = filament::Material::Builder().package(PCV_MAT_LEGACY_DATA, PCV_MAT_LEGACY_SIZE).build(*_engine);
+    //_legacy_material = legacy_mtl;
   }
 
   //setEnvironment();

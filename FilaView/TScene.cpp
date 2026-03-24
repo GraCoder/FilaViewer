@@ -56,11 +56,13 @@ int TScene::addShape(const std::string_view &cmd)
   } else if (op == "AddSphere") {
     return addShape(1, rad);
   }
+  return -1;
 }
 
 int TScene::addShape(int priType, float rad)
 {
   using namespace filament;
+
   std::shared_ptr<ShapeNode> node;
   switch (priType) {
   case 0:
