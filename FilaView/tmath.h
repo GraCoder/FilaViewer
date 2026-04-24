@@ -243,7 +243,8 @@ bool inverse(matNM<T, n, n> &des, const matNM<T, n, n> &ori)
 
 //----------------------------------------------------------------------------------------------
 
-inline mat4d frustum(double l, double r, double b, double t, double n, double f)
+template<typename T>
+inline Tmat4<T> frustum(double l, double r, double b, double t, double n, double f)
 {
   double A = (2.0 * n) / (r - l);
   double B = (2.0 * n) / (t - b);
@@ -251,28 +252,29 @@ inline mat4d frustum(double l, double r, double b, double t, double n, double f)
   double D = (t + b) / (t - b);
 
 #if defined(DEPTH_REVERSE) && defined(ZERO_NEAR)
-  double E = 0.0f;
+  double E = 0.0;
   double F = n;
 #elif defined(DEPTH_REVERSE) && !defined(ZERO_NEAR)
   double E = n / (f - n);
   double F = (f * n) / (f - n);
 #elif !defined(DEPTH_REVERSE) && defined(ZERO_NEAR)
-  double E = -1.0f;
-  double F = -2.0f * n;
+  double E = -1.0;
+  double F = -2.0 * n;
 #else
   double E = -(f + n) / (f - n);
-  double F = -(2.0f * f * n) / (f - n);
+  double F = -(2.0 * f * n) / (f - n);
 #endif
 
-  mat4d m;
-  m[0] = vec4d(A, 0, 0, 0);
-  m[1] = vec4d(0, B, 0, 0);
-  m[2] = vec4d(C, D, E, -1);
-  m[3] = vec4d(0, 0, F, 0);
+  Tmat4<T> m;
+  m[0] = Tvec4<T>(A, 0.0, 0.0, 0.0);
+  m[1] = Tvec4<T>(0.0, B, 0.0, 0.0);
+  m[2] = Tvec4<T>(C, D, E, -1.0);
+  m[3] = Tvec4<T>(0.0, 0.0, F, 0.0);
   return m;
 }
 
-inline bool get_frustum(const tg::mat4d &m, double &l, double &r, double &b, double &t, double &n, double &f)
+template<typename T, typename U>
+bool frustum(const Tmat4<T> &m, U &l, U &r, U &b, U &t, U &n, U &f)
 {
   if (m[0][3] != 0.0 || m[1][3] != 0.0 || m[2][3] != -1.0 || m[3][3] != 0.0)
     return false;
@@ -282,7 +284,7 @@ inline bool get_frustum(const tg::mat4d &m, double &l, double &r, double &b, dou
   f = m[3][2] / m[2][2];
 #elif DEPTH_REVERSE && !ZERO_NEAR
   n = m[3][2] / m[2][2];
-  f = m[3][2] / (m[2][2] + 1.0f);
+  f = m[3][2] / (m[2][2] + 1.0);
 #elif !DEPTH_REVERSE && ZERO_NEAR
   n = 0.0;
   f = m[3][2] / (m[2][2] + 1.0);
@@ -297,20 +299,21 @@ inline bool get_frustum(const tg::mat4d &m, double &l, double &r, double &b, dou
   double ref_depth = n;
 #endif
 
-  l = ref_depth * (m[2][0] - 1.0f) / m[0][0];
-  r = ref_depth * (1.0f + m[2][0]) / m[0][0];
-  t = ref_depth * (1.0f + m[2][1]) / m[1][1];
-  b = ref_depth * (m[2][1] - 1.0f) / m[1][1];
+  l = ref_depth * (m[2][0] - 1.0) / m[0][0];
+  r = ref_depth * (1.0 + m[2][0]) / m[0][0];
+  t = ref_depth * (1.0 + m[2][1]) / m[1][1];
+  b = ref_depth * (m[2][1] - 1.0) / m[1][1];
   return true;
 }
 
 // aspect = width/height
-inline mat4d perspective(double fovy, double aspect, double n, double f)
+template<typename T>
+Tmat4<T> perspective(double fovy, double aspect, double n, double f)
 {
   double q = 1.0 / tan(radians(0.5 * fovy));
   double A = q / aspect;
 #if DEPTH_REVERSE && ZERO_NEAR
-  double B = 0;
+  double B = 0.0;
   double C = n;
 #elif DEPTH_REVERSE && !ZERO_NEAR
   double B = n / (f - n);
@@ -323,18 +326,19 @@ inline mat4d perspective(double fovy, double aspect, double n, double f)
   double C = (2.0 * f * n) / (n - f);
 #endif
 
-  mat4d m;
-  m[0] = vec4d(A, 0.0f, 0.0f, 0.0f);
-  m[1] = vec4d(0.0f, q, 0.0f, 0.0f);
-  m[2] = vec4d(0.0f, 0.0f, B, -1.0f);
-  m[3] = vec4d(0.0f, 0.0f, C, 0.0f);
+  Tmat4<T> m;
+  m[0] = Tvec4<T>(A, 0.0, 0.0, 0.0);
+  m[1] = Tvec4<T>(0.0, q, 0.0, 0.0);
+  m[2] = Tvec4<T>(0.0, 0.0, B, -1.0);
+  m[3] = Tvec4<T>(0.0, 0.0, C, 0.0);
   return m;
 }
 
-inline bool get_perspective(const tg::mat4d &m, double &fovy, double &aspect, double &n, double &f)
+template<typename T, typename U>
+bool perspective(const Tmat4<T> &m, U &fovy, U &aspect, U &n, U &f)
 {
-  double l, r, b, t;
-  if (!get_frustum(m, l, r, b, t, n, f))
+  U l, r, b, t;
+  if (!frustum<T, U>(m, l, r, b, t, n, f))
     return false;
 
   fovy = 2.0 * atan((t - b) / (2.0 * n)) * (180.0 / M_PI);
@@ -342,17 +346,18 @@ inline bool get_perspective(const tg::mat4d &m, double &fovy, double &aspect, do
   return true;
 }
 
-inline mat4d ortho(double l, double r, double b, double t, double n, double f)
+template<typename T>
+Tmat4<T> ortho(T l, T r, T b, T t, T n, T f)
 {
-  mat4d m;
-  m[0] = vec4d(2.0 / (r - l), 0.0, 0.0, 0.0);
-  m[1] = vec4d(0.0, 2.0 / (t - b), 0.0, 0.0);
+  Tmat4<T> m;
+  m[0] = Tvec4<T>(2.0 / (r - l), 0.0, 0.0, 0.0);
+  m[1] = Tvec4<T>(0.0, 2.0 / (t - b), 0.0, 0.0);
 #ifdef ZERO_NEAR
-  m[2] = vec4d(0.0, 0.0, 1.0 / (n - f), 0.0);
-  m[3] = vec4d((l + r) / (l - r), (b + t) / (b - t), n / (n - f), 1.0);
+  m[2] = Tvec4<T>(0.0, 0.0, 1.0 / (n - f), 0.0);
+  m[3] = Tvec4<T>((l + r) / (l - r), (b + t) / (b - t), n / (n - f), 1.0);
 #else
-  m[2] = vec4d(0.0, 0.0, 2.0 / (n - f), 0.0);
-  m[3] = vec4d((l + r) / (l - r), (b + t) / (b - t), (n + f) / (n - f), 1.0);
+  m[2] = Tvec4<T>(0.0, 0.0, 2.0 / (n - f), 0.0);
+  m[3] = Tvec4<T>((l + r) / (l - r), (b + t) / (b - t), (n + f) / (n - f), 1.0);
 #endif
   return m;
 }

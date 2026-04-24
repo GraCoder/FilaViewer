@@ -5,6 +5,7 @@
 #include "tmath.h"
 
 #include "ManipOperator.h"
+#include "intern/FTView.h"
 
 #define THROW_EVENT SDL_USEREVENT + 1000
 
@@ -21,10 +22,12 @@ ManipOperator::~ManipOperator() {}
 bool ManipOperator::process(double refTime)
 {
   if (_throwTime > 0) {
-
     float f = 3 * (refTime - _refTime) / _throwTime;
     auto dx = _dx * f; auto dy = _dy * f;
-    performLeft(0, dx, dy);
+    if (_throwButton == 1)
+      performLeft(0, dx, dy);
+    else if (_throwButton == 2)
+      performRight(_view, dx, dy);
   }
   _refTime = refTime;
   return true;
@@ -53,6 +56,7 @@ bool ManipOperator::mousePress(TView *view, const SDL_MouseButtonEvent &btn)
 {
   if (btn.button == SDL_BUTTON_LEFT) {
   }
+  _view = 0;
   _throwTime = 0; _dx = btn.x; _dy = btn.y;
   _throwStamp = btn.timestamp;
   return true;
@@ -65,9 +69,16 @@ bool ManipOperator::mouseRelease(TView *view, const SDL_MouseButtonEvent &btn)
     _dx = btn.x - _dx; _dy = btn.y - _dy;
     float velocity = sqrt(_dx * _dx + _dy * _dy) / inv;
     if (velocity > 0.1) {
+      _view = view;
       _throwTime = inv;
+      _throwButton = btn.button == SDL_BUTTON_LEFT ? 1 : (btn.button == SDL_BUTTON_RIGHT ? 2 : 0);
       auto &vp = view->viewport();
       _dx /= vp.z(); _dy /= vp.w();
+
+      if(_throwButton == 2) {
+        _dx *= 0.2f;
+        _dy *= 0.2f;
+      }
     }
   }
 
@@ -142,7 +153,7 @@ void ManipOperator::performRight(TView *view, float dx, float dy)
   auto rt = tg::cross(dir, up);
 
   double fovy, aspect, near, far;
-  if(tg::get_perspective(view->projectionMatrix(), fovy, aspect, near, far)) {
+  if(tg::perspective(view->projectionMatrix(), fovy, aspect, near, far)) {
     double fv = tan(M_PI * fovy / 2.0 / 180) * _distance * 2;
     tg::vec3d oft = rt * -dx * fv * aspect + up * dy * fv;
     _target += oft;

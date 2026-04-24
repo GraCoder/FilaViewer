@@ -101,7 +101,7 @@ void FTView::resetProjection()
   double const h = (0.5 * _near) * ((SENSOR_SIZE * 1000.0) / 35.0);
   double const w = h * vp.width / vp.height;
 
-  auto mat = tg::frustum(-w, w, -h, h, _near, _far);
+  auto mat = tg::frustum<double>(-w, w, -h, h, _near, _far);
   filament::math::mat4 fmat;
   memcpy(&fmat, &mat, sizeof(tg::mat4d));
 
