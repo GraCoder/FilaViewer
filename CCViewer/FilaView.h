@@ -2,7 +2,10 @@
 
 #include <QWidget>
 
+namespace fv {
 class TWin;
+}
+
 class FilaView : public QWidget {
   Q_OBJECT
 public:
@@ -20,5 +23,5 @@ private:
   void moveWindow();
   
 private:
-  TWin *_win = nullptr;
+  fv::TWin *_win = nullptr;
 };

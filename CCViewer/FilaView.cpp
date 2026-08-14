@@ -1,10 +1,12 @@
+#define NOMINMAX
+#include <Windows.h>
+
 #include <QWidget>
 #include <QFileDialog>
 
 #include "FilaView/TWin.h"
 #include "FilaView.h"
 
-#include <Windows.h>
 
 FilaView::FilaView()
 {
@@ -17,10 +19,10 @@ void FilaView::showEvent(QShowEvent *event)
   QWidget::showEvent(event);
 
   if (!_win) {
-    _win = dynamic_cast<TWin *>(IWin::create(nullptr, false));
+    _win = dynamic_cast<fv::TWin *>(IWin::create(nullptr, false));
     _win->exec(true);
 
-    SetParent(HWND(_win->handle()), (HWND)winId());
+    SetParent(HWND(_win->winId()), (HWND)winId());
   }
 
   moveWindow();
@@ -49,12 +51,12 @@ void FilaView::sltOpenFile()
   if (f.isEmpty())
     return;
 
-  _win->load_model(f.toLocal8Bit().data(), 2.0f);
+  _win->loadModel(f.toLocal8Bit().data(), 2.0f);
 }
 
 void FilaView::moveWindow()
 {
-  HWND hwnd = (HWND)_win->handle();
+  HWND hwnd = (HWND)_win->winId();
   QPoint pt;
   // auto pt = mapToGlobal(QPoint(0, 0));
   MoveWindow(hwnd, pt.x(), pt.y(), width(), height(), TRUE);

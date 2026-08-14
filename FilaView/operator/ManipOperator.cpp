@@ -11,7 +11,7 @@
 
 namespace fv {
 
-ManipOperator::ManipOperator() 
+ManipOperator::ManipOperator()
 {
   _upAxis = tg::vec3d(0, 1, 0);
   _rtAxis = tg::vec3d(1, 0, 0);
@@ -23,7 +23,8 @@ bool ManipOperator::process(double refTime)
 {
   if (_throwTime > 0) {
     float f = 3 * (refTime - _refTime) / _throwTime;
-    auto dx = _dx * f; auto dy = _dy * f;
+    auto dx = _dx * f;
+    auto dy = _dy * f;
     if (_throwButton == 1)
       performLeft(0, dx, dy);
     else if (_throwButton == 2)
@@ -57,7 +58,9 @@ bool ManipOperator::mousePress(TView *view, const SDL_MouseButtonEvent &btn)
   if (btn.button == SDL_BUTTON_LEFT) {
   }
   _view = 0;
-  _throwTime = 0; _dx = btn.x; _dy = btn.y;
+  _throwTime = 0;
+  _dx = btn.x;
+  _dy = btn.y;
   _throwStamp = btn.timestamp;
   return true;
 }
@@ -66,16 +69,18 @@ bool ManipOperator::mouseRelease(TView *view, const SDL_MouseButtonEvent &btn)
 {
   auto inv = btn.timestamp - _throwStamp;
   if (inv > 0) {
-    _dx = btn.x - _dx; _dy = btn.y - _dy;
+    _dx = btn.x - _dx;
+    _dy = btn.y - _dy;
     float velocity = sqrt(_dx * _dx + _dy * _dy) / inv;
     if (velocity > 0.1) {
       _view = view;
       _throwTime = inv;
       _throwButton = btn.button == SDL_BUTTON_LEFT ? 1 : (btn.button == SDL_BUTTON_RIGHT ? 2 : 0);
       auto &vp = view->viewport();
-      _dx /= vp.z(); _dy /= vp.w();
+      _dx /= vp.z();
+      _dy /= vp.w();
 
-      if(_throwButton == 2) {
+      if (_throwButton == 2) {
         _dx *= 0.2f;
         _dy *= 0.2f;
       }
@@ -89,7 +94,8 @@ bool ManipOperator::mouseMove(TView *view, const SDL_MouseMotionEvent &motion)
 {
   auto &vp = view->viewport();
   float dx = motion.xrel, dy = motion.yrel;
-  dx /= vp.z(); dy /= vp.w();
+  dx /= vp.z();
+  dy /= vp.w();
   if (motion.state & SDL_BUTTON_LMASK) {
     performLeft(view, dx, dy);
   } else if (motion.state & SDL_BUTTON_RMASK) {
@@ -98,7 +104,8 @@ bool ManipOperator::mouseMove(TView *view, const SDL_MouseMotionEvent &motion)
   }
 
   if (motion.state && (motion.timestamp - _throwStamp) > 50) {
-    _dx = motion.x; _dy = motion.y;
+    _dx = motion.x;
+    _dy = motion.y;
     _throwStamp = motion.timestamp;
   }
   return true;
@@ -134,9 +141,9 @@ bool ManipOperator::keyRelease(TView *view, const SDL_KeyboardEvent &key)
   return true;
 }
 
-void ManipOperator::performLeft(TView *view, float dx, float dy) 
+void ManipOperator::performLeft(TView *view, float dx, float dy)
 {
-  if(_upAxis && _rtAxis) {
+  if (_upAxis && _rtAxis) {
     tg::quatd qx = tg::quaternion<double>(-dx, *_upAxis);
     auto right = qx * _rotation * *_rtAxis;
     tg::quatd qy = tg::quaternion<double>(-dy, right);
@@ -153,7 +160,7 @@ void ManipOperator::performRight(TView *view, float dx, float dy)
   auto rt = tg::cross(dir, up);
 
   double fovy, aspect, near, far;
-  if(tg::perspective(view->projectionMatrix(), fovy, aspect, near, far)) {
+  if (tg::perspective(view->projectionMatrix(), fovy, aspect, near, far)) {
     double fv = tan(M_PI * fovy / 2.0 / 180) * _distance * 2;
     tg::vec3d oft = rt * -dx * fv * aspect + up * dy * fv;
     _target += oft;

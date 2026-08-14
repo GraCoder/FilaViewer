@@ -2,10 +2,18 @@
 #define __TMATH_INC__
 
 #include "tvec.h"
-#include <algorithm>
-
 
 namespace tg {
+
+template <typename T, int n>
+inline bool operator==(const vecN<T, n> &lhs, const vecN<T, n> &rhs)
+{
+  for (int i = 0; i < n; i++) {
+    if (fabs(lhs[i] - rhs[i]) > teps<T>::eps)
+      return false;
+  }
+  return true;
+}
 
 template <typename T, int n>
 static inline T length(const vecN<T, n> &v)
@@ -55,16 +63,6 @@ static inline vecN<T, n> abs(const vecN<T, n> &a)
     result[i] = fabs(a[i]);
   }
   return result;
-}
-
-template <typename T, int n>
-inline bool operator==(const vecN<T, n> &v1, const vecN<T, n> &v2)
-{
-  for (int i = 0; i < n; i++) {
-    if (fabs(v1[i] - v2[i]) > teps<T>::eps)
-      return false;
-  }
-  return true;
 }
 
 template <typename T>
@@ -187,60 +185,6 @@ inline vecN<T, n> operator/(const T s, const vecN<T, n> &v)
   return result;
 }
 
-template <typename T, int n>
-bool inverse(matNM<T, n, n> &des, const matNM<T, n, n> &ori)
-{
-  constexpr int width = 2 * n;
-  T mat[n][width];
-  memset(&mat, 0, sizeof(T) * n * width);
-  T *cidx[n];
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-      mat[i][j] = ori[j][i];
-    }
-    mat[i][n + i] = 1;
-    cidx[i] = (T *)&mat[i];
-  }
-  for (int i = 0; i < n; i++) {
-    if (fabs(cidx[i][i]) < teps<T>::eps) {
-      int k = i + 1;
-      while (k < n) {
-        if (fabs(cidx[k][i]) > teps<T>::eps)
-          break;
-        k++;
-      }
-      if (k == n)
-        return false;
-      else {
-        T *tmp = cidx[i];
-        cidx[i] = cidx[k];
-        cidx[k] = tmp;
-      }
-    }
-    T tmp = cidx[i][i];
-    for (int j = 0; j < n; j++) {
-      if (j == i)
-        continue;
-      T temp = cidx[j][i];
-      for (int k = 0; k < width; k++) {
-        cidx[j][k] = cidx[j][k] * tmp - temp * cidx[i][k];
-      }
-    }
-  }
-  for (int i = 0; i < n; i++) {
-    for (int j = n; j < width; j++) {
-      cidx[i][j] /= cidx[i][i];
-    }
-  }
-
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-      des[j][i] = cidx[i][j + n];
-    }
-  }
-  return des;
-}
-
 //----------------------------------------------------------------------------------------------
 
 template<typename T>
@@ -251,16 +195,27 @@ inline Tmat4<T> frustum(double l, double r, double b, double t, double n, double
   double C = (r + l) / (r - l);
   double D = (t + b) / (t - b);
 
-#if defined(DEPTH_REVERSE) && defined(ZERO_NEAR)
-  double E = 0.0;
-  double F = n;
-#elif defined(DEPTH_REVERSE) && !defined(ZERO_NEAR)
+#if defined(DEPTH_REVERSE) && defined(DEPTH_ZERO)
+  // Reverse-Z with [0, 1] NDC (Vulkan / DirectX / GL_ARB_clip_control)
+  // Maps: near -> 1.0, far -> 0.0
   double E = n / (f - n);
   double F = (f * n) / (f - n);
-#elif !defined(DEPTH_REVERSE) && defined(ZERO_NEAR)
-  double E = -1.0;
-  double F = -2.0 * n;
+
+#elif defined(DEPTH_REVERSE) && !defined(DEPTH_ZERO)
+  // Reverse-Z with [-1, 1] NDC (Standard OpenGL Reverse-Z)
+  // Maps: near -> +1.0, far -> -1.0
+  double E = (n + f) / (f - n);
+  double F = (2.0 * f * n) / (f - n);
+
+#elif !defined(DEPTH_REVERSE) && defined(DEPTH_ZERO)
+  // Standard Z with [0, 1] NDC (DirectX / Vulkan default)
+  // Maps: near -> 0.0, far -> 1.0
+  double E = -f / (f - n);
+  double F = -(f * n) / (f - n);
+
 #else
+  // Standard Z with [-1, 1] NDC (Traditional OpenGL default)
+  // Maps: near -> -1.0, far -> +1.0
   double E = -(f + n) / (f - n);
   double F = -(2.0 * f * n) / (f - n);
 #endif
@@ -273,55 +228,82 @@ inline Tmat4<T> frustum(double l, double r, double b, double t, double n, double
   return m;
 }
 
-template<typename T, typename U>
+template <typename T, typename U>
 bool frustum(const Tmat4<T> &m, U &l, U &r, U &b, U &t, U &n, U &f)
 {
+  // Validate perspective matrix format (last column must be [0, 0, -1, 0])
   if (m[0][3] != 0.0 || m[1][3] != 0.0 || m[2][3] != -1.0 || m[3][3] != 0.0)
     return false;
 
-#if DEPTH_REVERSE && ZERO_NEAR
-  n = 0.0;
-  f = m[3][2] / m[2][2];
-#elif DEPTH_REVERSE && !ZERO_NEAR
-  n = m[3][2] / m[2][2];
-  f = m[3][2] / (m[2][2] + 1.0);
-#elif !DEPTH_REVERSE && ZERO_NEAR
-  n = 0.0;
-  f = m[3][2] / (m[2][2] + 1.0);
+  double E = static_cast<double>(m[2][2]);
+  double F = static_cast<double>(m[3][2]);
+
+#if defined(DEPTH_REVERSE) && defined(DEPTH_ZERO)
+  // [0, 1] Reverse-Z (Vulkan / DirectX / GL_ARB_clip_control)
+  // Near: z_ndc = 1.0, Far: z_ndc = 0.0
+  n = static_cast<U>(F / (1.0 + E));
+  f = static_cast<U>(F / E);
+
+#elif defined(DEPTH_REVERSE) && !defined(DEPTH_ZERO)
+  // [-1, 1] Reverse-Z (Standard OpenGL Reverse-Z)
+  // Near: z_ndc = +1.0, Far: z_ndc = -1.0
+  n = static_cast<U>(F / (1.0 + E));
+  f = static_cast<U>(F / (E - 1.0));
+
+#elif !defined(DEPTH_REVERSE) && defined(DEPTH_ZERO)
+  // [0, 1] Standard Z (DirectX / Vulkan default)
+  // Near: z_ndc = 0.0, Far: z_ndc = 1.0
+  n = static_cast<U>(F / E);
+  f = static_cast<U>(F / (1.0 + E));
+
 #else
-  n = m[3][2] / (m[2][2] - 1.0);
-  f = m[3][2] / (1.0 + m[2][2]);
+  // [-1, 1] Standard Z (Traditional OpenGL default)
+  // Near: z_ndc = -1.0, Far: z_ndc = 1.0
+  n = static_cast<U>(F / (E - 1.0)); // Fixed: yields positive 'near' distance
+  f = static_cast<U>(F / (1.0 + E)); // Fixed: yields positive 'far' distance
 #endif
 
-#if defined(DEPTH_REVERSE) && defined(ZERO_NEAR)
-  double ref_depth = f;
-#else
-  double ref_depth = n;
-#endif
+  // n must be positive when computing near-plane bounds (l, r, b, t)
+  double ref_depth = static_cast<double>(n);
 
-  l = ref_depth * (m[2][0] - 1.0) / m[0][0];
-  r = ref_depth * (1.0 + m[2][0]) / m[0][0];
-  t = ref_depth * (1.0 + m[2][1]) / m[1][1];
-  b = ref_depth * (m[2][1] - 1.0) / m[1][1];
+  // Bounds at the near plane
+  l = static_cast<U>(ref_depth * (m[2][0] - 1.0) / m[0][0]); // Negative for symmetric
+  r = static_cast<U>(ref_depth * (1.0 + m[2][0]) / m[0][0]); // Positive for symmetric
+
+  b = static_cast<U>(ref_depth * (m[2][1] - 1.0) / m[1][1]); // Negative for symmetric
+  t = static_cast<U>(ref_depth * (1.0 + m[2][1]) / m[1][1]); // Positive for symmetric
+
   return true;
 }
 
 // aspect = width/height
-template<typename T>
+template <typename T>
 Tmat4<T> perspective(double fovy, double aspect, double n, double f)
 {
   double q = 1.0 / tan(radians(0.5 * fovy));
   double A = q / aspect;
-#if DEPTH_REVERSE && ZERO_NEAR
-  double B = 0.0;
-  double C = n;
-#elif DEPTH_REVERSE && !ZERO_NEAR
+
+#if defined(DEPTH_REVERSE) && defined(DEPTH_ZERO)
+  // Reverse-Z with [0, 1] NDC (Vulkan / DirectX / GL_ARB_clip_control)
+  // Near -> 1.0, Far -> 0.0
   double B = n / (f - n);
   double C = (n * f) / (f - n);
-#elif !DEPTH_REVERSE && ZERO_NEAR
-  double B = -1.0;
-  double C = -2.0 * n;
+
+#elif defined(DEPTH_REVERSE) && !defined(DEPTH_ZERO)
+  // Reverse-Z with [-1, 1] NDC (Standard OpenGL Reverse-Z)
+  // Near -> +1.0, Far -> -1.0
+  double B = (n + f) / (f - n);
+  double C = (2.0 * n * f) / (f - n);
+
+#elif !defined(DEPTH_REVERSE) && defined(DEPTH_ZERO)
+  // Standard Z with [0, 1] NDC (DirectX / Vulkan default)
+  // Near -> 0.0, Far -> 1.0
+  double B = -f / (f - n);
+  double C = -(n * f) / (f - n);
+
 #else
+  // Standard Z with [-1, 1] NDC (Traditional OpenGL default)
+  // Near -> -1.0, Far -> +1.0
   double B = (f + n) / (n - f);
   double C = (2.0 * f * n) / (n - f);
 #endif
@@ -352,7 +334,7 @@ Tmat4<T> ortho(T l, T r, T b, T t, T n, T f)
   Tmat4<T> m;
   m[0] = Tvec4<T>(2.0 / (r - l), 0.0, 0.0, 0.0);
   m[1] = Tvec4<T>(0.0, 2.0 / (t - b), 0.0, 0.0);
-#ifdef ZERO_NEAR
+#ifdef DEPTH_ZERO
   m[2] = Tvec4<T>(0.0, 0.0, 1.0 / (n - f), 0.0);
   m[3] = Tvec4<T>((l + r) / (l - r), (b + t) / (b - t), n / (n - f), 1.0);
 #else
@@ -496,7 +478,7 @@ inline vecN<T, n> min(const vecN<T, n> &x, const vecN<T, n> &y)
 {
   vecN<T, n> t;
   for (int i = 0; i < n; i++) {
-    t[i] = std::min(x[i], y[i]);
+    t[i] = x[i] < y[i] ? x[i] : y[i];
   }
   return t;
 }
@@ -512,7 +494,7 @@ inline vecN<T, n> max(const vecN<T, n> &x, const vecN<T, n> &y)
 {
   vecN<T, n> t;
   for (int i = 0; i < n; i++) {
-    t[i] = std::max<T>(x[i], y[i]);
+    t[i] = x[i] > y[i] ? x[i] : y[i];
   }
   return t;
 }
@@ -520,7 +502,11 @@ inline vecN<T, n> max(const vecN<T, n> &x, const vecN<T, n> &y)
 template <typename T, const int n>
 inline vecN<T, n> clamp(const vecN<T, n> &x, const vecN<T, n> &minv, const vecN<T, n> &maxv)
 {
-  return std::min<T>(std::max<T>(x, minv), maxv);
+  vecN<T, n> t;
+  for (int i = 0; i < n; i++) {
+    t[i] = x[i] < minv[i] ? minv[i] : x[i] > maxv[i] ? maxv[i] : x[i];
+  }
+  return t;
 }
 
 template <typename T, const int n>
@@ -579,7 +565,7 @@ template <typename T>
 class Tboundingbox
 {
 public:
-  Tboundingbox() : _min(std::numeric_limits<T>::max()), _max(-_min) {}
+  Tboundingbox() : _min(T(1)), _max(T(-1)) {}
 
   Tboundingbox(const Tvec3<T> &min, const Tvec3<T> &max) : _min(min), _max(max) {}
 

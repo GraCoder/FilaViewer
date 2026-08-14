@@ -2,6 +2,7 @@
 
 #include <optional>
 #include <memory>
+#include "tvec.h"
 #include "tmath.h"
 #include "IView.h"
 

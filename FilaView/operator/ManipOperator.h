@@ -7,7 +7,8 @@
 namespace fv {
 
 class TView;
-class ManipOperator : public TOperator {
+class ManipOperator : public TOperator
+{
 public:
   ManipOperator();
   ~ManipOperator();
@@ -38,12 +39,12 @@ private:
   tg::quatd _rotation;
   double _distance = 100;
 
-  double _refTime;
+  double _refTime = 0;
 
   TView *_view = nullptr;
-  uint32_t _throwStamp;
-  uint32_t _throwButton;
-  float _dx, _dy, _throwTime = 0;
+  uint32_t _throwStamp  = 0;
+  uint32_t _throwButton = -1;
+  float _dx = 0, _dy = 0, _throwTime = 0;
 
   std::optional<tg::vec3d> _upAxis, _rtAxis;
 };
