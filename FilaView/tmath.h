@@ -1,7 +1,22 @@
 #ifndef __TMATH_INC__
 #define __TMATH_INC__
 
+#include <stdint.h>
+#include <math.h>
+
 #include "tvec.h"
+
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
 
 namespace tg {
 
@@ -128,7 +143,7 @@ inline matNM<T, m, u> operator*(const matNM<T, m, n> &lhs, const matNM<T, n, u> 
   for (uint32_t i = 0; i < m; i++) {
     for (uint32_t j = 0; j < u; j++) {
       T sum = 0;
-      const vecN<T, m> &v = rhs[j];
+      const vecN<T, n> &v = rhs[j];
       for (uint32_t k = 0; k < n; k++)
         sum += lhs[k][i] * v[k];
       result[j][i] = sum;
@@ -412,13 +427,16 @@ inline Tmat4<T> translate(const Tvec3<T> &v)
 }
 
 template <typename T>
-inline Tmat4<T> lookat(const Tvec3<T> &eye, const Tvec3<T> &center = Tvec3<T>(0), const Tvec3<T> &up = Tvec3<T>(0, 0, 1))
+inline Tmat4<T> lookat(const Tvec3<T> &eye, const Tvec3<T> &center, const Tvec3<T> &up)
 {
   const Tvec3<T> f = normalize(center - eye);
   const Tvec3<T> s = normalize(cross(f, up));
   const Tvec3<T> u = normalize(cross(s, f));
-  const Tmat4<T> M =
-    Tmat4<T>(Tvec4<T>(s[0], u[0], -f[0], T(0)), Tvec4<T>(s[1], u[1], -f[1], T(0)), Tvec4<T>(s[2], u[2], -f[2], T(0)), Tvec4<T>(T(0), T(0), T(0), T(1)));
+  const Tmat4<T> M = Tmat4<T>(
+    Tvec4<T>(s[0], u[0], -f[0], T(0)), 
+    Tvec4<T>(s[1], u[1], -f[1], T(0)), 
+    Tvec4<T>(s[2], u[2], -f[2], T(0)), 
+    Tvec4<T>(T(0), T(0), T(0), T(1)));
 
   return M * translate<T>(-eye);
 }
@@ -483,12 +501,6 @@ inline vecN<T, n> min(const vecN<T, n> &x, const vecN<T, n> &y)
   return t;
 }
 
-template <typename T>
-inline T clamp(T t, T min = 0, T max = 1)
-{
-  return t > max ? max : t < min ? min : t;
-}
-
 template <typename T, const int n>
 inline vecN<T, n> max(const vecN<T, n> &x, const vecN<T, n> &y)
 {
@@ -497,6 +509,12 @@ inline vecN<T, n> max(const vecN<T, n> &x, const vecN<T, n> &y)
     t[i] = x[i] > y[i] ? x[i] : y[i];
   }
   return t;
+}
+
+template <typename T>
+inline T clamp(T t, T min = 0, T max = 1)
+{
+  return t > max ? max : t < min ? min : t;
 }
 
 template <typename T, const int n>

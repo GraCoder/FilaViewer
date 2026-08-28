@@ -109,11 +109,14 @@ public:
   template <typename U, const int m>
   inline vecN<T, n> &operator=(const vecN<U, m> &that)
   {
-    constexpr int sz = n < m ? n : m;
-    for (int i = 0; i < sz; i++)
+    constexpr int d = n < m ? n : m;
+    for (int i = 0; i < d; i++)
       data_[i] = that[i];
     return *this;
   }
+
+  inline T &operator[](int i) { return data_[i]; }
+  inline const T &operator[](int i) const { return data_[i]; }
 
   inline vecN operator+(const vecN &that) const
   {
@@ -198,9 +201,6 @@ public:
     return *this;
   }
 
-  inline T &operator[](int i) { return data_[i]; }
-  inline const T &operator[](int i) const { return data_[i]; }
-
   inline T *data() { return static_cast<T *>(data_); }
   inline const T *data() const { return static_cast<const T *>(data_); }
 
@@ -264,8 +264,8 @@ public:
   template <typename U, const int m>
   inline vecN &operator=(const vecN<U, m> &that)
   {
-    constexpr int sz = 2 < m ? 2 : m;
-    for (int i = 0; i < sz; i++)
+    constexpr int d = 2 < m ? 2 : m;
+    for (int i = 0; i < d; i++)
       data_[i] = static_cast<T>(that[i]);
     return *this;
   }
@@ -377,8 +377,8 @@ public:
   template <typename U, const int m>
   inline vecN &operator=(const vecN<U, m> &that)
   {
-    constexpr int sz = 3 < m ? 3 : m;
-    for (int i = 0; i < sz; i++)
+    constexpr int d = 3 < m ? 3 : m;
+    for (int i = 0; i < d; i++)
       data_[i] = static_cast<T>(that[i]);
     return *this;
   }
@@ -504,18 +504,18 @@ public:
   template <typename U, const int m>
   inline vecN &operator=(const vecN<U, m> &that)
   {
-    constexpr int sz = 4 < m ? 4 : m;
-    for (int i = 0; i < sz; i++)
+    constexpr int d = 4 < m ? 4 : m;
+    for (int i = 0; i < d; i++)
       data_[i] = static_cast<T>(that[i]);
     return *this;
   }
 
-  inline vecN operator+(const vecN &that) const { return vecN(data_[0] + that.data_[0], data_[1] + that.data_[1], data_[2] + that.data_[2], data_[3] + that.data_[3]); }
+  inline vecN operator+(const vecN &that) const { return vecN(data_[0] + that[0], data_[1] + that[1], data_[2] + that[2], data_[3] + that[3]); }
   inline vecN &operator+=(const vecN &that) { return (*this = *this + that); }
   inline vecN operator-() const { return vecN(-data_[0], -data_[1], -data_[2], -data_[3]); }
-  inline vecN operator-(const vecN &that) const { return vecN(data_[0] - that.data_[0], data_[1] - that.data_[1], data_[2] - that.data_[2], data_[3] - that.data_[3]); }
+  inline vecN operator-(const vecN &that) const { return vecN(data_[0] - that[0], data_[1] - that[1], data_[2] - that[2], data_[3] - that[3]); }
   inline vecN &operator-=(const vecN &that) { return (*this = *this - that); }
-  inline vecN operator*(const vecN &that) const { return vecN(data_[0] * that.data_[0], data_[1] * that.data_[1], data_[2] * that.data_[2], data_[3] * that.data_[3]); }
+  inline vecN operator*(const vecN &that) const { return vecN(data_[0] * that[0], data_[1] * that[1], data_[2] * that[2], data_[3] * that[3]); }
   inline vecN &operator*=(const vecN &that) { return (*this = *this * that); }
   inline vecN operator*(const T &that) const { return vecN(data_[0] * that, data_[1] * that, data_[2] * that, data_[3] * that); }
   inline vecN &operator*=(const T &that)
@@ -572,11 +572,6 @@ using Tvec3 = vecN<T, 3>;
 
 template <typename T>
 using Tvec4 = vecN<T, 4>;
-
-using vec1 = vecN<float, 1>;
-using vec1i = vecN<int, 1>;
-using vec1u = vecN<unsigned int, 1>;
-using vec1d = vecN<double, 1>;
 
 using vec2 = Tvec2<float>;
 using vec2d = Tvec2<double>;
@@ -779,7 +774,7 @@ template <typename T, int m, int n>
 class matNM
 {
 public:
-  using type = matNM<T, n, m>;
+  using vecT = vecN<T, m>;  
 
   inline matNM() {}
 
@@ -790,31 +785,17 @@ public:
     }
   }
 
-  template <typename U>
-  matNM(const matNM<U, m, n> &that)
-  {
-    for (int i = 0; i < n; i++) {
-      data_[i] = that[i];
-    }
-  }
-
-  template <const int s, const int t>
-  matNM(const matNM<T, s, t> &that)
+  template <typename U, const int s, const int t>
+  matNM(const matNM<U, s, t> &that)
   {
     for (int i = 0; i < n; i++)
-      data_[i] = 0;
+      data_[i] = {};
     constexpr int col = n < t ? n : t;
     for (int i = 0; i < col; i++)
       data_[i] = that[i];
   }
 
-  explicit inline matNM(const vecN<T, m> &v)
-  {
-    for (int i = 0; i < n; i++)
-      data_[i] = v;
-  }
-
-  inline matNM &operator=(const type &that)
+  inline matNM &operator=(const matNM &that)
   {
     for (int i = 0; i < n; i++)
       data_[i] = that[i];
@@ -822,72 +803,69 @@ public:
   }
 
   template <typename U>
-  matNM &operator=(const matNM<U, n, m> &that)
+  matNM &operator=(const matNM<U, m, n> &that)
   {
     for (int i = 0; i < n; i++)
       data_[i] = that[i];
     return *this;
   }
 
-  inline matNM operator+(const type &that) const
+  inline vecT &operator[](int i) { return data_[i]; }
+  inline const vecT &operator[](int i) const { return data_[i]; }
+  inline operator T *() { return &data_[0][0]; }
+  inline operator const T *() const { return &data_[0][0]; }
+
+  inline matNM operator+(const matNM &that) const
   {
-    type result;
+    matNM result;
     for (int i = 0; i < n; i++)
       result.data_[i] = data_[i] + that.data_[i];
     return result;
   }
 
-  inline type &operator+=(const type &that) { return (*this = *this + that); }
+  inline matNM &operator+=(const matNM &that) { return (*this = *this + that); }
 
-  inline type operator-(const type &that) const
+  inline matNM operator-(const matNM &that) const
   {
-    type result;
+    matNM result;
     for (int i = 0; i < n; i++)
       result.data_[i] = data_[i] - that.data_[i];
     return result;
   }
 
-  inline type &operator-=(const type &that) { return (*this = *this - that); }
+  inline matNM &operator-=(const matNM &that) { return (*this = *this - that); }
 
-  inline type operator*(const T &that) const
+  inline matNM operator*(const T &that) const
   {
-    type result;
+    matNM result;
     for (int i = 0; i < n; i++)
       result.data_[i] = data_[i] * that;
     return result;
   }
 
-  inline type &operator*=(const T &that)
+  inline matNM &operator*=(const T &that)
   {
     for (int i = 0; i < n; i++)
       data_[i] = data_[i] * that;
     return *this;
   }
 
-  inline vecN<T, n> &operator[](int i) { return data_[i]; }
-  inline const vecN<T, n> &operator[](int i) const { return data_[i]; }
-  inline operator T *() { return &data_[0][0]; }
-  inline operator const T *() const { return &data_[0][0]; }
-
   inline matNM<T, n, m> transpose() const
   {
     matNM<T, n, m> result;
     for (int i = 0; i < n; i++)
       for (int j = 0; j < m; j++)
-        result.data_[j][i] = data_[i][j];
+        result[j][i] = data_[i][j];
     return result;
   }
 
-  inline void identity()
+  inline void identity() requires (m == n)
   {
     for (int i = 0; i < n; i++) {
-      data_[i] = 0;
+      data_[i] = {};
       data_[i][i] = 1;
     }
   }
-
-  static inline int row(void) { return m; }
-  static inline int col(void) { return n; }
 
   template <typename U>
   inline void set(const U *ele)
@@ -904,118 +882,47 @@ public:
   }
 
 protected:
-  vecN<T, m> data_[n] = {};
+  vecT data_[n] = {};
 };
 
 template <typename T>
-class matNM<T, 2, 2>
+class Tmat2 : public matNM<T, 2, 2>
 {
 public:
-  using type = matNM<T, 2, 2>;
+  using base = matNM<T, 2, 2>;
+  using base::base;
+  using base::operator=;
+  using vecT = typename base::vecT;
 
-  inline matNM() {}
-  explicit inline matNM(T f) { set(f); }
-  explicit inline matNM(const vecN<T, 2> &v)
+  Tmat2() = default;
+  Tmat2(const base &that) : base(that) {}
+  Tmat2(const vecT &v0, const vecT &v1) : base()
   {
-    data_[0] = v;
-    data_[1] = v;
-  }
-  inline matNM(const vecN<T, 2> &v0, const vecN<T, 2> &v1)
-  {
-    data_[0] = v0;
-    data_[1] = v1;
+    (*this)[0] = v0;
+    (*this)[1] = v1;
   }
 
-  template <typename U>
-  matNM(const matNM<U, 2, 2> &that)
+  Tmat2 &operator=(const base &that)
   {
-    data_[0] = that[0];
-    data_[1] = that[1];
-  }
-
-  inline matNM &operator=(const type &that)
-  {
-    data_[0] = that[0];
-    data_[1] = that[1];
+    base::operator=(that);
     return *this;
   }
-
-  template <typename U>
-  matNM &operator=(const matNM<U, 2, 2> &that)
-  {
-    data_[0] = that[0];
-    data_[1] = that[1];
-    return *this;
-  }
-
-  inline type operator+(const type &that) const { return type(data_[0] + that.data_[0], data_[1] + that.data_[1]); }
-  inline type &operator+=(const type &that) { return (*this = *this + that); }
-  inline type operator-(const type &that) const { return type(data_[0] - that.data_[0], data_[1] - that.data_[1]); }
-  inline type &operator-=(const type &that) { return (*this = *this - that); }
-  inline type operator*(const T &that) const { return type(data_[0] * that, data_[1] * that); }
-  inline type &operator*=(const T &that)
-  {
-    data_[0] *= that;
-    data_[1] *= that;
-    return *this;
-  }
-
-  inline vecN<T, 2> &operator[](int i) { return data_[i]; }
-  inline const vecN<T, 2> &operator[](int i) const { return data_[i]; }
-  inline operator T *() { return &data_[0][0]; }
-  inline operator const T *() const { return &data_[0][0]; }
-
-  inline type transpose() const { return type(vecN<T, 2>(data_[0][0], data_[1][0]), vecN<T, 2>(data_[0][1], data_[1][1])); }
-
-  inline void identity()
-  {
-    data_[0] = 0;
-    data_[1] = 0;
-    data_[0][0] = 1;
-    data_[1][1] = 1;
-  }
-
-  static inline int row(void) { return 2; }
-  static inline int col(void) { return 2; }
-
-  template <typename U>
-  inline void set(const U *ele)
-  {
-    data_[0].set(ele);
-    data_[1].set(ele + 2);
-  }
-
-  inline void set(T v)
-  {
-    data_[0].set(v);
-    data_[1].set(v);
-  }
-
-protected:
-  vecN<T, 2> data_[2] = {};
 };
 
 template <typename T>
-class matNM<T, 3, 3>
+class Tmat3 : public matNM<T, 3, 3>
 {
 public:
-  using type = matNM<T, 3, 3>;
+  using base = matNM<T, 3, 3>;
+  using base::base;
+  using base::operator=;
+  using vecT = typename base::vecT;
 
-  inline matNM() {}
-  explicit inline matNM(T f) { set(f); }
-  explicit inline matNM(const vecN<T, 3> &v)
-  {
-    data_[0] = v;
-    data_[1] = v;
-    data_[2] = v;
-  }
-  inline matNM(const vecN<T, 3> &v0, const vecN<T, 3> &v1, const vecN<T, 3> &v2)
-  {
-    data_[0] = v0;
-    data_[1] = v1;
-    data_[2] = v2;
-  }
-  inline matNM(const Tquat<T> &quat)
+  Tmat3() = default;
+  Tmat3(const base &that) : base(that) {}
+  Tmat3(const vecT &v0, const vecT &v1, const vecT &v2) : base() { (*this)[0] = v0; (*this)[1] = v1; (*this)[2] = v2; }
+
+  Tmat3(const Tquat<T> &quat) : base()
   {
     Tvec4<T> v(quat);
     const T xx = v.x() * v.x();
@@ -1028,243 +935,51 @@ public:
     const T yw = v.y() * v.w();
     const T zw = v.z() * v.w();
 
-    data_[0][0] = T(1) - T(2) * (yy + zz);
-    data_[0][1] = T(2) * (xy + zw);
-    data_[0][2] = T(2) * (xz - yw);
-    data_[1][0] = T(2) * (xy - zw);
-    data_[1][1] = T(1) - T(2) * (xx + zz);
-    data_[1][2] = T(2) * (yz + xw);
-    data_[2][0] = T(2) * (xz + yw);
-    data_[2][1] = T(2) * (yz - xw);
-    data_[2][2] = T(1) - T(2) * (xx + yy);
+    (*this)[0][0] = T(1) - T(2) * (yy + zz);
+    (*this)[0][1] = T(2) * (xy + zw);
+    (*this)[0][2] = T(2) * (xz - yw);
+    (*this)[1][0] = T(2) * (xy - zw);
+    (*this)[1][1] = T(1) - T(2) * (xx + zz);
+    (*this)[1][2] = T(2) * (yz + xw);
+    (*this)[2][0] = T(2) * (xz + yw);
+    (*this)[2][1] = T(2) * (yz - xw);
+    (*this)[2][2] = T(1) - T(2) * (xx + yy);
   }
 
-  template <typename U>
-  matNM(const matNM<U, 3, 3> &that)
+  Tmat3 &operator=(const base &that)
   {
-    data_[0] = that[0];
-    data_[1] = that[1];
-    data_[2] = that[2];
-  }
-
-  template <int m, int n>
-  matNM(const matNM<T, m, n> &that)
-  {
-    constexpr int row = 3 < m ? 3 : m;
-    constexpr int col = 3 < n ? 3 : n;
-    set(T(0));
-    for (int i = 0; i < col; i++)
-      for (int j = 0; j < row; j++)
-        data_[i][j] = that[i][j];
-  }
-
-  inline matNM &operator=(const type &that)
-  {
-    data_[0] = that[0];
-    data_[1] = that[1];
-    data_[2] = that[2];
+    base::operator=(that);
     return *this;
   }
-
-  template <typename U>
-  matNM &operator=(const matNM<U, 3, 3> &that)
-  {
-    data_[0] = that[0];
-    data_[1] = that[1];
-    data_[2] = that[2];
-    return *this;
-  }
-
-  inline type operator+(const type &that) const { return type(data_[0] + that.data_[0], data_[1] + that.data_[1], data_[2] + that.data_[2]); }
-  inline type &operator+=(const type &that) { return (*this = *this + that); }
-  inline type operator-(const type &that) const { return type(data_[0] - that.data_[0], data_[1] - that.data_[1], data_[2] - that.data_[2]); }
-  inline type &operator-=(const type &that) { return (*this = *this - that); }
-  inline type operator*(const T &that) const { return type(data_[0] * that, data_[1] * that, data_[2] * that); }
-  inline type &operator*=(const T &that)
-  {
-    data_[0] *= that;
-    data_[1] *= that;
-    data_[2] *= that;
-    return *this;
-  }
-
-  inline vecN<T, 3> &operator[](int i) { return data_[i]; }
-  inline const vecN<T, 3> &operator[](int i) const { return data_[i]; }
-  inline operator T *() { return &data_[0][0]; }
-  inline operator const T *() const { return &data_[0][0]; }
-
-  inline type transpose() const
-  {
-    return type(vecN<T, 3>(data_[0][0], data_[1][0], data_[2][0]), vecN<T, 3>(data_[0][1], data_[1][1], data_[2][1]),
-                vecN<T, 3>(data_[0][2], data_[1][2], data_[2][2]));
-  }
-
-  inline void identity()
-  {
-    set(T(0));
-    data_[0][0] = 1;
-    data_[1][1] = 1;
-    data_[2][2] = 1;
-  }
-
-  static inline int row(void) { return 3; }
-  static inline int col(void) { return 3; }
-
-  template <typename U>
-  inline void set(const U *ele)
-  {
-    data_[0].set(ele);
-    data_[1].set(ele + 3);
-    data_[2].set(ele + 6);
-  }
-
-  inline void set(T v)
-  {
-    data_[0].set(v);
-    data_[1].set(v);
-    data_[2].set(v);
-  }
-
-protected:
-  vecN<T, 3> data_[3] = {};
 };
 
 template <typename T>
-class matNM<T, 4, 4>
+class Tmat4 : public matNM<T, 4, 4>
 {
 public:
-  using type = matNM<T, 4, 4>;
+  using base = matNM<T, 4, 4>;
+  using base::base;
+  using base::operator=;
+  using vecT = typename base::vecT;
 
-  inline matNM() {}
-  explicit inline matNM(T f) { set(f); }
-  explicit inline matNM(const vecN<T, 4> &v)
+  Tmat4() = default;
+  Tmat4(const base &that) : base(that) {}
+  Tmat4(const vecT &v0, const vecT &v1, const vecT &v2, const vecT &v3) : base() { (*this)[0] = v0; (*this)[1] = v1; (*this)[2] = v2; (*this)[3] = v3; }
+
+  Tmat4(const matNM<T, 3, 3> &that)
+    : base()
   {
-    data_[0] = v;
-    data_[1] = v;
-    data_[2] = v;
-    data_[3] = v;
-  }
-  inline matNM(const vecN<T, 4> &v0, const vecN<T, 4> &v1, const vecN<T, 4> &v2, const vecN<T, 4> &v3)
-  {
-    data_[0] = v0;
-    data_[1] = v1;
-    data_[2] = v2;
-    data_[3] = v3;
-  }
-  inline matNM(const matNM<T, 3, 3> &that)
-  {
-    set(T(0));
     for (int i = 0; i < 3; i++)
-      for (int j = 0; j < 3; j++)
-        data_[i][j] = that[i][j];
-    data_[3][3] = T(1);
+      (*this)[i] = that[i];
+    (*this)[3][3] = T(1);
   }
 
-  template <typename U>
-  matNM(const matNM<U, 4, 4> &that)
+  Tmat4 &operator=(const base &that)
   {
-    data_[0] = that[0];
-    data_[1] = that[1];
-    data_[2] = that[2];
-    data_[3] = that[3];
-  }
-
-  template <int m, int n>
-  matNM(const matNM<T, m, n> &that)
-  {
-    constexpr int row = 4 < m ? 4 : m;
-    constexpr int col = 4 < n ? 4 : n;
-    set(T(0));
-    for (int i = 0; i < col; i++)
-      for (int j = 0; j < row; j++)
-        data_[i][j] = that[i][j];
-  }
-
-  inline matNM &operator=(const type &that)
-  {
-    data_[0] = that[0];
-    data_[1] = that[1];
-    data_[2] = that[2];
-    data_[3] = that[3];
+    base::operator=(that);
     return *this;
   }
-
-  template <typename U>
-  matNM &operator=(const matNM<U, 4, 4> &that)
-  {
-    data_[0] = that[0];
-    data_[1] = that[1];
-    data_[2] = that[2];
-    data_[3] = that[3];
-    return *this;
-  }
-
-  inline type operator+(const type &that) const { return type(data_[0] + that.data_[0], data_[1] + that.data_[1], data_[2] + that.data_[2], data_[3] + that.data_[3]); }
-  inline type &operator+=(const type &that) { return (*this = *this + that); }
-  inline type operator-(const type &that) const { return type(data_[0] - that.data_[0], data_[1] - that.data_[1], data_[2] - that.data_[2], data_[3] - that.data_[3]); }
-  inline type &operator-=(const type &that) { return (*this = *this - that); }
-  inline type operator*(const T &that) const { return type(data_[0] * that, data_[1] * that, data_[2] * that, data_[3] * that); }
-  inline type &operator*=(const T &that)
-  {
-    data_[0] *= that;
-    data_[1] *= that;
-    data_[2] *= that;
-    data_[3] *= that;
-    return *this;
-  }
-
-  inline vecN<T, 4> &operator[](int i) { return data_[i]; }
-  inline const vecN<T, 4> &operator[](int i) const { return data_[i]; }
-  inline operator T *() { return &data_[0][0]; }
-  inline operator const T *() const { return &data_[0][0]; }
-
-  inline type transpose() const
-  {
-    return type(vecN<T, 4>(data_[0][0], data_[1][0], data_[2][0], data_[3][0]), vecN<T, 4>(data_[0][1], data_[1][1], data_[2][1], data_[3][1]),
-                vecN<T, 4>(data_[0][2], data_[1][2], data_[2][2], data_[3][2]), vecN<T, 4>(data_[0][3], data_[1][3], data_[2][3], data_[3][3]));
-  }
-
-  inline void identity()
-  {
-    set(T(0));
-    data_[0][0] = 1;
-    data_[1][1] = 1;
-    data_[2][2] = 1;
-    data_[3][3] = 1;
-  }
-
-  static inline int row(void) { return 4; }
-  static inline int col(void) { return 4; }
-
-  template <typename U>
-  inline void set(const U *ele)
-  {
-    data_[0].set(ele);
-    data_[1].set(ele + 4);
-    data_[2].set(ele + 8);
-    data_[3].set(ele + 12);
-  }
-
-  inline void set(T v)
-  {
-    data_[0].set(v);
-    data_[1].set(v);
-    data_[2].set(v);
-    data_[3].set(v);
-  }
-
-protected:
-  vecN<T, 4> data_[4] = {};
 };
-
-template <typename T>
-using Tmat2 = matNM<T, 2, 2>;
-
-template <typename T>
-using Tmat3 = matNM<T, 3, 3>;
-
-template <typename T>
-using Tmat4 = matNM<T, 4, 4>;
 
 using mat2 = Tmat2<float>;
 using mat3 = Tmat3<float>;

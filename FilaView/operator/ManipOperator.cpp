@@ -79,11 +79,8 @@ bool ManipOperator::mouseRelease(TView *view, const SDL_MouseButtonEvent &btn)
       auto &vp = view->viewport();
       _dx /= vp.z();
       _dy /= vp.w();
-
-      if (_throwButton == 2) {
-        _dx *= 0.2f;
-        _dy *= 0.2f;
-      }
+      _dx *= 0.2f;
+      _dy *= 0.2f;
     }
   }
 
