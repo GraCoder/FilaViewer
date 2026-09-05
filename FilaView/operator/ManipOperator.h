@@ -42,7 +42,7 @@ private:
   double _refTime = 0;
 
   TView *_view = nullptr;
-  uint32_t _throwStamp  = 0;
+  uint64_t _throwStamp  = 0;
   uint32_t _throwButton = -1;
   float _dx = 0, _dy = 0, _throwTime = 0;
 

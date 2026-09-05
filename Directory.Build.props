@@ -1,9 +1,9 @@
 <Project>
   <PropertyGroup>
     <Nullable>enable</Nullable>
+    <AvaloniaVersion>11.0.6</AvaloniaVersion>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <BaseOutputPath>$(SolutionDir)0\$(MSBuildProjectName)\bin\</BaseOutputPath>
-    <BaseIntermediateOutputPath>$(SolutionDir)0\$(MSBuildProjectName)\obj\</BaseIntermediateOutputPath>
-    <IntermediateOutputPath>$(SolutionDir)0\$(MSBuildProjectName)\obj\</IntermediateOutputPath>
+    <BaseOutputPath>$(MSBuildThisFileDirectory)0\$(MSBuildProjectName)\bin\</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)0\$(MSBuildProjectName)\obj\</BaseIntermediateOutputPath>
   </PropertyGroup>
 </Project>

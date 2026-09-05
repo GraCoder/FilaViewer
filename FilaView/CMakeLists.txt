@@ -1,14 +1,11 @@
-cmake_minimum_required(VERSION 3.26)
+cmake_minimum_required(VERSION 3.28)
 
 set(target_name FilaView)
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDLL)
 
+find_package(SDL3 CONFIG REQUIRED)
 find_package(Vulkan)
-get_filename_component(VK_BIN_DIR ${Vulkan_GLSLC_EXECUTABLE} DIRECTORY)
-get_filename_component(SDL2_LIB_DIR ${Vulkan_LIBRARY} DIRECTORY)
-link_directories(${SDL2_LIB_DIR})
-
 find_package(Assimp)
 
 set(filament_dir "" CACHE PATH "")
@@ -180,21 +177,11 @@ set(filament_libs
   ${filament_dir}/lib/x86_64/ktxreader.lib
   ${filament_dir}/lib/x86_64/basis_transcoder.lib
   ${filament_dir}/lib/x86_64/zstd.lib
+  ${filament_dir}/lib/x86_64/bluevk.lib
 )
 
-option(WITH_OPENGL "" OFF)
-option(WITH_VULKAN "" ON)
-
-if(WITH_OPENGL)
-list(APPEND filament_libs ${filament_dir}/lib/x86_64/bluegl.lib)
-target_link_libraries(${target_name} PRIVATE Opengl32)
-endif()
-
-if(WITH_VULKAN)
-list(APPEND filament_libs ${filament_dir}/lib/x86_64/bluevk.lib)
-endif()
-
-target_link_libraries(${target_name} PRIVATE SDL2 ${filament_libs} shlwapi)
+target_link_libraries(${target_name} PRIVATE SDL3::SDL3)
+target_link_libraries(${target_name} PRIVATE ${filament_libs} shlwapi)
 
 if(Assimp_FOUND)
 target_link_libraries(${target_name} PRIVATE assimp::assimp)

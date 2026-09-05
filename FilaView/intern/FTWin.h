@@ -2,6 +2,7 @@
 
 #include "TWin.h"
 
+#include <atomic>
 #include <thread>
 
 class SDL_Window;
@@ -23,16 +24,14 @@ class FTView;
 class TOperator;
 class ManipOperator;
 
-class FTWin : public TWin {
+class FTWin : public TWin
+{
   friend class TWin;
-
 public:
   FTWin(FTWin *);
   ~FTWin();
 
-  uint64_t winId();
-
-  void exec(bool thread);
+  uint64_t exec(bool thread);
 
   filament::Engine *engine() { return _engine; }
   filament::SwapChain *swapchain() { return _swapchain; }
@@ -46,7 +45,7 @@ public:
   std::vector<std::shared_ptr<TOperator>> &operators() { return _operators; }
 
 private:
-  void createWindow();
+  void createWindow(bool thread);
 
   void createEngine();
 
@@ -64,10 +63,11 @@ private:
   void gui(filament::Engine *, filament::View *);
 
 private:
-  bool _close = false;
+  std::atomic_bool _close = false;
   bool _realized = false;
 
   SDL_Window *_window = nullptr;
+  uint64_t _nativeWindow = 0;
 
   filament::Engine *_engine = nullptr;
   filament::SwapChain *_swapchain = nullptr;

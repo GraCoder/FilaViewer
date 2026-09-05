@@ -8,9 +8,7 @@ public:
   static IWin*  create(IWin *win = nullptr, bool with_border = true);
   static void   destroy(IWin *win);
 
-  virtual uint64_t winId() = 0;
-
-  virtual void exec(bool thread) = 0;
+  virtual uint64_t exec(bool thread) = 0;
 
   virtual void setupGui() = 0;
   virtual IView *view(int id = 0) = 0;

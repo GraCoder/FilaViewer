@@ -28,66 +28,53 @@ public unsafe partial struct IWin : IWin.Interface
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [VtblIndex(0)]
     [return: NativeTypeName("uint64_t")]
-    public ulong winId()
+    public ulong exec(bool thread)
     {
-        return ((delegate* unmanaged[Thiscall]<IWin*, ulong>)(lpVtbl[0]))((IWin*)Unsafe.AsPointer(ref this));
+        return ((delegate* unmanaged[Thiscall]<IWin*, bool, ulong>)(lpVtbl[0]))((IWin*)Unsafe.AsPointer(ref this), thread);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [VtblIndex(1)]
-    public void exec(bool thread)
+    public void setupGui()
     {
-        ((delegate* unmanaged[Thiscall]<IWin*, bool, void>)(lpVtbl[1]))((IWin*)Unsafe.AsPointer(ref this), thread);
+        ((delegate* unmanaged[Thiscall]<IWin*, void>)(lpVtbl[1]))((IWin*)Unsafe.AsPointer(ref this));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [VtblIndex(2)]
-    public void setupGui()
+    public IView* view(int id = 0)
     {
-        ((delegate* unmanaged[Thiscall]<IWin*, void>)(lpVtbl[2]))((IWin*)Unsafe.AsPointer(ref this));
+        return ((delegate* unmanaged[Thiscall]<IWin*, int, IView*>)(lpVtbl[2]))((IWin*)Unsafe.AsPointer(ref this), id);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     [VtblIndex(3)]
-    public IView* view(int id = 0)
-    {
-        return ((delegate* unmanaged[Thiscall]<IWin*, int, IView*>)(lpVtbl[3]))((IWin*)Unsafe.AsPointer(ref this), id);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [VtblIndex(4)]
     public int handleCommand([NativeTypeName("const char *")] sbyte* ops, int len)
     {
-        return ((delegate* unmanaged[Thiscall]<IWin*, sbyte*, int, int>)(lpVtbl[4]))((IWin*)Unsafe.AsPointer(ref this), ops, len);
+        return ((delegate* unmanaged[Thiscall]<IWin*, sbyte*, int, int>)(lpVtbl[3]))((IWin*)Unsafe.AsPointer(ref this), ops, len);
     }
 
     public interface Interface
     {
         [VtblIndex(0)]
         [return: NativeTypeName("uint64_t")]
-        ulong winId();
+        ulong exec(bool thread);
 
         [VtblIndex(1)]
-        void exec(bool thread);
-
-        [VtblIndex(2)]
         void setupGui();
 
-        [VtblIndex(3)]
+        [VtblIndex(2)]
         IView* view(int id = 0);
 
-        [VtblIndex(4)]
+        [VtblIndex(3)]
         int handleCommand([NativeTypeName("const char *")] sbyte* ops, int len);
     }
 
     public partial struct Vtbl<TSelf>
         where TSelf : unmanaged, Interface
     {
-        [NativeTypeName("uint64_t ()")]
-        public delegate* unmanaged[Thiscall]<TSelf*, ulong> winId;
-
-        [NativeTypeName("void (bool)")]
-        public delegate* unmanaged[Thiscall]<TSelf*, bool, void> exec;
+        [NativeTypeName("uint64_t (bool)")]
+        public delegate* unmanaged[Thiscall]<TSelf*, bool, ulong> exec;
 
         [NativeTypeName("void ()")]
         public delegate* unmanaged[Thiscall]<TSelf*, void> setupGui;

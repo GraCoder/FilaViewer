@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2018 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 #include "ImGuiHelper.h"
 
 #include <unordered_map>
@@ -264,9 +248,7 @@ void ImGuiHelper::createAtlasTexture(Engine *engine)
 }
 
 namespace {
-static constexpr int mk[4] = {0, 0, 1, 2};
-
-ImGuiKey convert_key(int scanCode)
+ImGuiKey convert_key(SDL_Scancode scanCode)
 {
   switch (scanCode) {
   case SDL_SCANCODE_TAB:
@@ -366,69 +348,37 @@ ImGuiKey convert_key(int scanCode)
   }
 }
 
-void addMod(ImGuiIO &io, int mod, bool press) 
+void updateModifiers(ImGuiIO &io, SDL_Keymod mod)
 {
-  // Control (Ctrl)
-  if (mod & KMOD_LCTRL)
-    io.AddKeyEvent(ImGuiKey_LeftCtrl, press);
-  if (mod & KMOD_RCTRL)
-    io.AddKeyEvent(ImGuiKey_RightCtrl, press);
-  if ((mod & KMOD_CTRL) && !(mod & (KMOD_LCTRL | KMOD_RCTRL))) {
-    // generic CTRL set but no side-specific bits -> set both to be safe
-    io.AddKeyEvent(ImGuiKey_LeftCtrl, press);
-    io.AddKeyEvent(ImGuiKey_RightCtrl, press);
+  io.AddKeyEvent(ImGuiMod_Ctrl, (mod & SDL_KMOD_CTRL) != 0);
+  io.AddKeyEvent(ImGuiMod_Shift, (mod & SDL_KMOD_SHIFT) != 0);
+  io.AddKeyEvent(ImGuiMod_Alt, (mod & SDL_KMOD_ALT) != 0);
+  io.AddKeyEvent(ImGuiMod_Super, (mod & SDL_KMOD_GUI) != 0);
+}
+
+int convertMouseButton(Uint8 button)
+{
+  switch (button) {
+  case SDL_BUTTON_LEFT:
+    return ImGuiMouseButton_Left;
+  case SDL_BUTTON_RIGHT:
+    return ImGuiMouseButton_Right;
+  case SDL_BUTTON_MIDDLE:
+    return ImGuiMouseButton_Middle;
+  default:
+    return -1;
   }
-
-  // Shift
-  if (mod & KMOD_LSHIFT)
-    io.AddKeyEvent(ImGuiKey_LeftShift, press);
-  if (mod & KMOD_RSHIFT)
-    io.AddKeyEvent(ImGuiKey_RightShift, press);
-  if ((mod & KMOD_SHIFT) && !(mod & (KMOD_LSHIFT | KMOD_RSHIFT))) {
-    io.AddKeyEvent(ImGuiKey_LeftShift, press);
-    io.AddKeyEvent(ImGuiKey_RightShift, press);
-  }
-
-  // Alt (including AltGr)
-  if (mod & KMOD_LALT)
-    io.AddKeyEvent(ImGuiKey_LeftAlt, press);
-  if (mod & KMOD_RALT)
-    io.AddKeyEvent(ImGuiKey_RightAlt, press);
-  if ((mod & KMOD_ALT) && !(mod & (KMOD_LALT | KMOD_RALT))) {
-    io.AddKeyEvent(ImGuiKey_LeftAlt, press);
-    io.AddKeyEvent(ImGuiKey_RightAlt, press);
-  }
-
-  // GUI / Super (Windows / Command)
-  if (mod & KMOD_LGUI)
-    io.AddKeyEvent(ImGuiKey_LeftSuper, press);
-  if (mod & KMOD_RGUI)
-    io.AddKeyEvent(ImGuiKey_RightSuper, press);
-  if ((mod & KMOD_GUI) && !(mod & (KMOD_LGUI | KMOD_RGUI))) {
-    io.AddKeyEvent(ImGuiKey_LeftSuper, press);
-    io.AddKeyEvent(ImGuiKey_RightSuper, press);
-  }
-
-  // Lock keys
-  if (mod & KMOD_CAPS)
-    io.AddKeyEvent(ImGuiKey_CapsLock, press);
-  if (mod & KMOD_NUM)
-    io.AddKeyEvent(ImGuiKey_NumLock, press);
-
-  // KMOD_MODE is often AltGr on some layouts; treat it as RightAlt for ImGui
-  if (mod & KMOD_MODE)
-    io.AddKeyEvent(ImGuiKey_RightAlt, press);
 }
 
 }
 
 bool ImGuiHelper::keyDn(const SDL_KeyboardEvent &keyEvent)
 {
-  int key = convert_key(keyEvent.keysym.scancode);
+  ImGuiKey key = convert_key(keyEvent.scancode);
   auto &io = ImGui::GetIO();
-  io.AddKeyEvent(static_cast<ImGuiKey>(key), true);
-  if (keyEvent.keysym.mod > 0)
-    addMod(io, keyEvent.keysym.mod, true);
+  updateModifiers(io, keyEvent.mod);
+  if (key != ImGuiKey_None)
+    io.AddKeyEvent(key, true);
   if (io.WantCaptureKeyboard) {
     _refresh = true;
     return true;
@@ -438,12 +388,12 @@ bool ImGuiHelper::keyDn(const SDL_KeyboardEvent &keyEvent)
 
 bool ImGuiHelper::keyUp(const SDL_KeyboardEvent &keyEvent)
 {
-  ImGuiKey key = convert_key(keyEvent.keysym.scancode);
+  ImGuiKey key = convert_key(keyEvent.scancode);
 
   auto &io = ImGui::GetIO();
-  io.AddKeyEvent(static_cast<ImGuiKey>(key), false);
-  if (keyEvent.keysym.mod > 0)
-    addMod(io, keyEvent.keysym.mod, false);
+  updateModifiers(io, keyEvent.mod);
+  if (key != ImGuiKey_None)
+    io.AddKeyEvent(key, false);
   if (io.WantCaptureKeyboard) {
     _refresh = true;
     return true;
@@ -466,7 +416,9 @@ bool ImGuiHelper::mouseButtonDn(const SDL_MouseButtonEvent &mEvent)
 {
   auto &io = ImGui::GetIO();
   io.AddMousePosEvent(mEvent.x, mEvent.y);
-  io.AddMouseButtonEvent(mk[mEvent.button], true);
+  const int button = convertMouseButton(mEvent.button);
+  if (button >= 0)
+    io.AddMouseButtonEvent(button, true);
   if (io.WantCaptureMouse) {
     _refresh = true;
     return true;
@@ -479,7 +431,9 @@ bool ImGuiHelper::mouseButtonUp(const SDL_MouseButtonEvent &mEvent)
 {
   auto &io = ImGui::GetIO();
   io.AddMousePosEvent(mEvent.x, mEvent.y);
-  io.AddMouseButtonEvent(mk[mEvent.button], false);
+  const int button = convertMouseButton(mEvent.button);
+  if (button >= 0)
+    io.AddMouseButtonEvent(button, false);
   if (io.WantCaptureMouse) {
     _refresh = true;
     return true;
@@ -503,7 +457,9 @@ bool ImGuiHelper::mouseMove(const SDL_MouseMotionEvent &mEvent)
 bool ImGuiHelper::mouseWheel(const SDL_MouseWheelEvent &wEvent)
 {
   auto &io = ImGui::GetIO();
-  io.AddMouseWheelEvent(wEvent.mouseX, wEvent.mouseY);
+  const float direction = wEvent.direction == SDL_MOUSEWHEEL_FLIPPED ? -1.0f : 1.0f;
+  io.AddMousePosEvent(wEvent.mouse_x, wEvent.mouse_y);
+  io.AddMouseWheelEvent(wEvent.x * direction, wEvent.y * direction);
   if (io.WantCaptureMouse) {
     _refresh = true;
     return true;

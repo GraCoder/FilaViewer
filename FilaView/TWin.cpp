@@ -18,19 +18,14 @@ TWin::TWin() {}
 
 TWin::~TWin() {}
 
-uint64_t TWin::winId()
-{
-  return downcast(this)->winId();
-}
-
 TView *TWin::view(int id)
 {
   return downcast(this)->view(id);
 }
 
-void TWin::exec(bool thread)
+uint64_t TWin::exec(bool thread)
 {
-  downcast(this)->exec(thread);
+  return downcast(this)->exec(thread);
 }
 
 int TWin::handleCommand(const char *ops, int len)

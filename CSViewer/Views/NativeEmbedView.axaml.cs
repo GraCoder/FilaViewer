@@ -10,6 +10,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
 using MdlViewer.ViewModels;
 using ReactiveUI;
+using ReactiveUI.Primitives;
 
 namespace MdlViewer.Views;
 
@@ -138,9 +139,8 @@ public unsafe class VulkanWin : INativeControl
     {
 #if true 
         Win = fv.IWin.create(null, false);
-        Win->exec(true);
-
-        return new Win32WindowControlHandle((IntPtr)Win->winId(), "HWND");
+        var winId = Win->exec(true);
+        return new Win32WindowControlHandle((IntPtr)winId, "HWND");
 #else
         return null;
 #endif
@@ -162,6 +162,6 @@ internal class Win32WindowControlHandle : PlatformHandle, INativeControlHostDest
 
     public void Destroy()
     {
-        _ = WinApi.DestroyWindow(Handle);
+        // The SDL execution thread owns and destroys this HWND.
     }
 }

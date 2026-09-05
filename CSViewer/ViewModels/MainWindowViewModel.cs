@@ -1,9 +1,7 @@
-﻿using System.Linq;
-using System.Reactive.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using System.Windows.Input;
-using Avalonia.Controls;
 using ReactiveUI;
+using ReactiveUI.Primitives;
 
 namespace MdlViewer.ViewModels
 {
@@ -15,6 +13,7 @@ namespace MdlViewer.ViewModels
         public ICommand OpenFileCommand { get; }
 
         private readonly Interaction<string?, string[]?> _select_file_interaction;
+        public Interaction<string?, string[]?> SelectFileInteraction => this._select_file_interaction;
 
         public MainWindowViewModel()
         {
@@ -23,7 +22,7 @@ namespace MdlViewer.ViewModels
         }
 
 
-        public string ? SelectedFile
+        public string? SelectedFile
         {
             get { return _file; }
             set { this.RaiseAndSetIfChanged(ref _file, value); }
@@ -31,11 +30,9 @@ namespace MdlViewer.ViewModels
 
         private async Task SelectFile()
         {
-            var files = await _select_file_interaction.Handle("");
-            if(files.Count() > 0)
-                _file = files.First();
+            var files = await _select_file_interaction.Handle("").ToTask();
+            if (files is { Length: > 0 })
+                SelectedFile = files[0];
         }
-
-        public Interaction<string?, string[]?> SelectFileInteraction => this._select_file_interaction;
     }
 }

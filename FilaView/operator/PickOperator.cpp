@@ -1,4 +1,4 @@
-#include <SDL2/SDL_events.h>
+#include <SDL3/SDL_events.h>
 #include "filament/View.h"
 #include "intern/FTScene.h"
 #include "intern/FTView.h"

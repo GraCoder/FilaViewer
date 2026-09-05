@@ -32,7 +32,7 @@
 #include <utils/Entity.h>
 #include <utils/Path.h>
 
-#include <SDL2/SDL_events.h>
+#include <SDL3/SDL_events.h>
 
 struct ImDrawData;
 struct ImGuiIO;

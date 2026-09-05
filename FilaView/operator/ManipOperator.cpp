@@ -1,5 +1,5 @@
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_timer.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_timer.h>
 
 #include "TView.h"
 #include "tmath.h"
@@ -7,7 +7,7 @@
 #include "ManipOperator.h"
 #include "intern/FTView.h"
 
-#define THROW_EVENT SDL_USEREVENT + 1000
+#define THROW_EVENT SDL_EVENT_USER + 1000
 
 namespace fv {
 
@@ -71,10 +71,11 @@ bool ManipOperator::mouseRelease(TView *view, const SDL_MouseButtonEvent &btn)
   if (inv > 0) {
     _dx = btn.x - _dx;
     _dy = btn.y - _dy;
-    float velocity = sqrt(_dx * _dx + _dy * _dy) / inv;
+    const double elapsedMs = static_cast<double>(inv) / SDL_NS_PER_MS;
+    float velocity = static_cast<float>(sqrt(_dx * _dx + _dy * _dy) / elapsedMs);
     if (velocity > 0.1) {
       _view = view;
-      _throwTime = inv;
+      _throwTime = static_cast<float>(elapsedMs);
       _throwButton = btn.button == SDL_BUTTON_LEFT ? 1 : (btn.button == SDL_BUTTON_RIGHT ? 2 : 0);
       auto &vp = view->viewport();
       _dx /= vp.z();
@@ -100,7 +101,7 @@ bool ManipOperator::mouseMove(TView *view, const SDL_MouseMotionEvent &motion)
   } else if (motion.state & SDL_BUTTON_MMASK) {
   }
 
-  if (motion.state && (motion.timestamp - _throwStamp) > 50) {
+  if (motion.state && (motion.timestamp - _throwStamp) > 50 * SDL_NS_PER_MS) {
     _dx = motion.x;
     _dy = motion.y;
     _throwStamp = motion.timestamp;
@@ -110,7 +111,7 @@ bool ManipOperator::mouseMove(TView *view, const SDL_MouseMotionEvent &motion)
 
 bool ManipOperator::mouseWheel(TView *view, const SDL_MouseWheelEvent &wheel)
 {
-  float scale = 1.f + wheel.preciseY * 0.2;
+  float scale = 1.f + wheel.y * 0.2f;
   scale = tg::clamp(scale, 0.1f, 1e6f);
   _distance *= scale;
   return true;
@@ -118,11 +119,11 @@ bool ManipOperator::mouseWheel(TView *view, const SDL_MouseWheelEvent &wheel)
 
 bool ManipOperator::keyPress(TView *view, const SDL_KeyboardEvent &key)
 {
-  if (key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+  if (key.scancode == SDL_SCANCODE_ESCAPE) {
     //_close = true;
-  } else if (key.keysym.scancode == SDL_SCANCODE_LCTRL) {
+  } else if (key.scancode == SDL_SCANCODE_LCTRL) {
     //_view->filaView()->set_manip_factor(10.0);
-  } else if (key.keysym.scancode == SDL_SCANCODE_LSHIFT) {
+  } else if (key.scancode == SDL_SCANCODE_LSHIFT) {
     // view()->set_manip_factor(5.0);
   }
   return true;
@@ -130,7 +131,7 @@ bool ManipOperator::keyPress(TView *view, const SDL_KeyboardEvent &key)
 
 bool ManipOperator::keyRelease(TView *view, const SDL_KeyboardEvent &key)
 {
-  if (key.keysym.scancode == SDL_SCANCODE_SPACE) {
+  if (key.scancode == SDL_SCANCODE_SPACE) {
     _throwTime = 0;
     _distance = 100;
     _rotation = tg::quatd();

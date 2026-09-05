@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include <QWidget>
 
 namespace fv {
@@ -24,4 +26,5 @@ private:
   
 private:
   fv::TWin *_win = nullptr;
+  uint64_t _nativeWin = 0;
 };

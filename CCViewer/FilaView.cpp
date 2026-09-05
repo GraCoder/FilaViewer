@@ -20,9 +20,9 @@ void FilaView::showEvent(QShowEvent *event)
 
   if (!_win) {
     _win = dynamic_cast<fv::TWin *>(IWin::create(nullptr, false));
-    _win->exec(true);
+    _nativeWin = _win->exec(true);
 
-    SetParent(HWND(_win->winId()), (HWND)winId());
+    SetParent(HWND(_nativeWin), (HWND)winId());
   }
 
   moveWindow();
@@ -42,6 +42,7 @@ void FilaView::closeEvent(QCloseEvent *event)
   if (_win) {
     IWin::destroy(_win);
     _win = nullptr;
+    _nativeWin = 0;
   }
 }
 
@@ -56,7 +57,7 @@ void FilaView::sltOpenFile()
 
 void FilaView::moveWindow()
 {
-  HWND hwnd = (HWND)_win->winId();
+  HWND hwnd = (HWND)_nativeWin;
   QPoint pt;
   // auto pt = mapToGlobal(QPoint(0, 0));
   MoveWindow(hwnd, pt.x(), pt.y(), width(), height(), TRUE);
